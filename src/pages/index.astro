@@ -1,0 +1,23 @@
+---
+import Base from "../layouts/Base.astro";
+import { games } from "../data/games";
+import { modsForGame } from "../data/mods";
+---
+
+<Base
+  title="Azrael's Mods"
+  description="Mods for RimWorld, Sun Haven, and 7 Days to Die."
+>
+  <h1>Azrael's Mods</h1>
+  <p>Mods for three games, with downloads alongside Steam, Thunderstore, and Nexus.</p>
+  <ul>
+    {
+      games.map((game) => (
+        <li>
+          <a href={`/${game.slug}`}>{game.name}</a>
+            <span> ({modsForGame(game.slug).length})</span>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

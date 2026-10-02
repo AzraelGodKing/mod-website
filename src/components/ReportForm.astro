@@ -1,0 +1,125 @@
+---
+import { turnstileSitekey } from "../data/turnstile-sitekey";
+
+interface Props {
+  game: string;
+  mod: string;
+  name: string;
+  gameName: string;
+}
+
+const { game, mod, name, gameName } = Astro.props;
+---
+
+<section>
+  <h2>Report a problem</h2>
+  <p>This report is for {name} on {gameName}.</p>
+  <form id="report-form" data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
+    <label>
+      Summary
+      <input name="summary" required minlength="8" maxlength="120" autocomplete="off" />
+    </label>
+    <label>
+      What happened
+      <textarea name="details" required minlength="20" maxlength="4000" rows="6"></textarea>
+    </label>
+    <div id="report-turnstile"></div>
+    <p id="report-status" role="status"></p>
+    <button type="submit">Send report</button>
+  </form>
+</section>
+
+<script is:inline>
+  const form = document.querySelector("#report-form");
+  const status = document.querySelector("#report-status");
+  window.onAzraelTurnstile = () => {
+    form.dataset.widgetId = String(
+      turnstile.render("#report-turnstile", {
+        sitekey: form.dataset.sitekey,
+        action: "report",
+      }),
+    );
+  };
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = form.querySelector("button");
+    const token = turnstile.getResponse(form.dataset.widgetId);
+    if (!token) {
+      status.textContent = "Finish the check, then submit.";
+      return;
+    }
+    const parts = location.pathname.split("/").filter(Boolean);
+    if (parts[0] !== form.dataset.game || parts[1] !== form.dataset.mod) {
+      status.textContent = "This report does not match this page.";
+      return;
+    }
+    button.disabled = true;
+    status.textContent = "Sending…";
+    try {
+      const response = await fetch("/api/report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          game: parts[0],
+          mod: parts[1],
+          summary: new FormData(form).get("summary"),
+          details: new FormData(form).get("details"),
+          turnstileToken: token,
+        }),
+      });
+      const payload = await response.json();
+      if (response.ok && payload.ok === true) {
+        const issue =
+          typeof payload.issue === "string" && /^[A-Z][A-Z0-9]+-\d+$/.test(payload.issue)
+            ? ` Report ${payload.issue}.`
+            : "";
+        const done = document.createElement("p");
+        done.textContent = `Report sent.${issue}`;
+        form.replaceWith(done);
+        return;
+      }
+      status.textContent =
+        typeof payload.error === "string" ? payload.error : "The report could not be filed. Try again.";
+      turnstile.reset(form.dataset.widgetId);
+    } catch {
+      status.textContent = "The report could not be filed. Try again.";
+      turnstile.reset(form.dataset.widgetId);
+    } finally {
+      if (form.isConnected) button.disabled = false;
+    }
+  });
+</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onAzraelTurnstile" async defer></script>
+
+<style>
+  section {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #d9d0c3;
+  }
+
+  label {
+    display: block;
+    margin: 1rem 0;
+  }
+
+  input,
+  textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.35rem;
+    box-sizing: border-box;
+    font: inherit;
+  }
+
+  button {
+    font: inherit;
+    padding: 0.4rem 0.8rem;
+  }
+
+  #report-status:not(:empty) {
+    margin: 0.75rem 0;
+    color: #6b3a1f;
+    font-weight: 700;
+  }
+</style>

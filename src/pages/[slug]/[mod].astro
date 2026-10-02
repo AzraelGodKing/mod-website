@@ -1,0 +1,56 @@
+---
+import Base from "../../layouts/Base.astro";
+import ReportForm from "../../components/ReportForm.astro";
+import { games } from "../../data/games";
+import { findMod, mods, type ModEntry } from "../../data/mods";
+
+export function getStaticPaths() {
+  return mods.map((mod) => ({
+    params: { slug: mod.game, mod: mod.slug },
+    props: { mod },
+  }));
+}
+
+interface Props {
+  mod: ModEntry;
+}
+
+const { mod } = Astro.props;
+const game = games.find((entry) => entry.slug === mod.game);
+const storeLinks = [
+  ["Steam", mod.links.steam],
+  ["Thunderstore", mod.links.thunderstore],
+  ["Nexus", mod.links.nexus],
+].filter((entry): entry is [string, string] => Boolean(entry[1]));
+---
+
+<Base title={mod.name} description={mod.description}>
+  <p><a href={`/${mod.game}`}>{game?.name}</a></p>
+  <h1>{mod.name}</h1>
+  <p>Version {mod.version}</p>
+  <p>{mod.description}</p>
+  {
+    mod.images.length > 0 && (
+      <img src={mod.images[0]} alt={`${mod.name} preview`} width="640" />
+    )
+  }
+  {
+    storeLinks.length > 0 && (
+      <ul>
+        {storeLinks.map(([label, href]) => (
+          <li>
+            <a href={href}>{label}</a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  {
+    mod.download.url && (
+      <p>
+        <a href={mod.download.url}>Download {mod.download.file}</a>
+      </p>
+    )
+  }
+  <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
+</Base>
