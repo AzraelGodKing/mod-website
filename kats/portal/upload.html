@@ -3,29 +3,178 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KatsRics upload</title>
+  <title>File status — KatsRics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { margin: 0; font-family: Georgia, Palatino, serif; line-height: 1.5; color: #172033; background: #f4f7fb; }
-    main { max-width: 40rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-    label { display: block; margin-top: 1rem; }
-    input { margin-top: 0.35rem; }
-    button { margin-top: 1.25rem; }
-    #status { white-space: pre-wrap; }
+    :root {
+      color-scheme: dark;
+      --ink: #e8f1ff;
+      --muted: #8ea3bd;
+      --bg: #070b14;
+      --panel: #10182a;
+      --line: #24344d;
+      --accent: #3cf0c4;
+      --warn: #ffb020;
+      --danger: #ff6b8a;
+      --font: "Outfit", sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font: 16px/1.5 var(--font);
+      background:
+        radial-gradient(circle at top, rgba(60, 240, 196, 0.08), transparent 36%),
+        linear-gradient(rgba(126, 224, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126, 224, 255, 0.04) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, 28px 28px, 28px 28px, auto;
+    }
+
+    .banner, .monitor {
+      padding: 0.7rem 1.25rem;
+      color: var(--warn);
+      background: #140e08;
+      border-bottom: 1px solid #3a2a12;
+      font: 12px/1.6 var(--mono);
+      letter-spacing: 0.02em;
+    }
+
+    .monitor {
+      border-bottom: 0;
+      border-top: 1px solid #3a2a12;
+      color: var(--danger);
+    }
+
+    main {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+
+    .dossier {
+      padding: 1.5rem;
+      background: rgba(16, 24, 42, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 0 0 1px rgba(60, 240, 196, 0.05), 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .kicker {
+      margin: 0;
+      color: var(--accent);
+      font: 600 12px/1 var(--mono);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0.6rem 0 0.4rem;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .lede {
+      margin: 0 0 1.4rem;
+      color: var(--muted);
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      color: var(--muted);
+      font: 500 12px/1 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      margin-top: 0.45rem;
+      padding: 0.75rem 0.85rem;
+      color: var(--ink);
+      background: #0b1322;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font: 15px/1.4 var(--font);
+    }
+
+    input:focus {
+      outline: 2px solid rgba(60, 240, 196, 0.35);
+      border-color: var(--accent);
+    }
+
+    .file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 0.45rem;
+      padding: 0.85rem;
+      background: #0b1322;
+      border: 1px dashed #3c5270;
+      border-radius: 10px;
+      text-transform: none;
+      letter-spacing: 0;
+      font: 15px/1.4 var(--font);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .file input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .file strong { color: var(--accent); font-weight: 600; }
+    #file-name { color: var(--muted); font: 13px/1.4 var(--mono); text-align: right; }
+
+    button {
+      margin-top: 1.4rem;
+      padding: 0.8rem 1.1rem;
+      color: #06221b;
+      background: var(--accent);
+      border: 0;
+      border-radius: 999px;
+      font: 600 15px/1 var(--font);
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(1.05); }
+
+    #status {
+      min-height: 1.5rem;
+      margin: 1rem 0 0;
+      color: var(--ink);
+      font: 13px/1.5 var(--mono);
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
+  <p class="banner">FILE STATUS: Active | Revision: 38 | Previous revisions unavailable. | Reason for revision: Unknown. | Personnel retaining memory of Revision 37 are to notify Site Administration immediately.</p>
   <main>
-    <h1>KatsRics upload</h1>
-    <p>Upload a <code>CAP_ChatInteractive.rar</code> export. The catalog pages pick up the store, traits, races, incidents, weather, and commands.</p>
-    <p>Viewer lists and settings backups in that archive are left out. Genes and backstories stay as they are until those game exports are uploaded below.</p>
-    <form id="upload-form">
-      <label>Password <input name="password" type="password" autocomplete="current-password" required /></label>
-      <label>CAP export <input id="rar" type="file" accept=".rar,application/vnd.rar,application/x-rar-compressed" /></label>
-      <label>Genes or backstories <input id="game-files" type="file" accept=".json,application/json" multiple /></label>
-      <button type="submit">Update the catalog</button>
-    </form>
-    <p id="status" role="status"></p>
+    <section class="dossier">
+      <p class="kicker">Site administration</p>
+      <h1>Catalog revision</h1>
+      <p class="lede">File a CAP export. The store, traits, races, incidents, weather, and commands are revised. Viewer lists and settings backups are not entered into the record.</p>
+      <form id="upload-form">
+        <label>Clearance
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <label class="file">
+          <span><strong>Select export</strong></span>
+          <input id="rar" type="file" accept=".rar,application/vnd.rar,application/x-rar-compressed" required />
+          <span id="file-name">No file selected</span>
+        </label>
+        <button type="submit">File this revision</button>
+      </form>
+      <p id="status" role="status"></p>
+    </section>
   </main>
+  <p class="monitor">This channel is continuously monitored for unauthorized modification.</p>
   <script type="module" src="/portal.js"></script>
 </body>
 </html>

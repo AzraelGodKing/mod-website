@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import esbuild from "esbuild";
@@ -8,8 +8,10 @@ const siteRoot = path.resolve(katsRoot, "..");
 const source = process.env.KATS_RICS ?? path.resolve(siteRoot, "../KatsRics/docs");
 const assets = path.join(katsRoot, "assets");
 
-rmSync(assets, { recursive: true, force: true });
 mkdirSync(assets, { recursive: true });
+for (const name of readdirSync(assets)) {
+  rmSync(path.join(assets, name), { recursive: true, force: true });
+}
 cpSync(source, assets, { recursive: true });
 cpSync(path.join(katsRoot, "portal", "upload.html"), path.join(assets, "upload.html"));
 cpSync(

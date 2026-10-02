@@ -3,6 +3,12 @@ import { buildCatalog } from "./catalog.mjs";
 
 const form = document.querySelector("#upload-form");
 const status = document.querySelector("#status");
+const fileName = document.querySelector("#file-name");
+const rarInput = document.querySelector("#rar");
+
+rarInput.addEventListener("change", () => {
+  fileName.textContent = rarInput.files[0]?.name ?? "No file selected";
+});
 
 function setStatus(message) {
   status.textContent = message;
@@ -35,43 +41,37 @@ function countLine(counts) {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const password = new FormData(form).get("password");
-  const rar = form.querySelector("#rar").files[0];
-  const gameFiles = [...form.querySelector("#game-files").files];
+  const rar = rarInput.files[0];
   if (!password) {
-    setStatus("Enter the upload password.");
+    setStatus("Clearance was not entered.");
     return;
   }
-  if (!rar && gameFiles.length === 0) {
-    setStatus("Choose a CAP export, or the gene and backstory files.");
+  if (!rar) {
+    setStatus("No export is attached to this revision.");
     return;
   }
 
   const entries = [];
   try {
-    if (rar) {
-      setStatus("Reading the export…");
-      const bytes = await rar.arrayBuffer();
-      const extractor = await createExtractorFromData({ data: bytes });
-      const extracted = extractor.extract();
-      const decoder = new TextDecoder("utf-8");
-      for (const file of extracted.files) {
-        if (file.fileHeader.flags.directory || !file.extraction) continue;
-        entries.push({ path: file.fileHeader.name, text: decoder.decode(file.extraction) });
-      }
-    }
-    for (const file of gameFiles) {
-      entries.push({ path: file.name, text: await file.text() });
+    setStatus("Revision in progress. The export is under review.");
+    const bytes = await rar.arrayBuffer();
+    const extractor = await createExtractorFromData({ data: bytes });
+    const extracted = extractor.extract();
+    const decoder = new TextDecoder("utf-8");
+    for (const file of extracted.files) {
+      if (file.fileHeader.flags.directory || !file.extraction) continue;
+      entries.push({ path: file.fileHeader.name, text: decoder.decode(file.extraction) });
     }
     const built = buildCatalog(entries);
     const names = Object.keys(built.files);
     if (names.length === 0) {
-      setStatus("That upload did not contain store, trait, race, incident, weather, command, gene, or backstory data.");
+      setStatus("The export did not contain store, trait, race, incident, weather, or command data.");
       return;
     }
-    setStatus("Publishing the catalog…");
+    setStatus("Filing the revision.");
     await publish(String(password), built.files);
-    const skipped = built.skipped.length ? ` Left out: ${built.skipped.join(", ")}.` : "";
-    setStatus(`Updated ${countLine(built.counts)}.${skipped}`);
+    const withheld = built.skipped.length ? " Private records were not filed." : "";
+    setStatus(`FILE STATUS: Active. Revision filed. ${countLine(built.counts)}.${withheld}`);
   } catch (error) {
     setStatus(error instanceof Error ? error.message : "The upload failed.");
   }
