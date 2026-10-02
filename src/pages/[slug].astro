@@ -13,25 +13,102 @@ export function getStaticPaths() {
 
 const { game } = Astro.props;
 const gameMods = modsForGame(game.slug);
+const rimworld = game.slug === "rimworld";
 ---
 
 <Base title={`${game.name} mods`} description={`Mods for ${game.name}.`} game={game.slug}>
-  <header class="game-intro">
-    <h1>{game.name}</h1>
-    <p class="repo">
-      <a href={game.repo}>Source repository</a>
-    </p>
-  </header>
-  <div class="cards">
-    {
-      gameMods.map((mod) => (
-        <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
-          <span class="mark">{lookFor(mod.slug).mark}</span>
-          <strong>{mod.name}</strong>
-          <span class="ver">{mod.version}</span>
-          <p>{mod.description}</p>
-        </a>
-      ))
-    }
-  </div>
+  {
+    rimworld ? (
+      <div class="rw-hub">
+        <section class="rw-window" aria-label="RimWorld mods">
+          <header class="rw-title">
+            <h1>Mods</h1>
+            <a href={game.repo}>Source</a>
+          </header>
+          <div class="rw-tools">
+            <label>
+              Search
+              <input id="rw-search" type="search" placeholder="Search mods" autocomplete="off" />
+            </label>
+            <p>{gameMods.length} mods</p>
+          </div>
+          <div class="rw-body">
+            <div class="rw-list">
+              {gameMods.map((mod, index) => (
+                <>
+                  <input
+                    class="rw-pick"
+                    type="radio"
+                    name="rw-mod"
+                    id={`rw-${mod.slug}`}
+                    checked={index === 0}
+                  />
+                  <label class="rw-row" for={`rw-${mod.slug}`} data-name={mod.name.toLowerCase()}>
+                    <span class="rw-box" aria-hidden="true" />
+                    <span class="rw-name">{mod.name}</span>
+                    <span class="rw-ver">{mod.version}</span>
+                  </label>
+                </>
+              ))}
+            </div>
+            <div class="rw-detail">
+              {gameMods.map((mod, index) => {
+                const preview = mod.slug === "azrael" ? undefined : mod.images[0];
+                return (
+                  <article class="rw-pane" data-mod={mod.slug} hidden={index !== 0}>
+                    {preview && <img src={preview} alt="" />}
+                    <h2>{mod.name}</h2>
+                    <p class="rw-mark">{lookFor(mod.slug).mark}</p>
+                    <p class="rw-meta">Version {mod.version}</p>
+                    <p>{mod.description}</p>
+                    <a class="rw-open" href={`/${game.slug}/${mod.slug}`}>
+                      Open
+                    </a>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+        <script is:inline>
+          const search = document.querySelector("#rw-search");
+          const rows = document.querySelectorAll(".rw-row");
+          const picks = document.querySelectorAll(".rw-pick");
+          const panes = document.querySelectorAll(".rw-pane");
+          function showPicked() {
+            const picked = document.querySelector(".rw-pick:checked");
+            const slug = picked?.id.replace(/^rw-/, "");
+            for (const pane of panes) pane.hidden = pane.dataset.mod !== slug;
+          }
+          for (const pick of picks) pick.addEventListener("change", showPicked);
+          showPicked();
+          search?.addEventListener("input", () => {
+            const query = search.value.trim().toLowerCase();
+            for (const row of rows) {
+              row.hidden = Boolean(query) && !row.dataset.name.includes(query);
+            }
+          });
+        </script>
+      </div>
+    ) : (
+      <>
+        <header class="game-intro">
+          <h1>{game.name}</h1>
+          <p class="repo">
+            <a href={game.repo}>Source repository</a>
+          </p>
+        </header>
+        <div class="cards">
+          {gameMods.map((mod) => (
+            <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
+              <span class="mark">{lookFor(mod.slug).mark}</span>
+              <strong>{mod.name}</strong>
+              <span class="ver">{mod.version}</span>
+              <p>{mod.description}</p>
+            </a>
+          ))}
+        </div>
+      </>
+    )
+  }
 </Base>
