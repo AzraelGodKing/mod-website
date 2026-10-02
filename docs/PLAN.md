@@ -9,7 +9,7 @@ Static site for AzraelGodKing's mods. Source of truth for this plan is this file
 - Catalog file is `mod.json` inside each mod folder, not one file for the whole repo. Libraries (`SharedUtilities`, `TheVault.Abstractions`) are left out.
 - Linear workspace `AzraelGodKing`, team `AzraelGodKing`, is on Basic. Confirmed price: $12 per user per month.
 - Report form is on `main` and is not deployed. The Linear key is stored in `.dev.vars` on this machine. Test reports AZR-350 and AZR-352 are in Backlog.
-- Hosting path stays Buildkite plus Wrangler, on free tiers, until a later decision changes it.
+- Hosting path stays Buildkite plus Wrangler, on free tiers, until a later decision changes it. Buildkite connects to GitHub `AzraelGodKing/mod-website`. The Origin app does not build this repo, because Codebase is only a mirror. Builds are started by hand. Pull requests, forks, and GitHub push webhooks do not deploy. The deploy agent is a separate queue and is the only place the Cloudflare token lives.
 
 ## Verification
 
@@ -51,7 +51,7 @@ Repos for the mods are public. Prefer free services. Ask before using anything p
 ### Work in this order
 
 1. Linear Basic is done. Do not deploy the report form until the later form step, and do not deploy it before the checks in that step pass.
-2. Site repo: an Astro project, deployed to Cloudflare by a Buildkite pipeline running Wrangler. Cloudflare Workers Builds can read this Codebase repo. The pipeline still uses Buildkite so builds stay manually triggered.
+2. Site repo: an Astro project, deployed to Cloudflare by a Buildkite pipeline running Wrangler. The pipeline connects to the GitHub repo so builds stay manually triggered.
 3. Mod data: each mod repo gets a `mod.json` (name, game, description, version, screenshots, download file, Steam/Thunderstore/Nexus links). The site build reads them from the three repos.
 4. Downloads: an R2 bucket on a custom domain, laid out as `<game>/<mod>/<version>/<mod>-<version>.zip` plus a `.sha256` file. Public builds only, with no copyrighted assets. Each mod's release pipeline uploads with a token scoped to that one bucket.
 5. Report form: Cloudflare Turnstile plus a Cloudflare function that verifies the token on the server, validates and trims input, strips HTML, and creates the Linear issue with the team, the mod's label, and a `website` label.

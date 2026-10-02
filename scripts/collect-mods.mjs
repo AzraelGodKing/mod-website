@@ -42,6 +42,11 @@ for (const root of roots) {
   }
 }
 
+if (mods.length === 0) {
+  console.error("No mod.json files found in the catalog repos.");
+  process.exit(1);
+}
+
 mods.sort((a, b) => a.game.localeCompare(b.game) || a.name.localeCompare(b.name));
 const out = path.join(siteRoot, "src", "data", "catalog.json");
 writeFileSync(out, `${JSON.stringify({ mods }, null, 2)}\n`);

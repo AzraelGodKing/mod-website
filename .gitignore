@@ -25,6 +25,11 @@ pnpm-debug.log*
 # generated from the mod repos
 src/data/catalog.json
 public/catalog/
+.catalog-sources/
+
+# Buildkite agent secrets. Examples in .buildkite/*.env.example are safe to commit.
+.buildkite/agent.env
+.buildkite/deploy.env
 
 # macOS-specific files
 .DS_Store

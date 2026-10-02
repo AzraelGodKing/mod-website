@@ -1,0 +1,12 @@
+steps:
+  - label: "Build and test"
+    key: build
+    agents:
+      queue: site
+    command: bash scripts/ci-build.sh
+
+  - label: "Queue deploy"
+    depends_on: build
+    agents:
+      queue: site
+    command: bash scripts/ci-queue-deploy.sh
