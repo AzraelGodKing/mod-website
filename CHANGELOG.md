@@ -3,6 +3,7 @@
 ## Unreleased
 
 - KatsRics is a separate site. A CAP export upload refreshes the chatter catalog, and viewer lists and settings backups are not published.
+- The KatsRics upload page lays the file status out as separate fields instead of one running line.
 - Mod pages link to the public zip on `downloads.azraelsmods.com`, with a checksum file beside it.
 - The 7 Days to Die mods use those same download links. Azrael and Living World send Download to a not-ready page.
 - The site is served on `azraelsmods.com` and `www.azraelsmods.com`.
