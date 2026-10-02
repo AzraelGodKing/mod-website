@@ -1,0 +1,282 @@
+:root {
+  --paper: #f6f1e8;
+  --ink: #1c1915;
+  --muted: #5c5348;
+  --link: #6b3a1f;
+  --bar: #1c1915;
+  --bar-ink: #f6f1e8;
+  --bar-mark: #e2b15a;
+  --rule: #d9d0c3;
+  --card: #fffaf3;
+  --accent: #6b3a1f;
+  --accent-ink: #fffaf3;
+  --radius: 2px;
+  --font: Georgia, "Iowan Old Style", Palatino, serif;
+  --wash: var(--card);
+  --hero-ink: var(--ink);
+  --hero-muted: var(--muted);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+body > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.75rem;
+  padding: 1rem 1.5rem;
+  background: var(--bar);
+  color: var(--bar-ink);
+  border-bottom: 1px solid var(--rule);
+}
+
+body > header > a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+body > header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+}
+
+body > header nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+body > header nav a[aria-current] {
+  border-bottom: 2px solid var(--bar-mark);
+}
+
+main {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+}
+
+a {
+  color: var(--link);
+}
+
+a:visited {
+  color: var(--link);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+h1,
+h2 {
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.lede {
+  font-size: 1.05rem;
+}
+
+.game-band {
+  margin: 1.5rem -1.5rem 0;
+  padding: 1.5rem 1.5rem 1.75rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+.game-band h2 {
+  margin: 0;
+}
+
+.game-band h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.game-band .count,
+.game-intro .repo {
+  margin: 0.35rem 0 1rem;
+  color: var(--muted);
+}
+
+.cards,
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.mod-card,
+.mod-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 0.95rem 1rem;
+  background: var(--wash);
+  color: var(--hero-ink);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-top: 4px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.mod-card:visited,
+.mod-chip:visited {
+  color: var(--hero-ink);
+}
+
+.mod-card .mark,
+.mod-chip .mark {
+  color: var(--accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mod-card strong,
+.mod-chip strong {
+  font-size: 1.05rem;
+}
+
+.mod-card .ver,
+.hero .version {
+  color: var(--hero-muted);
+  font-size: 0.85rem;
+}
+
+.mod-card p {
+  margin: 0.35rem 0 0;
+  color: var(--hero-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hero {
+  margin: 0 0 1.25rem;
+  padding: 1.5rem 1.35rem 1.35rem;
+  background: var(--wash);
+  color: var(--hero-ink);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--radius);
+}
+
+.hero a,
+.hero a:visited {
+  color: var(--hero-ink);
+}
+
+.hero .mark {
+  margin: 0.35rem 0 0;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.hero h1 {
+  margin: 0.2rem 0 0;
+}
+
+.hero .version {
+  margin: 0.45rem 0 0;
+}
+
+.hero img {
+  display: block;
+  width: 100%;
+  margin: 1rem 0 0;
+  border-radius: var(--radius);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.download {
+  display: inline-block;
+  padding: 0.55rem 0.95rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: var(--radius);
+}
+
+.download:visited {
+  color: var(--accent-ink);
+}
+
+.others {
+  margin-top: 2rem;
+}
+
+.others h2 {
+  margin-bottom: 0.75rem;
+}
+
+#report-form,
+.report {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+#report-form label,
+.report label {
+  display: block;
+  margin: 1rem 0;
+}
+
+#report-form input,
+#report-form textarea,
+.report input,
+.report textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.55rem;
+}
+
+#report-form button,
+.report button {
+  font: inherit;
+  padding: 0.5rem 0.9rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+#report-status:not(:empty) {
+  margin: 0.75rem 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--bar-mark);
+  outline-offset: 2px;
+}
