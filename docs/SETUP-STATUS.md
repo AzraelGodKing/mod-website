@@ -14,16 +14,16 @@ Updated 2026-10-02.
 - `mod.json` is written for 9 RimWorld mods, 14 Sun Haven mods, and 5 7 Days to Die mods. Local site build lists them. RimWorld and Sun Haven pages link to the existing GitHub zip when one exists.
 - R2 is enabled on account Azraelgodking. One Standard bucket, `azraels-mods`, is in ENAM. Public address `pub-aa73fdeb8db147eb8c49d8634a51646c.r2.dev` is on. No custom domain. The bucket is empty.
 - Cloudflare emails the account billing address when spend reaches $1. That alert does not stop uploads or downloads. R2 has no hard monthly cap; usage past the free tier is billed.
-- Each mod page has a report form. The Worker checks Turnstile, trims the text, strips HTML, and creates a Linear issue with that mod's label and the `website` label. The Turnstile widget allows `localhost`, `127.0.0.1`, and `azraels-mods-website.azraelgodking95.workers.dev`. The form is not deployed.
+- Each mod page has a report form. The Worker checks Turnstile, trims the text, strips HTML, and creates a Linear issue with that mod's label and the `website` label. The Turnstile widget allows `localhost`, `127.0.0.1`, `azraelsmods.com`, `www.azraelsmods.com`, and `azraels-mods-website.azraelgodking95.workers.dev`. The form is deployed.
 
 ## In progress
 
 - Codebase is the mirror. This machine does not push there. The Origin CLI does not run on native Windows, and `git push` to Codebase was rejected.
 - `mod.json` is on `main` in the three mod repos. The site build reads those `main` branches.
 - The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. Test reports AZR-350 and AZR-352 are in Backlog.
-- Buildkite agents `site` and `deploy` are connected on this machine. The deploy agent is the only one with the Cloudflare token and the report-form secrets. Nothing is deployed. The public hostname will be `azraels-mods-website.azraelgodking95.workers.dev`.
+- Buildkite agents `site` and `deploy` are connected on this machine. The site is deployed at `https://azraelsmods.com`. The workers.dev address still works.
 
 ## Waiting on me
 
 - Nothing for the report form. AZR-350 and AZR-352 are the test issues in Backlog. Close or cancel them when you do not need them.
-- Start one build of `main` in Buildkite, and leave **Deploy the site** unclicked until that build's test step passes.
+- Merge the custom-domain pull request so the next deploy keeps `azraelsmods.com`.

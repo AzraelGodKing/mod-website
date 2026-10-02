@@ -3,6 +3,10 @@
   "name": "azraels-mods-website",
   "main": "./src/worker.ts",
   "compatibility_date": "2026-10-02",
+  "routes": [
+    { "pattern": "azraelsmods.com", "custom_domain": true },
+    { "pattern": "www.azraelsmods.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
