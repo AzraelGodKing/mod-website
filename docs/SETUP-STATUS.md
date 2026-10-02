@@ -6,7 +6,7 @@ Updated 2026-10-02.
 
 - Linear workspace AzraelGodKing is on the Basic plan. Confirmed price: $12 per user per month.
 - Linear docs confirm a personal API key can be limited to Create issues and to one team. No key has been created.
-- Site repo is Codebase `azraelgodking/Azraels_Mods_Website`. Local clone is `F:\Repositories\Azraels_Mods_Website` on branch `feat/report-form`. No commit yet.
+- Site work is in GitHub `AzraelGodKing/mod-website`, local clone `F:\Repositories\mod-website`. Pull request #1 is merged to `main`. Codebase `azraelgodking/Azraels_Mods_Website` is a mirror. Pushes go to GitHub.
 - Cloudflare Workers Builds can connect to a Cursor Origin repo (Cloudflare changelog, 2026-09-22).
 - Personal Codebase repos are private only. This site source cannot be made public in Codebase.
 - Buildkite can connect to an Origin-hosted repo. It does not build GitHub-mirror repos through the Origin app.
@@ -18,8 +18,8 @@ Updated 2026-10-02.
 
 ## In progress
 
-- Plan docs are in the local clone. A push to Codebase is not verified. `git ls-remote` waited on a login, and the Origin CLI does not support native Windows.
-- Each mod has a `mod.json` on branch `chore/mod-json` in a worktree: `rimworld_mods-modjson`, `SunhavenMod-modjson`, and `7d2d-modjson`. The site build reads those files. Nothing is committed or deployed.
+- Codebase is the mirror. This machine does not push there. The Origin CLI does not run on native Windows, and `git push` to Codebase was rejected.
+- `mod.json` is committed on `chore/mod-json` in the three mod repos and pushed to GitHub. Those branches are not merged to each repo's main. The site build reads the local worktrees.
 - The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. A test report filed AZR-350 with the Azrael and website labels.
 
 ## Waiting on me

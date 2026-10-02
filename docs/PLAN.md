@@ -4,11 +4,11 @@ Static site for AzraelGodKing's mods. Source of truth for this plan is this file
 
 ## Decisions
 
-- Site repo: Codebase `azraelgodking/Azraels_Mods_Website` (native Origin repo, not a GitHub mirror). Local clone: `F:\Repositories\Azraels_Mods_Website`. Branch: `docs/site-plan`.
+- Site repo we edit: GitHub `AzraelGodKing/mod-website`. Local clone: `F:\Repositories\mod-website`. Codebase `azraelgodking/Azraels_Mods_Website` is a mirror of that GitHub repo. Do not push to Codebase from this Windows machine. The Origin CLI does not run here, and the saved Codebase token was rejected.
 - Mod repos, confirmed: `AzraelGodKing/rimworld_mods`, `AzraelGodKing/SunhavenMod`, `AzraelGodKing/7d2d_mods`. Every mod in those repos is in scope. Do not mirror `7d2d_mods` into Codebase. The site reads the public GitHub repo.
 - Catalog file is `mod.json` inside each mod folder, not one file for the whole repo. Libraries (`SharedUtilities`, `TheVault.Abstractions`) are left out.
 - Linear workspace `AzraelGodKing`, team `AzraelGodKing`, is on Basic. Confirmed price: $12 per user per month.
-- Report form is built on `feat/report-form` and is not deployed. The Linear key is stored in `.dev.vars` on this machine. A test report created AZR-350.
+- Report form is on `main` and is not deployed. The Linear key is stored in `.dev.vars` on this machine. Test reports AZR-350 and AZR-352 are in Backlog.
 - Hosting path stays Buildkite plus Wrangler, on free tiers, until a later decision changes it.
 
 ## Verification
