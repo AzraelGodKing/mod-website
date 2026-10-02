@@ -31,6 +31,10 @@ public/catalog/
 .buildkite/agent.env
 .buildkite/deploy.env
 
+# KatsRics site assets are copied from the KatsRics repo at build time.
+kats/assets/
+kats/.wrangler/
+
 # macOS-specific files
 .DS_Store
 

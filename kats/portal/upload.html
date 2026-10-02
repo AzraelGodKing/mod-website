@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KatsRics upload</title>
+  <style>
+    body { margin: 0; font-family: Georgia, Palatino, serif; line-height: 1.5; color: #172033; background: #f4f7fb; }
+    main { max-width: 40rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    label { display: block; margin-top: 1rem; }
+    input { margin-top: 0.35rem; }
+    button { margin-top: 1.25rem; }
+    #status { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>KatsRics upload</h1>
+    <p>Upload a <code>CAP_ChatInteractive.rar</code> export. The catalog pages pick up the store, traits, races, incidents, weather, and commands.</p>
+    <p>Viewer lists and settings backups in that archive are left out. Genes and backstories stay as they are until those game exports are uploaded below.</p>
+    <form id="upload-form">
+      <label>Password <input name="password" type="password" autocomplete="current-password" required /></label>
+      <label>CAP export <input id="rar" type="file" accept=".rar,application/vnd.rar,application/x-rar-compressed" /></label>
+      <label>Genes or backstories <input id="game-files" type="file" accept=".json,application/json" multiple /></label>
+      <button type="submit">Update the catalog</button>
+    </form>
+    <p id="status" role="status"></p>
+  </main>
+  <script type="module" src="/portal.js"></script>
+</body>
+</html>
