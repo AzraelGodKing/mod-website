@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import labels from "../src/data/report-labels.json" with { type: "json" };
-import catalog from "../src/data/catalog.json" with { type: "json" };
 import { buildIssueBody, handleReport, stripHtml } from "../src/report/handle.mjs";
 
 const target = {
@@ -67,7 +66,14 @@ test("issue body uses cleaned text and both labels", () => {
   assert.match(issue.variables.input.description, /Version: 1\.3\.0/);
 });
 
-test("every catalog mod has a label", () => {
+test("every catalog mod has a label", async () => {
+  let catalog;
+  try {
+    catalog = (await import("../src/data/catalog.json", { with: { type: "json" } })).default;
+  } catch (error) {
+    if (error?.code !== "ERR_MODULE_NOT_FOUND") throw error;
+    assert.fail("catalog.json is missing. Run npm run catalog first.");
+  }
   for (const mod of catalog.mods) {
     const key = `${mod.game}/${mod.slug}`;
     assert.equal(typeof labels.mods[key], "string", key);
