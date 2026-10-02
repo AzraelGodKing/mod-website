@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The site build reads `mod.json` from `main` in the three mod repos.
 - The deploy step stores the report-form secrets on the worker and refuses a hostname list that includes localhost.
 - Added a Buildkite pipeline that tests and builds the site, then deploys only after a manual confirmation. The deploy agent is the only one with the Cloudflare token.
 - Added the site plan and setup status for the Codebase repo.

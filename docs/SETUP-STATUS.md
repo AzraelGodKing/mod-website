@@ -19,11 +19,11 @@ Updated 2026-10-02.
 ## In progress
 
 - Codebase is the mirror. This machine does not push there. The Origin CLI does not run on native Windows, and `git push` to Codebase was rejected.
-- `mod.json` is committed on `chore/mod-json` in the three mod repos and pushed to GitHub. Those branches are not merged to each repo's main. The site build reads the local worktrees.
+- `mod.json` is on `main` in the three mod repos. The site build reads those `main` branches.
 - The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. Test reports AZR-350 and AZR-352 are in Backlog.
 - Buildkite agents `site` and `deploy` are connected on this machine. The deploy agent is the only one with the Cloudflare token and the report-form secrets. Nothing is deployed. The public hostname will be `azraels-mods-website.azraelgodking95.workers.dev`.
 
 ## Waiting on me
 
 - Nothing for the report form. AZR-350 and AZR-352 are the test issues in Backlog. Close or cancel them when you do not need them.
-- Merge the deploy-secrets pull request, start one build of `main` in Buildkite, and leave **Deploy the site** unclicked until that build's test step passes.
+- Start one build of `main` in Buildkite, and leave **Deploy the site** unclicked until that build's test step passes.
