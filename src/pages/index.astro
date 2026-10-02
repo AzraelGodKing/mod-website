@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import { games } from "../data/games";
 import { modsForGame } from "../data/mods";
+import { gameVars, heroVars, lookFor } from "../data/themes";
 ---
 
 <Base
@@ -9,15 +10,25 @@ import { modsForGame } from "../data/mods";
   description="Mods for RimWorld, Sun Haven, and 7 Days to Die."
 >
   <h1>Azrael's Mods</h1>
-  <p>Mods for three games, with downloads alongside Steam, Thunderstore, and Nexus.</p>
-  <ul>
-    {
-      games.map((game) => (
-        <li>
+  <p class="lede">Mods for three games, with downloads alongside Steam, Thunderstore, and Nexus.</p>
+  {
+    games.map((game) => (
+      <section class="game-band" style={gameVars(game.slug)}>
+        <h2>
           <a href={`/${game.slug}`}>{game.name}</a>
-            <span> ({modsForGame(game.slug).length})</span>
-        </li>
-      ))
-    }
-  </ul>
+        </h2>
+        <p class="count">{modsForGame(game.slug).length} mods</p>
+        <div class="cards">
+          {modsForGame(game.slug).map((mod) => (
+            <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
+              <span class="mark">{lookFor(mod.slug).mark}</span>
+              <strong>{mod.name}</strong>
+              <span class="ver">{mod.version}</span>
+              <p>{mod.description}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))
+  }
 </Base>

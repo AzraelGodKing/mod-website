@@ -11,7 +11,7 @@ interface Props {
 const { game, mod, name, gameName } = Astro.props;
 ---
 
-<section>
+<section class="report">
   <h2>Report a problem</h2>
   <p>This report is for {name} on {gameName}.</p>
   <form id="report-form" data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
@@ -90,36 +90,3 @@ const { game, mod, name, gameName } = Astro.props;
   });
 </script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onAzraelTurnstile" async defer></script>
-
-<style>
-  section {
-    margin-top: 2.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #d9d0c3;
-  }
-
-  label {
-    display: block;
-    margin: 1rem 0;
-  }
-
-  input,
-  textarea {
-    display: block;
-    width: 100%;
-    margin-top: 0.35rem;
-    box-sizing: border-box;
-    font: inherit;
-  }
-
-  button {
-    font: inherit;
-    padding: 0.4rem 0.8rem;
-  }
-
-  #report-status:not(:empty) {
-    margin: 0.75rem 0;
-    color: #6b3a1f;
-    font-weight: 700;
-  }
-</style>

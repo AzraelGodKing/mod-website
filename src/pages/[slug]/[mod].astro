@@ -2,7 +2,8 @@
 import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
 import { games } from "../../data/games";
-import { findMod, isNotReady, mods, r2Download, type ModEntry } from "../../data/mods";
+import { isNotReady, mods, modsForGame, r2Download, type ModEntry } from "../../data/mods";
+import { heroVars, lookFor } from "../../data/themes";
 
 export function getStaticPaths() {
   return mods.map((mod) => ({
@@ -17,6 +18,10 @@ interface Props {
 
 const { mod } = Astro.props;
 const game = games.find((entry) => entry.slug === mod.game);
+const look = lookFor(mod.slug);
+// Azrael's preview file is the Homesteader poster, so this page does not show it again.
+const preview = mod.slug === "azrael" ? undefined : mod.images[0];
+const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
 const notReady = isNotReady(mod);
 const storeLinks = [
@@ -26,42 +31,59 @@ const storeLinks = [
 ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 ---
 
-<Base title={mod.name} description={mod.description}>
-  <p><a href={`/${mod.game}`}>{game?.name}</a></p>
-  <h1>{mod.name}</h1>
-  <p>Version {mod.version}</p>
-  <p>{mod.description}</p>
-  {
-    mod.images.length > 0 && (
-      <img src={mod.images[0]} alt={`${mod.name} preview`} width="640" />
-    )
-  }
-  {
-    storeLinks.length > 0 && (
-      <ul>
-        {storeLinks.map(([label, href]) => (
-          <li>
-            <a href={href}>{label}</a>
-          </li>
-        ))}
-      </ul>
-    )
-  }
-  {
-    direct && (
+<Base title={mod.name} description={mod.description} game={mod.game}>
+  <article style={heroVars(mod.slug)}>
+    <header class="hero">
       <p>
-        <a href={direct.url}>Download {direct.file}</a>
-        {" "}
-        <a href={direct.checksum}>Checksum</a>
+        <a href={`/${mod.game}`}>{game?.name}</a>
       </p>
-    )
-  }
-  {
-    notReady && (
-      <p>
-        <a href="/not-ready">Download</a>
-      </p>
-    )
-  }
-  <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
+      <h1>{mod.name}</h1>
+      <p class="mark">{look.mark}</p>
+      <p class="version">Version {mod.version}</p>
+      {
+        preview && (
+          <img src={preview} alt={`${mod.name} preview`} width="960" />
+        )
+      }
+    </header>
+    <p class="lede">{mod.description}</p>
+    <p class="actions">
+      {
+        direct && (
+          <>
+            <a class="download" href={direct.url}>
+              Download {direct.file}
+            </a>
+            <a href={direct.checksum}>Checksum</a>
+          </>
+        )
+      }
+      {
+        notReady && (
+          <a class="download" href="/not-ready">
+            Download
+          </a>
+        )
+      }
+      {storeLinks.map(([label, href]) => (
+        <a href={href}>{label}</a>
+      ))}
+    </p>
+    {
+      others.length > 0 && (
+        <nav class="others" aria-label={`Other ${game?.name ?? "game"} mods`}>
+          <h2>Other {game?.name} mods</h2>
+          <div class="chips">
+            {others.map((entry) => (
+              <a class="mod-chip" style={heroVars(entry.slug)} href={`/${entry.game}/${entry.slug}`}>
+                <span class="mark">{lookFor(entry.slug).mark}</span>
+                <strong>{entry.name}</strong>
+              </a>
+            ))}
+          </div>
+        </nav>
+      )
+    }
+    <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
+  </article>
 </Base>
