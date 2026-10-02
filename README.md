@@ -9,4 +9,4 @@ npm run dev
 
 The report form is served by the Worker, so use `npm run dev:worker` to try it. `npm run dev` is the static site only.
 
-`npm run deploy` builds the site and runs Wrangler. It is not wired to a pipeline yet.
+`npm run deploy` builds the site and runs Wrangler. Buildkite runs that from `.buildkite/pipeline.yml` after you confirm the deploy step. The agents are the Docker Compose services in this repo.

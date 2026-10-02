@@ -5,11 +5,11 @@ Updated 2026-10-02.
 ## Done
 
 - Linear workspace AzraelGodKing is on the Basic plan. Confirmed price: $12 per user per month.
-- Linear docs confirm a personal API key can be limited to Create issues and to one team. No key has been created.
+- Linear docs confirm a personal API key can be limited to Create issues and to one team. A key is in `.dev.vars` on this machine.
 - Site work is in GitHub `AzraelGodKing/mod-website`, local clone `F:\Repositories\mod-website`. Pull request #1 is merged to `main`. Codebase `azraelgodking/Azraels_Mods_Website` is a mirror. Pushes go to GitHub.
 - Cloudflare Workers Builds can connect to a Cursor Origin repo (Cloudflare changelog, 2026-09-22).
 - Personal Codebase repos are private only. This site source cannot be made public in Codebase.
-- Buildkite can connect to an Origin-hosted repo. It does not build GitHub-mirror repos through the Origin app.
+- Buildkite's Origin app does not build a GitHub mirror. This pipeline connects to GitHub `AzraelGodKing/mod-website` instead.
 - Confirmed mod repos: `AzraelGodKing/rimworld_mods`, `AzraelGodKing/SunhavenMod`, and `AzraelGodKing/7d2d_mods`. Every mod in those repos is in scope.
 - `mod.json` is written for 9 RimWorld mods, 14 Sun Haven mods, and 5 7 Days to Die mods. Local site build lists them. RimWorld and Sun Haven pages link to the existing GitHub zip when one exists.
 - R2 is enabled on account Azraelgodking. One Standard bucket, `azraels-mods`, is in ENAM. Public address `pub-aa73fdeb8db147eb8c49d8634a51646c.r2.dev` is on. No custom domain. The bucket is empty.
@@ -20,8 +20,10 @@ Updated 2026-10-02.
 
 - Codebase is the mirror. This machine does not push there. The Origin CLI does not run on native Windows, and `git push` to Codebase was rejected.
 - `mod.json` is committed on `chore/mod-json` in the three mod repos and pushed to GitHub. Those branches are not merged to each repo's main. The site build reads the local worktrees.
-- The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. A test report filed AZR-350 with the Azrael and website labels.
+- The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. Test reports AZR-350 and AZR-352 are in Backlog.
+- Buildkite pipeline files are in this repo. The Buildkite account, the agent token, and the Cloudflare deploy token are not created yet. Docker Desktop is installed and its engine is stopped. Nothing is deployed.
 
 ## Waiting on me
 
-- Nothing for the report form. AZR-350 is the test issue in Backlog. Close or cancel it when you do not need it.
+- Nothing for the report form. AZR-350 and AZR-352 are the test issues in Backlog. Close or cancel them when you do not need them.
+- Create the Buildkite organization on the Free plan, connect GitHub, and create the agent token and the Cloudflare deploy token in the local env files. Do not paste either token into chat.

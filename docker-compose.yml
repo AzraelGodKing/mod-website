@@ -1,0 +1,26 @@
+services:
+  site:
+    build:
+      context: .buildkite
+      dockerfile: agent.Dockerfile
+    image: azraels-mods-agent:local
+    restart: unless-stopped
+    env_file:
+      - .buildkite/agent.env
+    environment:
+      BUILDKITE_AGENT_NAME: site
+      BUILDKITE_AGENT_TAGS: queue=site
+
+  deploy:
+    build:
+      context: .buildkite
+      dockerfile: agent.Dockerfile
+    image: azraels-mods-agent:local
+    restart: unless-stopped
+    env_file:
+      - .buildkite/agent.env
+      - .buildkite/deploy.env
+    environment:
+      BUILDKITE_AGENT_NAME: deploy
+      BUILDKITE_AGENT_TAGS: queue=deploy
+      CLOUDFLARE_ACCOUNT_ID: d05dae265db549002979eca48fd26156

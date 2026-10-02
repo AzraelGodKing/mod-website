@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a Buildkite pipeline that tests and builds the site, then deploys only after a manual confirmation. The deploy agent is the only one with the Cloudflare token.
 - Added the site plan and setup status for the Codebase repo.
 - Added a static Astro shell with one page per game.
 - Mod pages now read `mod.json` from the three mod repos.
