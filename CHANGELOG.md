@@ -10,3 +10,4 @@
 - Added a report form on each mod page. Turnstile is checked on the server, the text is trimmed and HTML is stripped, and a Linear issue is created with that mod's label and the `website` label.
 - The report label now comes from the mod page address, so a report sent from Homesteader is tagged Homesteader.
 - Website reports also get a game label: RimWorld, Sun Haven, or 7 Days to Die.
+- Site edits now happen in the GitHub repo. Codebase receives them through the mirror.
