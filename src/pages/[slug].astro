@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import { games } from "../data/games";
 import { modsForGame } from "../data/mods";
+import { heroVars, lookFor } from "../data/themes";
 
 export function getStaticPaths() {
   return games.map((game) => ({
@@ -14,18 +15,23 @@ const { game } = Astro.props;
 const gameMods = modsForGame(game.slug);
 ---
 
-<Base title={`${game.name} mods`} description={`Mods for ${game.name}.`}>
-  <h1>{game.name}</h1>
-  <p><a href={game.repo}>Source repository</a></p>
-  <ul>
+<Base title={`${game.name} mods`} description={`Mods for ${game.name}.`} game={game.slug}>
+  <header class="game-intro">
+    <h1>{game.name}</h1>
+    <p class="repo">
+      <a href={game.repo}>Source repository</a>
+    </p>
+  </header>
+  <div class="cards">
     {
       gameMods.map((mod) => (
-        <li>
-          <a href={`/${game.slug}/${mod.slug}`}>{mod.name}</a>
-          <span> {mod.version}</span>
+        <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
+          <span class="mark">{lookFor(mod.slug).mark}</span>
+          <strong>{mod.name}</strong>
+          <span class="ver">{mod.version}</span>
           <p>{mod.description}</p>
-        </li>
+        </a>
       ))
     }
-  </ul>
+  </div>
 </Base>

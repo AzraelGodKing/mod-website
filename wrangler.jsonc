@@ -2,6 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "azraels-mods-website",
   "main": "./src/worker.ts",
+  "workers_dev": true,
   "compatibility_date": "2026-10-02",
   "routes": [
     { "pattern": "azraelsmods.com", "custom_domain": true },
