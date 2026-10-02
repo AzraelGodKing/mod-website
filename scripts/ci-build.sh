@@ -12,9 +12,10 @@ if [[ -n "${BUILDKITE_PULL_REQUEST_REPO:-}" && "${BUILDKITE_PULL_REQUEST_REPO}" 
 fi
 
 npm ci
-npm test
 bash scripts/fetch-catalog-repos.sh
 export RIMWORLD_MODS="$PWD/.catalog-sources/rimworld"
 export SUNHAVEN_MODS="$PWD/.catalog-sources/sunhaven"
 export SEVENDAYS_MODS="$PWD/.catalog-sources/sevendays"
+node scripts/collect-mods.mjs
+npm test
 npm run build
