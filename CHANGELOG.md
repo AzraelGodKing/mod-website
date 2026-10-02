@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Mod pages link to the public zip on `downloads.azraelsmods.com`, with a checksum file beside it.
+- The 7 Days to Die mods use those same download links. Azrael and Living World send Download to a not-ready page.
 - The site is served on `azraelsmods.com` and `www.azraelsmods.com`.
 - The build writes the catalog before the tests run, so the report tests can load `catalog.json`.
 - The site build reads `mod.json` from `main` in the three mod repos.

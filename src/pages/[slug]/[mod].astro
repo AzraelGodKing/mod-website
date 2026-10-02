@@ -2,7 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
 import { games } from "../../data/games";
-import { findMod, mods, r2Download, type ModEntry } from "../../data/mods";
+import { findMod, isNotReady, mods, r2Download, type ModEntry } from "../../data/mods";
 
 export function getStaticPaths() {
   return mods.map((mod) => ({
@@ -18,6 +18,7 @@ interface Props {
 const { mod } = Astro.props;
 const game = games.find((entry) => entry.slug === mod.game);
 const direct = r2Download(mod);
+const notReady = isNotReady(mod);
 const storeLinks = [
   ["Steam", mod.links.steam],
   ["Thunderstore", mod.links.thunderstore],
@@ -52,6 +53,13 @@ const storeLinks = [
         <a href={direct.url}>Download {direct.file}</a>
         {" "}
         <a href={direct.checksum}>Checksum</a>
+      </p>
+    )
+  }
+  {
+    notReady && (
+      <p>
+        <a href="/not-ready">Download</a>
       </p>
     )
   }
