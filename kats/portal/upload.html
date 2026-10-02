@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>File status — KatsRics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #e8f1ff;
+      --muted: #8ea3bd;
+      --bg: #070b14;
+      --panel: rgba(16, 24, 42, 0.94);
+      --line: #24344d;
+      --accent: #3cf0c4;
+      --warn: #ffb020;
+      --danger: #ff8fa3;
+      --font: "Outfit", sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font: 16px/1.5 var(--font);
+      background:
+        radial-gradient(ellipse at 50% -10%, rgba(60, 240, 196, 0.12), transparent 42%),
+        linear-gradient(rgba(126, 224, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126, 224, 255, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, 32px 32px, 32px 32px, auto;
+    }
+
+    .mast, .monitor {
+      padding: 0.9rem 1.5rem;
+      background: rgba(18, 12, 6, 0.94);
+      border-bottom: 1px solid rgba(255, 176, 32, 0.28);
+      font: 12px/1.4 var(--mono);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      margin: 0;
+    }
+
+    .stats div { display: grid; gap: 0.2rem; min-width: 8rem; }
+    .stats dt {
+      margin: 0;
+      color: var(--warn);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .stats dd { margin: 0; color: #fff8ec; font-size: 15px; font-weight: 600; }
+    .reason { margin: 0.65rem 0 0; color: #d7b27a; }
+    .monitor { margin: 0; color: var(--danger); letter-spacing: 0.04em; }
+
+    .monitor {
+      margin-top: auto;
+      border-bottom: 0;
+      border-top: 1px solid rgba(255, 143, 163, 0.35);
+      color: var(--danger);
+    }
+
+    main {
+      width: min(40rem, calc(100% - 2rem));
+      margin: 2.75rem auto 3rem;
+    }
+
+    .dossier {
+      padding: 1.6rem 1.5rem 1.35rem;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 0 0 1px rgba(60, 240, 196, 0.06), 0 28px 70px rgba(0, 0, 0, 0.38);
+    }
+
+    .head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: baseline;
+    }
+
+    .kicker {
+      margin: 0;
+      color: var(--accent);
+      font: 600 12px/1 var(--mono);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .stamp {
+      margin: 0;
+      color: var(--muted);
+      font: 500 12px/1 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0.7rem 0 0.35rem;
+      font-size: clamp(1.8rem, 4vw, 2.35rem);
+      letter-spacing: -0.035em;
+    }
+
+    .lede {
+      margin: 0 0 1.35rem;
+      max-width: 38rem;
+      color: var(--muted);
+    }
+
+    form { display: grid; gap: 0.95rem; }
+
+    label {
+      display: grid;
+      gap: 0.4rem;
+      color: var(--muted);
+      font: 600 11px/1 var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 0.85rem 0.9rem;
+      color: var(--ink);
+      background: #0b1322;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font: 16px/1.3 var(--font);
+    }
+
+    input:focus-visible, .file:focus-within {
+      outline: 2px solid rgba(60, 240, 196, 0.45);
+      outline-offset: 2px;
+      border-color: var(--accent);
+    }
+
+    .file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 4.25rem;
+      padding: 0.9rem 1rem;
+      background:
+        linear-gradient(180deg, rgba(60, 240, 196, 0.05), transparent 55%),
+        #0b1322;
+      border: 1px dashed #3d5678;
+      border-radius: 12px;
+      letter-spacing: 0;
+      text-transform: none;
+      font: 16px/1.3 var(--font);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .file:hover { border-color: var(--accent); }
+    .file input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .file strong { color: var(--accent); font-weight: 650; }
+    #file-name { color: var(--muted); font: 13px/1.4 var(--mono); text-align: right; }
+
+    .actions { display: flex; }
+
+    button {
+      padding: 0.85rem 1.2rem;
+      color: #06221b;
+      background: var(--accent);
+      border: 0;
+      border-radius: 999px;
+      font: 650 15px/1 var(--font);
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(60, 240, 196, 0.18);
+    }
+
+    button:hover { filter: brightness(1.06); }
+
+    #status {
+      min-height: 2.6rem;
+      margin: 0.2rem 0 0;
+      padding: 0.75rem 0.85rem;
+      color: #d5e4f7;
+      background: #0b1322;
+      border-radius: 12px;
+      font: 13px/1.45 var(--mono);
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 640px) {
+      .mast { padding-inline: 1rem; }
+      .actions, .file { align-items: stretch; }
+      .file { flex-direction: column; align-items: flex-start; }
+      #file-name, .actions { text-align: left; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="mast">
+    <dl class="stats">
+      <div><dt>File status</dt><dd>Active</dd></div>
+      <div><dt>Revision</dt><dd>38</dd></div>
+      <div><dt>Previous revisions</dt><dd>Unavailable</dd></div>
+    </dl>
+    <p class="reason">Reason for revision: Unknown. Personnel retaining memory of Revision 37 are to notify Site Administration immediately.</p>
+  </header>
+  <main>
+    <section class="dossier">
+      <div class="head">
+        <p class="kicker">Site administration</p>
+        <p class="stamp">CAP export</p>
+      </div>
+      <h1>Catalog revision</h1>
+      <p class="lede">File a CAP export. The store, traits, races, incidents, weather, and commands are revised. Viewer lists and settings backups are not entered into the record.</p>
+      <form id="upload-form">
+        <label>Clearance
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <label class="file">
+          <span><strong>Select export</strong></span>
+          <input id="rar" type="file" accept=".rar,application/vnd.rar,application/x-rar-compressed" required />
+          <span id="file-name">No file selected</span>
+        </label>
+        <div class="actions">
+          <button type="submit">File this revision</button>
+        </div>
+      </form>
+      <p id="status" role="status">Awaiting a filed revision.</p>
+    </section>
+  </main>
+  <p class="monitor">This channel is continuously monitored for unauthorized modification.</p>
+  <script type="module" src="/portal.js"></script>
+</body>
+</html>

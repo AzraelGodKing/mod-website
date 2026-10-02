@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- KatsRics is a separate site. A CAP export upload refreshes the chatter catalog, and viewer lists and settings backups are not published.
+- The KatsRics upload page lays the file status out as separate fields instead of one running line.
 - The workers.dev address stays on when the site is deployed.
 - Each game keeps its own page, and each mod is colored from that mod inside the game.
 - Every page links RimWorld, Sun Haven, and 7 Days to Die, and each mod page links the other mods for that game.

@@ -1,0 +1,33 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "kats-rics",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-10-02",
+  "assets": {
+    "directory": "./assets",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": ["/data/*", "/api/*"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "CATALOG",
+      "bucket_name": "kats-rics-catalog"
+    }
+  ],
+  "routes": [
+    { "pattern": "kats.azraelsmods.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  }
+}

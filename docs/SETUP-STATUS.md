@@ -21,9 +21,10 @@ Updated 2026-10-02.
 - Codebase is the mirror. This machine does not push there. The Origin CLI does not run on native Windows, and `git push` to Codebase was rejected.
 - `mod.json` is on `main` in the three mod repos. The site build reads those `main` branches.
 - The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. Test reports AZR-350 and AZR-352 are in Backlog.
+- KatsRics is a separate worker, `kats-rics`, at `kats.azraelsmods.com`. It is not linked from the mod pages. The upload password is `kats/.dev.vars`. The mods Buildkite pipeline does not deploy this worker.
 - Buildkite agents `site` and `deploy` are connected on this machine. The site is deployed at `https://azraelsmods.com`. The workers.dev address still works.
 
 ## Waiting on me
 
 - Nothing for the report form. AZR-350 and AZR-352 are the test issues in Backlog. Close or cancel them when you do not need them.
-- Merge the R2 download pull request, then confirm the Buildkite deploy so the new download links go live.
+- Confirm a Buildkite deploy of `main` if the live mod pages still use the GitHub zip links.
