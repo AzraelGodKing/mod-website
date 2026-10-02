@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The site is served on `azraelsmods.com` and `www.azraelsmods.com`.
 - The build writes the catalog before the tests run, so the report tests can load `catalog.json`.
 - The site build reads `mod.json` from `main` in the three mod repos.
 - The deploy step stores the report-form secrets on the worker and refuses a hostname list that includes localhost.
