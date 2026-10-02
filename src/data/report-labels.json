@@ -1,0 +1,38 @@
+{
+  "websiteLabelId": "b3e67249-75c8-4101-abc1-7af9e1c0de79",
+  "games": {
+    "rimworld": "21d0eabd-da37-45c4-8a31-63681480a5fc",
+    "sun-haven": "f4593ca4-e346-4000-b3ce-d42d96c646bc",
+    "7-days-to-die": "63462605-fb92-41c4-9f6e-4c344c43e101"
+  },
+  "mods": {
+    "7-days-to-die/blood-moon-sound": "32976eee-9269-4fba-9ecc-e16cb5881efd",
+    "7-days-to-die/keep-backpacks": "751634a6-5911-4519-bad3-dda69238497d",
+    "7-days-to-die/quest-disconnect-fix": "dccd039e-fb10-4d03-b99a-3535fb101024",
+    "7-days-to-die/remove-zombie-dogs": "4182bb78-a2b7-423e-85b7-aa0c15d72c93",
+    "7-days-to-die/speedometer": "53463538-2013-4a9c-8d9c-0aa657cb36c9",
+    "rimworld/azrael": "fd31bb2a-392d-44ee-b1cb-0e1cef3fff19",
+    "rimworld/date-night": "994a3642-92c8-4ae3-a3f9-b09280a3ca93",
+    "rimworld/deep-colony": "bfed7a6e-8535-4742-9595-fba0f00e2b9f",
+    "rimworld/homesteader": "c644f095-2220-4e40-bff2-318125f3bcb8",
+    "rimworld/living-world": "79c0b339-5bef-4342-b79b-f97a6446ed4f",
+    "rimworld/nemesis": "c728278d-8116-4004-8e8a-e69764aebacf",
+    "rimworld/niceties": "c2b70e92-a2cd-4cac-8b67-f4fd95c8eeda",
+    "rimworld/stormproof": "665dc02d-37a8-4c4c-a027-9caae05a822f",
+    "rimworld/strata": "a6fb5778-f263-460a-9450-dc5b03c731b9",
+    "sun-haven/birthday-reminder": "28d8bc47-224a-44b1-8186-df0065280351",
+    "sun-haven/crop-optimizer": "9413face-cd05-460a-a9fa-0b346e1584ff",
+    "sun-haven/faster-races": "88c21bcb-b34a-4310-9033-b2dc12dcaf6c",
+    "sun-haven/gifting-assistant": "731f8b40-389b-40a8-8190-6551628d5606",
+    "sun-haven/havens-almanac": "5d641d43-1243-4c96-92dc-3be6b99b923b",
+    "sun-haven/havens-birthright": "f348cf06-39ae-41c7-ac75-e83c829577b3",
+    "sun-haven/havens-mirror": "74ac8a97-278a-48fa-937a-1e65df05d647",
+    "sun-haven/havens-respec": "f9b2aa77-1be2-4a46-ab96-6603815299fe",
+    "sun-haven/haven-dev-tools": "e4764a65-ffae-405a-8356-c12b3a078f16",
+    "sun-haven/senpais-chest": "6d1d823a-443f-4c5d-86aa-b4dc35b3d1d4",
+    "sun-haven/sunhaven-todo": "30dfcba1-7cef-4c42-a475-11bcacfc6564",
+    "sun-haven/smut": "349434b7-2e55-4cfd-8c27-bc68947c1d4b",
+    "sun-haven/the-vault": "703d8045-687e-469c-b185-806185e4b7c2",
+    "sun-haven/trinket-fortune": "a8c4a2b9-5a82-4844-a3ce-f528408a1bb7"
+  }
+}

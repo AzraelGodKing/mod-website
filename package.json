@@ -1,0 +1,29 @@
+{
+  "name": "azraels-mods-website",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "predev": "node scripts/collect-mods.mjs",
+    "dev": "astro dev",
+    "prebuild": "node scripts/collect-mods.mjs",
+    "build": "astro build",
+    "catalog": "node scripts/collect-mods.mjs",
+    "preview": "astro preview",
+    "test": "node --test test/report.test.mjs",
+    "dev:worker": "npm run build && wrangler dev",
+    "astro": "astro",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "astro": "^7.3.5"
+  },
+  "allowScripts": {
+    "esbuild": true
+  },
+  "devDependencies": {
+    "wrangler": "^4.147.0"
+  }
+}

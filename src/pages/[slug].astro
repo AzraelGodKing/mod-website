@@ -1,0 +1,31 @@
+---
+import Base from "../layouts/Base.astro";
+import { games } from "../data/games";
+import { modsForGame } from "../data/mods";
+
+export function getStaticPaths() {
+  return games.map((game) => ({
+    params: { slug: game.slug },
+    props: { game },
+  }));
+}
+
+const { game } = Astro.props;
+const gameMods = modsForGame(game.slug);
+---
+
+<Base title={`${game.name} mods`} description={`Mods for ${game.name}.`}>
+  <h1>{game.name}</h1>
+  <p><a href={game.repo}>Source repository</a></p>
+  <ul>
+    {
+      gameMods.map((mod) => (
+        <li>
+          <a href={`/${game.slug}/${mod.slug}`}>{mod.name}</a>
+          <span> {mod.version}</span>
+          <p>{mod.description}</p>
+        </li>
+      ))
+    }
+  </ul>
+</Base>
