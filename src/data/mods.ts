@@ -32,3 +32,12 @@ export function modsForGame(game: string): ModEntry[] {
 export function findMod(game: string, slug: string): ModEntry | undefined {
   return mods.find((mod) => mod.game === game && mod.slug === slug);
 }
+
+const downloadOrigin = "https://downloads.azraelsmods.com";
+
+export function r2Download(mod: ModEntry): { file: string; url: string; checksum: string } | null {
+  if (!mod.download.url) return null;
+  const file = `${mod.slug}-${mod.version}.zip`;
+  const url = `${downloadOrigin}/${mod.game}/${mod.slug}/${mod.version}/${file}`;
+  return { file, url, checksum: `${url}.sha256` };
+}
