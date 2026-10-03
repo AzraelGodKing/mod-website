@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- The RimWorld page follows the workshop catalog: a dark hero and poster cards. Each mod page is unchanged.
+- RimWorld mod pages use the same catalog look as the RimWorld hub: dark page, brass type, and the poster.
+- Game hubs no longer link to the source repository.
+- The RimWorld page follows the workshop catalog: a dark hero and poster cards.
 - The Sun Haven page follows the Haven catalog: a warm hero, search, and grouped mod cards.
 - The 7 Days to Die page is a night board for the five survival mods.
 - Mod pages no longer show a checksum link.
