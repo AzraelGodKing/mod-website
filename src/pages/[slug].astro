@@ -14,79 +14,294 @@ export function getStaticPaths() {
 const { game } = Astro.props;
 const gameMods = modsForGame(game.slug);
 const rimworld = game.slug === "rimworld";
+const sunhaven = game.slug === "sun-haven";
+const sevendays = game.slug === "7-days-to-die";
+const featured = [
+  "homesteader",
+  "stormproof",
+  "strata",
+  "nemesis",
+  "deep-colony",
+  "date-night",
+  "niceties",
+  "azrael",
+  "living-world",
+];
+const rimworldMods = [...gameMods].sort((a, b) => {
+  const left = featured.indexOf(a.slug);
+  const right = featured.indexOf(b.slug);
+  return (left < 0 ? featured.length : left) - (right < 0 ? featured.length : right);
+});
+const sunOrder = [
+  "the-vault",
+  "havens-birthright",
+  "faster-races",
+  "havens-mirror",
+  "trinket-fortune",
+  "smut",
+  "sunhaven-todo",
+  "birthday-reminder",
+  "gifting-assistant",
+  "senpais-chest",
+  "havens-almanac",
+  "crop-optimizer",
+  "havens-respec",
+  "haven-dev-tools",
+];
+const sunGroup: Record<string, string> = {
+  "the-vault": "Storage",
+  "senpais-chest": "Storage",
+  "havens-birthright": "Skills",
+  "faster-races": "Skills",
+  "havens-respec": "Skills",
+  "havens-mirror": "UI",
+  "havens-almanac": "UI",
+  "trinket-fortune": "Tracking",
+  smut: "Tracking",
+  "crop-optimizer": "Tracking",
+  "sunhaven-todo": "QoL",
+  "birthday-reminder": "Social",
+  "gifting-assistant": "Social",
+  "haven-dev-tools": "Dev",
+};
+const sunFilters = ["All", "QoL", "Storage", "UI", "Social", "Tracking", "Skills", "Dev"];
+const sunMods = [...gameMods].sort((a, b) => {
+  const left = sunOrder.indexOf(a.slug);
+  const right = sunOrder.indexOf(b.slug);
+  return (left < 0 ? sunOrder.length : left) - (right < 0 ? sunOrder.length : right);
+});
 ---
 
 <Base title={`${game.name} mods`} description={`Mods for ${game.name}.`} game={game.slug}>
   {
     rimworld ? (
       <div class="rw-hub">
-        <section class="rw-window" aria-label="RimWorld mods">
-          <header class="rw-title">
-            <h1>Mods</h1>
-            <a href={game.repo}>Source</a>
-          </header>
-          <div class="rw-tools">
-            <label>
-              Search
-              <input id="rw-search" type="search" placeholder="Search mods" autocomplete="off" />
-            </label>
-            <p>{gameMods.length} mods</p>
+        <header class="rw-hero">
+          <div class="rw-wrap rw-hero-layout">
+            <div>
+              <p class="rw-kicker">RimWorld</p>
+              <h1>RimWorld Mods</h1>
+              <p class="rw-tagline">
+                RimWorld mods for colonies that farm, harden, dig, remember, make time for each other, and keep the small comforts.
+              </p>
+              <p class="rw-intro">
+                {rimworldMods.length} mods. Open a card for the mod page, the download, and the workshop links.
+              </p>
+            </div>
+            <aside class="rw-stats">
+              <span class="rw-stat-label">Mods</span>
+              <span class="rw-stat-num">{rimworldMods.length}</span>
+              <p>
+                <a href={game.repo}>Source repository</a>
+              </p>
+            </aside>
           </div>
-          <div class="rw-body">
-            <div class="rw-list">
-              {gameMods.map((mod, index) => (
-                <>
-                  <input
-                    class="rw-pick"
-                    type="radio"
-                    name="rw-mod"
-                    id={`rw-${mod.slug}`}
-                    checked={index === 0}
-                  />
-                  <label class="rw-row" for={`rw-${mod.slug}`} data-name={mod.name.toLowerCase()}>
-                    <span class="rw-box" aria-hidden="true" />
-                    <span class="rw-name">{mod.name}</span>
-                    <span class="rw-ver">{mod.version}</span>
-                  </label>
-                </>
+        </header>
+        <div class="rw-wrap">
+          <div class="rw-controls">
+            <input id="rw-search" type="search" placeholder="Search mods…" aria-label="Search mods" autocomplete="off" />
+            <select id="rw-sort" aria-label="Sort">
+              <option value="featured">Featured order</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </div>
+          <div class="rw-grid" id="rw-grid">
+            {rimworldMods.map((mod, index) => {
+              const look = lookFor(mod.slug);
+              const preview = mod.slug === "azrael" ? undefined : mod.images[0];
+              return (
+                <a
+                  class:list={["rw-card", index === 0 && "rw-lead"]}
+                  style={heroVars(mod.slug)}
+                  href={`/${game.slug}/${mod.slug}`}
+                  data-name={mod.name.toLowerCase()}
+                  data-text={`${mod.name} ${mod.description}`.toLowerCase()}
+                  data-order={index}
+                >
+                  <span class="rw-media">
+                    {preview ? <img src={preview} alt="" /> : <span class="rw-plate">{look.mark}</span>}
+                  </span>
+                  <span class="rw-copy">
+                    <h2>{mod.name}</h2>
+                    <p>{mod.description}</p>
+                    <span class="rw-badges">
+                      <span>Version {mod.version}</span>
+                      <span>{look.mark}</span>
+                    </span>
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+          <p class="rw-empty" id="rw-empty" hidden>
+            No mods match that search.
+          </p>
+        </div>
+        <script is:inline>
+          const grid = document.querySelector("#rw-grid");
+          const search = document.querySelector("#rw-search");
+          const sort = document.querySelector("#rw-sort");
+          const empty = document.querySelector("#rw-empty");
+          const cards = [...grid.querySelectorAll(".rw-card")];
+          function apply() {
+            const query = search.value.trim().toLowerCase();
+            const byName = sort.value === "name";
+            const ordered = [...cards].sort((a, b) => {
+              if (byName) return a.dataset.name.localeCompare(b.dataset.name);
+              return Number(a.dataset.order) - Number(b.dataset.order);
+            });
+            let lead = null;
+            for (const card of ordered) {
+              card.hidden = Boolean(query) && !card.dataset.text.includes(query);
+              card.classList.remove("rw-lead");
+              grid.appendChild(card);
+              if (!card.hidden && !lead) lead = card;
+            }
+            if (lead) lead.classList.add("rw-lead");
+            empty.hidden = Boolean(lead);
+          }
+          search.addEventListener("input", apply);
+          sort.addEventListener("change", apply);
+        </script>
+      </div>
+    ) : sunhaven ? (
+      <div class="sh-hub">
+        <header class="sh-hero">
+          <p class="sh-kicker">BepInEx plugins for Sun Haven</p>
+          <h1>
+            Make every day in Haven <em>a little brighter.</em>
+          </h1>
+          <p>
+            {sunMods.length} quality-of-life mods that track your museum, sort your chests, bank your tokens, remember every birthday, and plan your farm — each one standalone, all of them better together.
+          </p>
+          <p class="sh-note">
+            <a href={game.repo}>Source repository</a>
+          </p>
+        </header>
+        <div class="sh-wrap">
+          <div class="sh-controls">
+            <input id="sh-search" type="search" placeholder="Search by name or description…" aria-label="Search mods" autocomplete="off" />
+            <div class="sh-filters" role="group" aria-label="Filter mods">
+              {sunFilters.map((filter) => (
+                <button type="button" class:list={["sh-filter", filter === "All" && "is-on"]} data-group={filter.toLowerCase()}>
+                  {filter}
+                </button>
               ))}
             </div>
-            <div class="rw-detail">
-              {gameMods.map((mod, index) => {
-                const preview = mod.slug === "azrael" ? undefined : mod.images[0];
-                return (
-                  <article class="rw-pane" data-mod={mod.slug} hidden={index !== 0}>
-                    {preview && <img src={preview} alt="" />}
-                    <h2>{mod.name}</h2>
-                    <p class="rw-mark">{lookFor(mod.slug).mark}</p>
-                    <p class="rw-meta">Version {mod.version}</p>
-                    <p>{mod.description}</p>
-                    <a class="rw-open" href={`/${game.slug}/${mod.slug}`}>
-                      Open
-                    </a>
-                  </article>
-                );
-              })}
-            </div>
+            <p class="sh-count" id="sh-count">
+              Showing all {sunMods.length} mods.
+            </p>
           </div>
-        </section>
+          <div class="sh-grid" id="sh-grid">
+            {sunMods.map((mod) => {
+              const look = lookFor(mod.slug);
+              const group = sunGroup[mod.slug] ?? "QoL";
+              return (
+                <a
+                  class="sh-card"
+                  href={`/${game.slug}/${mod.slug}`}
+                  data-group={group.toLowerCase()}
+                  data-text={`${mod.name} ${look.mark} ${mod.description}`.toLowerCase()}
+                >
+                  <span class="sh-top">
+                    <span>
+                      <h2>{mod.name}</h2>
+                      <span class="sh-sub">{look.mark}</span>
+                    </span>
+                    <span class="sh-ver">v{mod.version}</span>
+                  </span>
+                  <p>{mod.description}</p>
+                  <span class="sh-open">Open mod page →</span>
+                </a>
+              );
+            })}
+          </div>
+          <p class="sh-empty" id="sh-empty" hidden>
+            No mods match that search.
+          </p>
+        </div>
         <script is:inline>
-          const search = document.querySelector("#rw-search");
-          const rows = document.querySelectorAll(".rw-row");
-          const picks = document.querySelectorAll(".rw-pick");
-          const panes = document.querySelectorAll(".rw-pane");
-          function showPicked() {
-            const picked = document.querySelector(".rw-pick:checked");
-            const slug = picked?.id.replace(/^rw-/, "");
-            for (const pane of panes) pane.hidden = pane.dataset.mod !== slug;
-          }
-          for (const pick of picks) pick.addEventListener("change", showPicked);
-          showPicked();
-          search?.addEventListener("input", () => {
+          const grid = document.querySelector("#sh-grid");
+          const search = document.querySelector("#sh-search");
+          const count = document.querySelector("#sh-count");
+          const empty = document.querySelector("#sh-empty");
+          const cards = [...grid.querySelectorAll(".sh-card")];
+          const filters = [...document.querySelectorAll(".sh-filter")];
+          let group = "all";
+          function apply() {
             const query = search.value.trim().toLowerCase();
-            for (const row of rows) {
-              row.hidden = Boolean(query) && !row.dataset.name.includes(query);
+            let shown = 0;
+            for (const card of cards) {
+              const groupOk = group === "all" || card.dataset.group === group;
+              const textOk = !query || card.dataset.text.includes(query);
+              card.hidden = !(groupOk && textOk);
+              if (!card.hidden) shown += 1;
             }
+            count.textContent = shown === cards.length ? `Showing all ${cards.length} mods.` : `Showing ${shown} mods.`;
+            empty.hidden = shown > 0;
+          }
+          for (const filter of filters) {
+            filter.addEventListener("click", () => {
+              group = filter.dataset.group;
+              for (const button of filters) button.classList.toggle("is-on", button === filter);
+              apply();
+            });
+          }
+          search.addEventListener("input", apply);
+        </script>
+      </div>
+    ) : sevendays ? (
+      <div class="zd-hub">
+        <header class="zd-hero">
+          <p class="zd-kicker">7 Days to Die</p>
+          <h1>After dark.</h1>
+          <p>
+            {gameMods.length} mods for the horde. Hear it coming, keep your pack, finish the quest, quiet the dogs, and watch your speed.
+          </p>
+          <p class="zd-note">
+            <a href={game.repo}>Source repository</a>
+          </p>
+        </header>
+        <div class="zd-hazard" aria-hidden="true"></div>
+        <div class="zd-wrap">
+          <input id="zd-search" type="search" placeholder="Search mods…" aria-label="Search mods" autocomplete="off" />
+          <div class="zd-grid" id="zd-grid">
+            {gameMods.map((mod) => {
+              const look = lookFor(mod.slug);
+              return (
+                <a
+                  class="zd-card"
+                  style={heroVars(mod.slug)}
+                  href={`/${game.slug}/${mod.slug}`}
+                  data-text={`${mod.name} ${look.mark} ${mod.description}`.toLowerCase()}
+                >
+                  <span class="zd-mark">{look.mark}</span>
+                  <h2>{mod.name}</h2>
+                  <p>{mod.description}</p>
+                  <span class="zd-foot">
+                    <span>v{mod.version}</span>
+                    <span class="zd-open">Open</span>
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+          <p class="zd-empty" id="zd-empty" hidden>
+            No mods match that search.
+          </p>
+        </div>
+        <script is:inline>
+          const search = document.querySelector("#zd-search");
+          const empty = document.querySelector("#zd-empty");
+          const cards = [...document.querySelectorAll(".zd-card")];
+          search.addEventListener("input", () => {
+            const query = search.value.trim().toLowerCase();
+            let shown = 0;
+            for (const card of cards) {
+              card.hidden = Boolean(query) && !card.dataset.text.includes(query);
+              if (!card.hidden) shown += 1;
+            }
+            empty.hidden = shown > 0;
           });
         </script>
       </div>
