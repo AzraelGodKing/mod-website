@@ -91,9 +91,6 @@ const sunMods = [...gameMods].sort((a, b) => {
             <aside class="rw-stats">
               <span class="rw-stat-label">Mods</span>
               <span class="rw-stat-num">{rimworldMods.length}</span>
-              <p>
-                <a href={game.repo}>Source repository</a>
-              </p>
             </aside>
           </div>
         </header>
@@ -173,9 +170,6 @@ const sunMods = [...gameMods].sort((a, b) => {
           </h1>
           <p>
             {sunMods.length} quality-of-life mods that track your museum, sort your chests, bank your tokens, remember every birthday, and plan your farm — each one standalone, all of them better together.
-          </p>
-          <p class="sh-note">
-            <a href={game.repo}>Source repository</a>
           </p>
         </header>
         <div class="sh-wrap">
@@ -258,9 +252,6 @@ const sunMods = [...gameMods].sort((a, b) => {
           <p>
             {gameMods.length} mods for the horde. Hear it coming, keep your pack, finish the quest, quiet the dogs, and watch your speed.
           </p>
-          <p class="zd-note">
-            <a href={game.repo}>Source repository</a>
-          </p>
         </header>
         <div class="zd-hazard" aria-hidden="true"></div>
         <div class="zd-wrap">
@@ -309,9 +300,6 @@ const sunMods = [...gameMods].sort((a, b) => {
       <>
         <header class="game-intro">
           <h1>{game.name}</h1>
-          <p class="repo">
-            <a href={game.repo}>Source repository</a>
-          </p>
         </header>
         <div class="cards">
           {gameMods.map((mod) => (

@@ -105,8 +105,7 @@ h2 {
   text-decoration: none;
 }
 
-.game-band .count,
-.game-intro .repo {
+.game-band .count {
   margin: 0.35rem 0 1rem;
   color: var(--muted);
 }
@@ -385,19 +384,6 @@ button:focus-visible {
   line-height: 1;
 }
 
-.rw-stats p {
-  margin: 0.85rem 0 0;
-  padding-top: 0.65rem;
-  border-top: 1px solid #2d251f;
-  color: #a89882;
-  font-size: 0.85rem;
-}
-
-.rw-stats a {
-  color: #c9a15b;
-  font-weight: 600;
-}
-
 .rw-controls {
   display: flex;
   flex-wrap: wrap;
@@ -572,6 +558,150 @@ button:focus-visible {
   }
 }
 
+body.rw-site {
+  background: #110e0c;
+  color: #f4ece1;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+body.rw-site > header {
+  background: #181310;
+  color: #f4ece1;
+  border-bottom-color: #2d251f;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+body.rw-site > header > a {
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+body.rw-site > header nav a[aria-current] {
+  border-bottom-color: #c9a15b;
+}
+
+.rw-kicker a,
+.rw-kicker a:visited {
+  color: inherit;
+  text-decoration: none;
+}
+
+.rw-kicker a:hover {
+  color: #e8c98a;
+}
+
+.rw-poster {
+  margin: 1.75rem 0 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, #2d251f);
+  background: #181310;
+}
+
+.rw-poster img {
+  display: block;
+  width: 100%;
+  max-height: 32rem;
+  object-fit: cover;
+}
+
+.rw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.35rem 0 0;
+}
+
+.rw-actions a,
+.rw-actions a:visited {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #3d3229;
+  color: #f4ece1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.rw-actions a:hover {
+  border-color: #c9a15b;
+  color: #e8c98a;
+}
+
+.rw-actions a.download,
+.rw-actions a.download:visited {
+  background: #c9a15b;
+  border-color: #c9a15b;
+  color: #1a140c;
+}
+
+.rw-actions a.download:hover {
+  background: #e8c98a;
+  border-color: #e8c98a;
+  color: #1a140c;
+}
+
+.rw-more {
+  margin-top: 2.75rem;
+}
+
+.rw-more > h2 {
+  margin: 0 0 1rem;
+  color: #f4ece1;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.rw-more .rw-grid {
+  margin-bottom: 0;
+}
+
+.rw-mod .report {
+  margin-top: 2.75rem;
+  padding: 1.25rem 1.15rem 1.4rem;
+  background: #1c1612;
+  border: 1px solid #2d251f;
+  color: #a89882;
+}
+
+.rw-mod .report h2 {
+  margin: 0 0 0.35rem;
+  color: #f4ece1;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.rw-mod .report p,
+.rw-mod .report label {
+  color: #a89882;
+}
+
+.rw-mod #report-form input,
+.rw-mod #report-form textarea {
+  background: #181310;
+  color: #f4ece1;
+  border-color: #3d3229;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+.rw-mod #report-form button {
+  background: #c9a15b;
+  color: #1a140c;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rw-mod #report-status:not(:empty) {
+  color: #e8c98a;
+}
+
 .sh-hub {
   margin: -1.5rem -1.5rem -4rem;
   padding: 0 0 3rem;
@@ -619,16 +749,6 @@ button:focus-visible {
   margin: 0 auto;
   color: #5c4a38;
   font-size: 1.05rem;
-}
-
-.sh-note {
-  margin-top: 0.85rem !important;
-  font-size: 0.92rem !important;
-}
-
-.sh-note a {
-  color: #9a5418;
-  font-weight: 700;
 }
 
 .sh-wrap {
@@ -808,16 +928,6 @@ button:focus-visible {
   max-width: 38rem;
   color: #cbbba8;
   font-size: 1.05rem;
-}
-
-.zd-note {
-  margin-top: 0.85rem !important;
-}
-
-.zd-note a {
-  color: #e07a3d;
-  font-weight: 700;
-  text-decoration: none;
 }
 
 .zd-hazard {
