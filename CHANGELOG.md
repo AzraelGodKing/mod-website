@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- The RimWorld page is a mod-list window. Each mod page is unchanged.
+- The RimWorld page follows the workshop catalog: a dark hero and poster cards. Each mod page is unchanged.
+- The Sun Haven page follows the Haven catalog: a warm hero, search, and grouped mod cards.
+- The 7 Days to Die page is a night board for the five survival mods.
 - Mod pages no longer show a checksum link.
 - KatsRics is a separate site. A CAP export upload refreshes the chatter catalog, and viewer lists and settings backups are not published.
 - The KatsRics upload page lays the file status out as separate fields instead of one running line.
