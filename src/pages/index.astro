@@ -2,33 +2,87 @@
 import Base from "../layouts/Base.astro";
 import { games } from "../data/games";
 import { modsForGame } from "../data/mods";
-import { gameVars, heroVars, lookFor } from "../data/themes";
+
+const rooms: Record<string, { title: string; line: string }> = {
+  rimworld: {
+    title: "Farm, harden, dig.",
+    line: "Colonies that farm, harden, dig, remember, make time for each other, and keep the small comforts.",
+  },
+  "sun-haven": {
+    title: "A little brighter.",
+    line: "Track the museum, sort the chests, bank the tokens, remember the birthdays, and plan the farm.",
+  },
+  "7-days-to-die": {
+    title: "After dark.",
+    line: "Hear the horde coming, keep the pack, finish the quest, quiet the dogs, and watch your speed.",
+  },
+};
+
+const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0);
 ---
 
 <Base
   title="Azrael's Mods"
-  description="Mods for RimWorld, Sun Haven, and 7 Days to Die."
+  description="Mods for RimWorld, Sun Haven, and 7 Days to Die, with downloads alongside Steam, Thunderstore, and Nexus."
+  home
 >
-  <h1>Azrael's Mods</h1>
-  <p class="lede">Mods for three games, with downloads alongside Steam, Thunderstore, and Nexus.</p>
-  {
-    games.map((game) => (
-      <section class="game-band" style={gameVars(game.slug)}>
-        <h2>
-          <a href={`/${game.slug}`}>{game.name}</a>
-        </h2>
-        <p class="count">{modsForGame(game.slug).length} mods</p>
-        <div class="cards">
-          {modsForGame(game.slug).map((mod) => (
-            <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
-              <span class="mark">{lookFor(mod.slug).mark}</span>
-              <strong>{mod.name}</strong>
-              <span class="ver">{mod.version}</span>
-              <p>{mod.description}</p>
+  <div class="entry">
+    <section class="entry-hero">
+      <div class="entry-copy">
+        <p class="entry-kicker">The workshop</p>
+        <h1>Azrael's Mods</h1>
+        <p class="entry-lede">
+          Mods for three games. Downloads sit alongside Steam, Thunderstore, and Nexus.
+        </p>
+        <p class="entry-total"><span>{total}</span> mods across three catalogs</p>
+      </div>
+      <nav class="entry-ledger" aria-label="Catalogs">
+        {
+          games.map((game) => (
+            <a href={`/${game.slug}`}>
+              <span>{game.name}</span>
+              <span>{modsForGame(game.slug).length}</span>
             </a>
-          ))}
-        </div>
-      </section>
-    ))
-  }
+          ))
+        }
+      </nav>
+    </section>
+    <div class="entry-rule" aria-hidden="true"></div>
+    <div class="entry-doors">
+      {
+        games.map((game) => {
+          const room = rooms[game.slug];
+          const mods = modsForGame(game.slug);
+          return (
+            <article class={`door door-${game.slug}`} id={game.slug}>
+              <a class="door-face" href={`/${game.slug}`}>
+                <p class="door-kicker">{game.name}</p>
+                <h2>
+                  {game.slug === "sun-haven" ? (
+                    <>
+                      A little <em>brighter.</em>
+                    </>
+                  ) : (
+                    room?.title ?? game.name
+                  )}
+                </h2>
+                <p>{room?.line}</p>
+                <span class="door-count">
+                  <span>{mods.length}</span>
+                  mods
+                </span>
+                <span class="door-go">Open the catalog</span>
+              </a>
+              <nav class="door-index" aria-label={`${game.name} mods`}>
+                {mods.map((mod) => (
+                  <a href={`/${game.slug}/${mod.slug}`}>{mod.name}</a>
+                ))}
+              </nav>
+            </article>
+          );
+        })
+      }
+    </div>
+    <p class="entry-close">Each catalog opens the mod page, the download, and the workshop links.</p>
+  </div>
 </Base>
