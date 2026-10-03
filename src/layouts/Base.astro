@@ -23,7 +23,7 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
-  <body style={gameVars(game)}>
+  <body class:list={[game === "rimworld" && "rw-site"]} style={gameVars(game)}>
     <header>
       <a href="/">Azrael's Mods</a>
       <nav aria-label="Games">

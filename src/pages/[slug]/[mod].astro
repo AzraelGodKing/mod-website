@@ -32,6 +32,84 @@ const storeLinks = [
 ---
 
 <Base title={mod.name} description={mod.description} game={mod.game}>
+  {
+    mod.game === "rimworld" ? (
+      <div class="rw-hub rw-mod" style={heroVars(mod.slug)}>
+        <header class="rw-hero">
+          <div class="rw-wrap rw-hero-layout">
+            <div>
+              <p class="rw-kicker">
+                <a href={`/${mod.game}`}>{game?.name}</a>
+              </p>
+              <h1>{mod.name}</h1>
+              <p class="rw-tagline">{look.mark}</p>
+              <p class="rw-intro">{mod.description}</p>
+            </div>
+            <aside class="rw-stats">
+              <span class="rw-stat-label">Version</span>
+              <span class="rw-stat-num">{mod.version}</span>
+            </aside>
+          </div>
+        </header>
+        <div class="rw-wrap">
+          {
+            preview && (
+              <figure class="rw-poster">
+                <img src={preview} alt={`${mod.name} preview`} width="960" />
+              </figure>
+            )
+          }
+          <p class="rw-actions">
+            {
+              direct && (
+                <a class="download" href={direct.url}>
+                  Download {direct.file}
+                </a>
+              )
+            }
+            {
+              notReady && (
+                <a class="download" href="/not-ready">
+                  Download
+                </a>
+              )
+            }
+            {storeLinks.map(([label, href]) => (
+              <a href={href}>{label}</a>
+            ))}
+          </p>
+          {
+            others.length > 0 && (
+              <nav class="rw-more" aria-label={`Other ${game?.name ?? "game"} mods`}>
+                <h2>Other {game?.name} mods</h2>
+                <div class="rw-grid">
+                  {others.map((entry) => {
+                    const entryLook = lookFor(entry.slug);
+                    const entryPreview = entry.slug === "azrael" ? undefined : entry.images[0];
+                    return (
+                      <a class="rw-card" style={heroVars(entry.slug)} href={`/${entry.game}/${entry.slug}`}>
+                        <span class="rw-media">
+                          {entryPreview ? <img src={entryPreview} alt="" /> : <span class="rw-plate">{entryLook.mark}</span>}
+                        </span>
+                        <span class="rw-copy">
+                          <h2>{entry.name}</h2>
+                          <p>{entry.description}</p>
+                          <span class="rw-badges">
+                            <span>Version {entry.version}</span>
+                            <span>{entryLook.mark}</span>
+                          </span>
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </nav>
+            )
+          }
+          <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
+        </div>
+      </div>
+    ) : (
   <article style={heroVars(mod.slug)}>
     <header class="hero">
       <p>
@@ -83,4 +161,6 @@ const storeLinks = [
     }
     <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
   </article>
+    )
+  }
 </Base>
