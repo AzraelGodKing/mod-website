@@ -45,5 +45,47 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
     <main>
       <slot />
     </main>
+    <script is:inline>
+      (() => {
+        const lists = document.querySelectorAll("[data-stat-key]");
+        if (lists.length === 0) return;
+        const format = (value) => (typeof value === "number" ? value.toLocaleString("en-US") : "—");
+        const counts = (snapshot, list) => {
+          const key = list.dataset.statKey;
+          if (list.dataset.statScope === "game") return snapshot.games?.[key] ?? null;
+          const mod = snapshot.mods?.[key];
+          if (!mod) return null;
+          const thunderstore = mod.thunderstore?.downloads ?? null;
+          const nexus = mod.nexus?.downloads ?? null;
+          return {
+            steam: mod.steam?.subscriptions ?? null,
+            thunderstore,
+            nexus,
+            nexus_unique: mod.nexus?.unique ?? null,
+            combined: thunderstore === null && nexus === null ? null : (thunderstore ?? 0) + (nexus ?? 0),
+          };
+        };
+        fetch("/api/stats")
+          .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+          .then((snapshot) => {
+            for (const list of lists) {
+              const values = counts(snapshot, list);
+              if (!values) continue;
+              for (const cell of list.querySelectorAll("[data-field]")) {
+                const field = cell.dataset.field;
+                if (field === "nexus_full") {
+                  cell.textContent =
+                    typeof values.nexus === "number"
+                      ? `${format(values.nexus)} (${format(values.nexus_unique)} unique)`
+                      : "—";
+                } else {
+                  cell.textContent = format(values[field]);
+                }
+              }
+            }
+          })
+          .catch(() => {});
+      })();
+    </script>
   </body>
 </html>

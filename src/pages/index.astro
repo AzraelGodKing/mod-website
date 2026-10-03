@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import StoreCounts from "../components/StoreCounts.astro";
 import { games } from "../data/games";
 import { modsForGame } from "../data/mods";
 
@@ -71,6 +72,7 @@ const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0
                   <span>{mods.length}</span>
                   mods
                 </span>
+                <StoreCounts game={game.slug} variant="room" />
                 <span class="door-go">Open the catalog</span>
               </a>
               <nav class="door-index" aria-label={`${game.name} mods`}>

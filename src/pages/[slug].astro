@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import StoreCounts from "../components/StoreCounts.astro";
 import { games } from "../data/games";
 import { modsForGame } from "../data/mods";
 import { heroVars, lookFor } from "../data/themes";
@@ -91,6 +92,7 @@ const sunMods = [...gameMods].sort((a, b) => {
             <aside class="rw-stats">
               <span class="rw-stat-label">Mods</span>
               <span class="rw-stat-num">{rimworldMods.length}</span>
+              <StoreCounts game={game.slug} variant="hero" />
             </aside>
           </div>
         </header>
@@ -121,6 +123,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                   <span class="rw-copy">
                     <h2>{mod.name}</h2>
                     <p>{mod.description}</p>
+                    <StoreCounts game={game.slug} mod={mod.slug} variant="card" />
                     <span class="rw-badges">
                       <span>Version {mod.version}</span>
                       <span>{look.mark}</span>
@@ -171,6 +174,7 @@ const sunMods = [...gameMods].sort((a, b) => {
           <p>
             {sunMods.length} quality-of-life mods that track your museum, sort your chests, bank your tokens, remember every birthday, and plan your farm — each one standalone, all of them better together.
           </p>
+          <StoreCounts game={game.slug} variant="hero" />
         </header>
         <div class="sh-wrap">
           <div class="sh-controls">
@@ -205,6 +209,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                     <span class="sh-ver">v{mod.version}</span>
                   </span>
                   <p>{mod.description}</p>
+                  <StoreCounts game={game.slug} mod={mod.slug} variant="card" />
                   <span class="sh-open">Open mod page →</span>
                 </a>
               );
@@ -252,6 +257,7 @@ const sunMods = [...gameMods].sort((a, b) => {
           <p>
             {gameMods.length} mods for the horde. Hear it coming, keep your pack, finish the quest, quiet the dogs, and watch your speed.
           </p>
+          <StoreCounts game={game.slug} variant="hero" />
         </header>
         <div class="zd-hazard" aria-hidden="true"></div>
         <div class="zd-wrap">
@@ -269,6 +275,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                   <span class="zd-mark">{look.mark}</span>
                   <h2>{mod.name}</h2>
                   <p>{mod.description}</p>
+                  <StoreCounts game={game.slug} mod={mod.slug} variant="card" />
                   <span class="zd-foot">
                     <span>v{mod.version}</span>
                     <span class="zd-open">Open</span>

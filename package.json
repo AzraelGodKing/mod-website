@@ -12,7 +12,7 @@
     "build": "astro build",
     "catalog": "node scripts/collect-mods.mjs",
     "preview": "astro preview",
-    "test": "node --test test/report.test.mjs test/kats-catalog.test.mjs",
+    "test": "node --test test/report.test.mjs test/kats-catalog.test.mjs test/stats.test.mjs",
     "build:kats": "node kats/scripts/build-assets.mjs",
     "dev:kats": "npm run build:kats && wrangler dev --config kats/wrangler.jsonc",
     "deploy:kats": "npm run build:kats && wrangler deploy --config kats/wrangler.jsonc",
