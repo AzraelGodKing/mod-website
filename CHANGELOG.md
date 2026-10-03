@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Game names in the header stay light on the bar, including links already opened.
 - A merge to main builds the site and deploys it. Pull requests and other branches do not deploy.
 - RimWorld mod pages use the same catalog look as the RimWorld hub: dark page, brass type, and the poster.
 - Game hubs no longer link to the source repository.
