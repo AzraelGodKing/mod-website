@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Game names in the header stay light on the bar, including links already opened.
 - RimWorld mod pages use the same catalog look as the RimWorld hub: dark page, brass type, and the poster.
 - Game hubs no longer link to the source repository.
 - The RimWorld page follows the workshop catalog: a dark hero and poster cards.
