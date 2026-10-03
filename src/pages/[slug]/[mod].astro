@@ -50,12 +50,9 @@ const storeLinks = [
     <p class="actions">
       {
         direct && (
-          <>
-            <a class="download" href={direct.url}>
-              Download {direct.file}
-            </a>
-            <a href={direct.checksum}>Checksum</a>
-          </>
+          <a class="download" href={direct.url}>
+            Download {direct.file}
+          </a>
         )
       }
       {

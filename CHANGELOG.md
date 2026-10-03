@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The RimWorld page is a mod-list window. Each mod page is unchanged.
+- Mod pages no longer show a checksum link.
 - KatsRics is a separate site. A CAP export upload refreshes the chatter catalog, and viewer lists and settings backups are not published.
 - The KatsRics upload page lays the file status out as separate fields instead of one running line.
 - The workers.dev address stays on when the site is deployed.
