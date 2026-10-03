@@ -1033,3 +1033,422 @@ body.rw-site > header nav a[aria-current] {
 .zd-empty {
   color: #cbbba8;
 }
+
+body.entry-site {
+  background: #110e0c;
+  color: #f4ece1;
+}
+
+body.entry-site > header {
+  background: transparent;
+  border-bottom: 1px solid #2d251f;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+body.entry-site > header > a,
+body.entry-site > header > a:visited {
+  color: #f4ece1;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+body.entry-site > header nav a,
+body.entry-site > header nav a:visited {
+  color: #f4ece1;
+  font-weight: 600;
+}
+
+body.entry-site > header nav a:hover {
+  color: #e8c98a;
+}
+
+body.entry-site main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entry {
+  background:
+    radial-gradient(1100px 480px at 8% -10%, rgba(139, 26, 43, 0.28), transparent 58%),
+    radial-gradient(900px 420px at 92% 0%, rgba(201, 161, 91, 0.14), transparent 52%),
+    #110e0c;
+}
+
+.entry-hero {
+  display: grid;
+  gap: 2rem;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 4.25rem 1.5rem 3rem;
+  align-items: end;
+}
+
+.entry-kicker,
+.door-kicker {
+  margin: 0 0 0.85rem;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.entry-kicker {
+  color: #c9a15b;
+}
+
+.entry-hero h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: clamp(3.6rem, 9vw, 6.6rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+}
+
+.entry-lede {
+  max-width: 34rem;
+  margin: 1.15rem 0 0;
+  color: #a89882;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 1.15rem;
+  line-height: 1.55;
+}
+
+.entry-total {
+  margin: 1.5rem 0 0;
+  color: #cbbba8;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.entry-total span {
+  margin-right: 0.4rem;
+  color: #e8c98a;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.entry-ledger {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #3d3229;
+  background: rgba(24, 19, 16, 0.72);
+}
+
+.entry-ledger a,
+.entry-ledger a:visited {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #2d251f;
+  color: #f4ece1;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.entry-ledger a:last-child {
+  border-bottom: 0;
+}
+
+.entry-ledger a span:last-child {
+  color: #c9a15b;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.entry-ledger a:hover {
+  background: #221c18;
+  color: #fff6e4;
+}
+
+.entry-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c9a15b, transparent);
+}
+
+.entry-doors {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+}
+
+.door-face {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 2rem 1.6rem 1.2rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.door-face:visited {
+  color: inherit;
+}
+
+.door-face h2 {
+  margin: 0;
+  font-size: clamp(2.3rem, 4vw, 3.35rem);
+  line-height: 0.98;
+}
+
+.door-face p {
+  max-width: 36ch;
+  margin: 0.9rem 0 0;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.door-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: auto;
+  padding-top: 1.75rem;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.door-count span {
+  font-size: 2.6rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.door-go {
+  display: inline-block;
+  margin-top: 0.85rem;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.door-go::after {
+  content: " →";
+}
+
+.door-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  padding: 0.35rem 1.6rem 1.6rem;
+}
+
+.door-index a,
+.door-index a:visited {
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.door-rimworld {
+  background: #181310;
+  color: #f4ece1;
+  box-shadow: inset 0 1px 0 #c9a15b;
+}
+
+.door-rimworld .door-kicker,
+.door-rimworld .door-count,
+.door-rimworld .door-count span,
+.door-rimworld .door-go {
+  color: #c9a15b;
+}
+
+.door-rimworld .door-face h2 {
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.door-rimworld .door-face p {
+  color: #a89882;
+}
+
+.door-rimworld .door-index a,
+.door-rimworld .door-index a:visited {
+  color: #e8c98a;
+}
+
+.door-rimworld .door-face:hover {
+  background: #221c18;
+}
+
+.door-rimworld .door-index a:hover {
+  color: #fff6e4;
+}
+
+.door-sun-haven {
+  background:
+    radial-gradient(520px 280px at 78% 118%, rgba(180, 83, 9, 0.35), transparent 65%),
+    linear-gradient(#fde8c8, #f6c56b);
+  color: #2a2119;
+}
+
+.door-sun-haven .door-kicker,
+.door-sun-haven .door-count,
+.door-sun-haven .door-go {
+  color: #9a5418;
+}
+
+.door-sun-haven .door-count span,
+.door-sun-haven h2 em {
+  color: #b45309;
+  font-style: italic;
+  font-weight: 560;
+}
+
+.door-sun-haven .door-count span {
+  font-family: Fraunces, Georgia, serif;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.door-sun-haven .door-face h2 {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.door-sun-haven .door-face p {
+  color: #5c4a38;
+}
+
+.door-sun-haven .door-index a,
+.door-sun-haven .door-index a:visited {
+  color: #7a3e12;
+}
+
+.door-sun-haven .door-face:hover {
+  background: linear-gradient(rgba(255, 248, 236, 0.28), rgba(255, 248, 236, 0.08));
+}
+
+.door-sun-haven .door-index a:hover {
+  color: #4a240c;
+}
+
+.door-7-days-to-die {
+  background:
+    radial-gradient(420px 220px at 88% 0%, rgba(224, 122, 61, 0.2), transparent 70%),
+    #12100e;
+  color: #f2ebe3;
+}
+
+.door-7-days-to-die::before {
+  content: "";
+  display: block;
+  height: 0.45rem;
+  background: repeating-linear-gradient(-45deg, #e07a3d 0 10px, #1a140c 10px 20px);
+}
+
+.door-7-days-to-die .door-kicker,
+.door-7-days-to-die .door-count,
+.door-7-days-to-die .door-count span,
+.door-7-days-to-die .door-go {
+  color: #e07a3d;
+  font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+}
+
+.door-7-days-to-die .door-face h2 {
+  font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.door-7-days-to-die .door-face p,
+.door-7-days-to-die .door-index {
+  font-family: "Segoe UI", sans-serif;
+}
+
+.door-7-days-to-die .door-face p {
+  color: #cbbba8;
+}
+
+.door-7-days-to-die .door-index a,
+.door-7-days-to-die .door-index a:visited {
+  color: #e7c49a;
+  font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.door-7-days-to-die .door-face:hover {
+  background: rgba(255, 244, 230, 0.04);
+}
+
+.door-7-days-to-die .door-index a:hover {
+  color: #fff1dc;
+}
+
+.entry-close {
+  margin: 0;
+  padding: 1.2rem 1.5rem 2.2rem;
+  color: #a89882;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.door-face:focus-visible,
+.door-index a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (min-width: 900px) {
+  .entry-hero {
+    grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 22rem);
+  }
+}
+
+@media (min-width: 1000px) {
+  .entry-doors {
+    grid-template-columns: 1.15fr 1fr 0.95fr;
+    min-height: 34rem;
+  }
+
+  .door + .door {
+    box-shadow: inset 1px 0 0 rgba(255, 248, 236, 0.08);
+  }
+}
+
+@media (max-width: 999px) {
+  .door + .door {
+    box-shadow: inset 0 1px 0 rgba(255, 248, 236, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .door-face {
+    transition: none;
+  }
+}

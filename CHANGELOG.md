@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The homepage is the workshop door: a dark hero and three game rooms that open the RimWorld, Sun Haven, and 7 Days to Die catalogs.
 - Game names in the header stay light on the bar, including links already opened.
 - A merge to main builds the site and deploys it. Pull requests and other branches do not deploy.
 - RimWorld mod pages use the same catalog look as the RimWorld hub: dark page, brass type, and the poster.
