@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
+import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { isNotReady, mods, modsForGame, r2Download, type ModEntry } from "../../data/mods";
 import { heroVars, lookFor } from "../../data/themes";
@@ -48,6 +49,7 @@ const storeLinks = [
             <aside class="rw-stats">
               <span class="rw-stat-label">Version</span>
               <span class="rw-stat-num">{mod.version}</span>
+              <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
             </aside>
           </div>
         </header>
@@ -118,6 +120,7 @@ const storeLinks = [
       <h1>{mod.name}</h1>
       <p class="mark">{look.mark}</p>
       <p class="version">Version {mod.version}</p>
+      <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
       {
         preview && (
           <img src={preview} alt={`${mod.name} preview`} width="960" />

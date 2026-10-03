@@ -1452,3 +1452,98 @@ body.entry-site main {
     transition: none;
   }
 }
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.15rem;
+  margin: 0;
+}
+
+.counts div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.counts dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.counts dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.counts-room {
+  margin-top: 0.85rem;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.95rem;
+}
+
+.counts-card {
+  font-size: 0.82rem;
+}
+
+.counts-hero,
+.counts-page {
+  margin-top: 1rem;
+  font-size: 1rem;
+}
+
+.rw-stats .counts {
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #3d3229;
+  color: #f4ece1;
+}
+
+.rw-stats .counts div {
+  justify-content: space-between;
+}
+
+.rw-stats .counts dt {
+  color: #a89882;
+  opacity: 1;
+}
+
+.sh-hero .counts {
+  justify-content: center;
+  color: #5c4a38;
+}
+
+.sh-hero .counts dd,
+.sh-card .counts dd {
+  color: #b45309;
+}
+
+.sh-card .counts {
+  color: #6b5848;
+}
+
+.zd-hero .counts dd {
+  color: #e07a3d;
+}
+
+.zd-card .counts dd {
+  color: var(--accent);
+}
+
+.zd-card .counts {
+  color: #a89888;
+  letter-spacing: 0.04em;
+}
+
+.rw-card .counts {
+  color: #a89882;
+}
+
+.rw-card .counts dd {
+  color: #e8c98a;
+}

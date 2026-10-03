@@ -14,11 +14,16 @@
     "not_found_handling": "404-page",
     "run_worker_first": ["/api/*"]
   },
-  // Secrets, set outside the repo: TURNSTILE_SECRET, LINEAR_API_KEY.
+  // Secrets, set outside the repo: TURNSTILE_SECRET, LINEAR_API_KEY, NEXUSMODS_API_KEY.
   // TURNSTILE_HOSTNAMES is the public site hostname. Local values live in .dev.vars.
   // Do not put localhost in the production value.
   "vars": {
     "LINEAR_TEAM_ID": "793cb9eb-f8a9-4a64-ad43-33a56637ec16"
+  },
+  // Store download counts. Wrangler creates the namespace on the first deploy without an id.
+  "kv_namespaces": [{ "binding": "STATS" }],
+  "triggers": {
+    "crons": ["17 * * * *"]
   },
   "observability": {
     "enabled": true,

@@ -32,3 +32,8 @@ npm run deploy
 put_secret TURNSTILE_SECRET "$TURNSTILE_SECRET"
 put_secret LINEAR_API_KEY "$LINEAR_API_KEY"
 put_secret TURNSTILE_HOSTNAMES "$TURNSTILE_HOSTNAMES"
+if [[ -n "${NEXUSMODS_API_KEY:-}" ]]; then
+  put_secret NEXUSMODS_API_KEY "$NEXUSMODS_API_KEY"
+else
+  echo "NEXUSMODS_API_KEY is not on the deploy agent. Nexus download counts will not refresh."
+fi

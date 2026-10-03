@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Download counters are back. The homepage, game pages, and mod pages show Steam subscribers and Nexus downloads for RimWorld, Thunderstore and Nexus downloads with a combined total for Sun Haven, and Nexus downloads for 7 Days to Die. The Worker refreshes them every hour and keeps the last good count when a store does not answer.
 - The homepage is the workshop door: a dark hero and three game rooms that open the RimWorld, Sun Haven, and 7 Days to Die catalogs.
 - Game names in the header stay light on the bar, including links already opened.
 - A merge to main builds the site and deploys it. Pull requests and other branches do not deploy.

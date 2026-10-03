@@ -1,0 +1,27 @@
+---
+import { statRows } from "../data/stats";
+
+interface Props {
+  game: string;
+  mod?: string;
+  variant: "room" | "hero" | "card" | "page";
+}
+
+const { game, mod, variant } = Astro.props;
+const rows = statRows(game, variant === "hero" || variant === "page");
+---
+
+<dl
+  class:list={["counts", `counts-${variant}`]}
+  data-stat-scope={mod ? "mod" : "game"}
+  data-stat-key={mod ? `${game}/${mod}` : game}
+>
+  {
+    rows.map((row) => (
+      <div>
+        <dt>{row.label}</dt>
+        <dd data-field={row.field}>—</dd>
+      </div>
+    ))
+  }
+</dl>
