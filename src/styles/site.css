@@ -38,8 +38,9 @@ body > header {
   border-bottom: 1px solid var(--rule);
 }
 
-body > header > a {
-  color: inherit;
+body > header > a,
+body > header > a:visited {
+  color: var(--bar-ink);
   font-weight: 700;
   text-decoration: none;
 }
@@ -50,12 +51,16 @@ body > header nav {
   gap: 0.35rem 1.25rem;
 }
 
-body > header nav a {
-  color: inherit;
+body > header nav a,
+body > header nav a:visited {
+  color: var(--bar-ink);
+  font-weight: 700;
   text-decoration: none;
 }
 
-body > header nav a[aria-current] {
+body > header nav a[aria-current],
+body > header nav a[aria-current]:visited {
+  color: var(--bar-mark);
   border-bottom: 2px solid var(--bar-mark);
 }
 
