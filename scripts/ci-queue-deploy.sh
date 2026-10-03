@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 case "${BUILDKITE_SOURCE:-}" in
-  ui|api|trigger_job) ;;
+  ui|api|trigger_job|webhook) ;;
   *)
     echo "Deploy stays off this build."
     exit 0

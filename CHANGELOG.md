@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A merge to main builds the site and deploys it. Pull requests and other branches do not deploy.
 - RimWorld mod pages use the same catalog look as the RimWorld hub: dark page, brass type, and the poster.
 - Game hubs no longer link to the source repository.
 - The RimWorld page follows the workshop catalog: a dark hero and poster cards.
@@ -19,7 +20,7 @@
 - The build writes the catalog before the tests run, so the report tests can load `catalog.json`.
 - The site build reads `mod.json` from `main` in the three mod repos.
 - The deploy step stores the report-form secrets on the worker and refuses a hostname list that includes localhost.
-- Added a Buildkite pipeline that tests and builds the site, then deploys only after a manual confirmation. The deploy agent is the only one with the Cloudflare token.
+- Added a Buildkite pipeline that tests and builds the site, then deploys from the deploy agent. The deploy agent is the only one with the Cloudflare token.
 - Added the site plan and setup status for the Codebase repo.
 - Added a static Astro shell with one page per game.
 - Mod pages now read `mod.json` from the three mod repos.
