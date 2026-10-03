@@ -14,7 +14,7 @@
     "not_found_handling": "404-page",
     "run_worker_first": ["/api/*"]
   },
-  // Secrets, set outside the repo: TURNSTILE_SECRET, LINEAR_API_KEY, NEXUSMODS_API_KEY.
+  // Secrets, set outside the repo: TURNSTILE_SECRET, LINEAR_API_KEY, NEXUSMODS_API_KEY, ADMIN_TOKEN.
   // TURNSTILE_HOSTNAMES is the public site hostname. Local values live in .dev.vars.
   // Do not put localhost in the production value.
   "vars": {

@@ -1,8 +1,8 @@
 export type StatField = "steam" | "thunderstore" | "nexus" | "nexus_full" | "combined";
 
-type Platform = "steam" | "thunderstore" | "nexus";
+export type Platform = "steam" | "thunderstore" | "nexus";
 
-const platforms: Record<string, Platform[]> = {
+export const platforms: Record<string, Platform[]> = {
   rimworld: ["steam", "nexus"],
   "sun-haven": ["thunderstore", "nexus"],
   "7-days-to-die": ["nexus"],
