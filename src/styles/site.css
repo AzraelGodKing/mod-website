@@ -1547,3 +1547,188 @@ body.entry-site main {
 .rw-card .counts dd {
   color: #e8c98a;
 }
+
+/* Admin */
+
+.admin {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.admin-head h1 {
+  margin: 0.25rem 0 0.75rem;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+}
+
+.admin-lede {
+  max-width: 42rem;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.admin button {
+  font: inherit;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.admin button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.admin .admin-quiet {
+  background: transparent;
+}
+
+.admin-login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.admin-login[hidden],
+.admin-body[hidden],
+.admin-warnings[hidden] {
+  display: none;
+}
+
+.admin-login label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.admin-login input {
+  font: inherit;
+  min-width: 16rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.4rem;
+  background: rgba(0, 0, 0, 0.3);
+  color: inherit;
+}
+
+.admin-error {
+  flex-basis: 100%;
+  margin: 0;
+  min-height: 1.25rem;
+  color: #f2a08f;
+}
+
+.admin-body {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+
+.admin-times,
+.admin-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin: 0;
+}
+
+.admin-times dt,
+.admin-totals dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.admin-times dd,
+.admin-totals dd {
+  margin: 0.2rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-totals dd {
+  font-size: 1.35rem;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-status {
+  margin: -0.75rem 0 0;
+  min-height: 1.25rem;
+  opacity: 0.8;
+}
+
+.admin-warnings {
+  margin: 0;
+  padding: 0.75rem 1rem 0.75rem 2rem;
+  border-left: 3px solid #e0a95a;
+  background: rgba(224, 169, 90, 0.08);
+  font-size: 0.9rem;
+}
+
+.admin-game {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-game h2 {
+  margin: 0;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table th:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.admin-table thead th {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.admin-table a {
+  color: inherit;
+}

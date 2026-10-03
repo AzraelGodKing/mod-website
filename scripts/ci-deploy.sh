@@ -37,3 +37,6 @@ if [[ -n "${NEXUSMODS_API_KEY:-}" ]]; then
 else
   echo "NEXUSMODS_API_KEY is not on the deploy agent. Nexus download counts will not refresh."
 fi
+if [[ -n "${ADMIN_TOKEN:-}" ]]; then
+  put_secret ADMIN_TOKEN "$ADMIN_TOKEN"
+fi

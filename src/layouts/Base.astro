@@ -8,9 +8,10 @@ interface Props {
   description: string;
   game?: string;
   home?: boolean;
+  admin?: boolean;
 }
 
-const { title, description, game, home = false } = Astro.props;
+const { title, description, game, home = false, admin = false } = Astro.props;
 const here = Astro.url.pathname.replace(/\/$/, "") || "/";
 ---
 
@@ -22,9 +23,13 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
+    {admin && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
   </head>
-  <body class:list={[game === "rimworld" && "rw-site", home && "entry-site"]} style={gameVars(game)}>
+  <body
+    class:list={[game === "rimworld" && "rw-site", (home || admin) && "entry-site", admin && "admin-site"]}
+    style={gameVars(game)}
+  >
     <header>
       <a href="/">Azrael's Mods</a>
       <nav aria-label="Games">

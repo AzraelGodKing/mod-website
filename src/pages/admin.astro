@@ -1,0 +1,221 @@
+---
+import Base from "../layouts/Base.astro";
+import { games } from "../data/games";
+import { modsForGame } from "../data/mods";
+import { platforms } from "../data/stats";
+
+type Column = { field: string; label: string };
+
+function columns(game: string): Column[] {
+  const list: Column[] = [];
+  for (const platform of platforms[game] ?? []) {
+    if (platform === "steam") list.push({ field: "steam", label: "Steam subscribers" });
+    if (platform === "thunderstore") list.push({ field: "thunderstore", label: "Thunderstore" });
+    if (platform === "nexus") {
+      list.push({ field: "nexus", label: "Nexus" }, { field: "nexus_unique", label: "Nexus unique" });
+    }
+  }
+  return list;
+}
+
+function totals(game: string): Column[] {
+  const list = columns(game);
+  if (game === "sun-haven") list.unshift({ field: "combined", label: "Thunderstore + Nexus" });
+  return list;
+}
+---
+
+<Base title="Admin · Azrael's Mods" description="Download counter admin." admin>
+  <div class="admin">
+    <header class="admin-head">
+      <p class="entry-kicker">Admin</p>
+      <h1>Download counters</h1>
+      <p class="admin-lede">
+        The Worker refreshes every hour at 17 minutes past. Refresh now fetches the stores immediately and does not
+        move the hourly schedule.
+      </p>
+    </header>
+
+    <form class="admin-login" id="admin-login">
+      <label>
+        Password
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit">Open</button>
+      <p class="admin-error" id="admin-login-error" role="alert"></p>
+    </form>
+
+    <section class="admin-body" id="admin-body" hidden>
+      <div class="admin-bar">
+        <dl class="admin-times">
+          <div>
+            <dt>Last refresh</dt>
+            <dd id="admin-last">—</dd>
+          </div>
+          <div>
+            <dt>Last hourly refresh</dt>
+            <dd id="admin-hourly">—</dd>
+          </div>
+          <div>
+            <dt>Next hourly refresh</dt>
+            <dd id="admin-next">—</dd>
+          </div>
+        </dl>
+        <div class="admin-actions">
+          <button type="button" id="admin-refresh">Refresh now</button>
+          <button type="button" class="admin-quiet" id="admin-logout">Sign out</button>
+        </div>
+      </div>
+      <p class="admin-status" id="admin-status" role="status"></p>
+      <ul class="admin-warnings" id="admin-warnings" hidden></ul>
+
+      {
+        games.map((game) => (
+          <section class="admin-game">
+            <h2>{game.name}</h2>
+            <dl class="admin-totals" data-admin-game={game.slug}>
+              {totals(game.slug).map((column) => (
+                <div>
+                  <dt>{column.label}</dt>
+                  <dd data-field={column.field}>—</dd>
+                </div>
+              ))}
+            </dl>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Mod</th>
+                    {columns(game.slug).map((column) => (
+                      <th scope="col">{column.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {modsForGame(game.slug).map((mod) => (
+                    <tr data-admin-mod={`${game.slug}/${mod.slug}`}>
+                      <th scope="row">
+                        <a href={`/${game.slug}/${mod.slug}`}>{mod.name}</a>
+                      </th>
+                      {columns(game.slug).map((column) => (
+                        <td data-field={column.field}>—</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))
+      }
+    </section>
+  </div>
+
+  <script is:inline>
+    (() => {
+      const storageKey = "azraels-admin-password";
+      const login = document.querySelector("#admin-login");
+      const loginError = document.querySelector("#admin-login-error");
+      const body = document.querySelector("#admin-body");
+      const status = document.querySelector("#admin-status");
+      const warnings = document.querySelector("#admin-warnings");
+      const refreshButton = document.querySelector("#admin-refresh");
+      const sources = { scheduled: "hourly", manual: "manual", "first-request": "first visit" };
+
+      const format = (value) => (typeof value === "number" ? value.toLocaleString("en-US") : "—");
+      const when = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
+
+      function nextHourly() {
+        const next = new Date();
+        next.setUTCMinutes(17, 0, 0);
+        if (next <= new Date()) next.setUTCHours(next.getUTCHours() + 1);
+        return next.toLocaleString();
+      }
+
+      function render(snapshot) {
+        document.querySelector("#admin-last").textContent =
+          `${when(snapshot.lastFetched)} (${sources[snapshot.source] ?? snapshot.source ?? "unknown"})`;
+        document.querySelector("#admin-hourly").textContent = when(snapshot.lastScheduled);
+        document.querySelector("#admin-next").textContent = nextHourly();
+
+        warnings.replaceChildren(
+          ...(snapshot.warnings ?? []).map((message) => {
+            const item = document.createElement("li");
+            item.textContent = message;
+            return item;
+          }),
+        );
+        warnings.hidden = warnings.children.length === 0;
+
+        for (const list of document.querySelectorAll("[data-admin-game]")) {
+          const totals = snapshot.games?.[list.dataset.adminGame] ?? {};
+          for (const cell of list.querySelectorAll("[data-field]")) cell.textContent = format(totals[cell.dataset.field]);
+        }
+        for (const row of document.querySelectorAll("[data-admin-mod]")) {
+          const mod = snapshot.mods?.[row.dataset.adminMod] ?? {};
+          const values = {
+            steam: mod.steam?.subscriptions,
+            thunderstore: mod.thunderstore?.downloads,
+            nexus: mod.nexus?.downloads,
+            nexus_unique: mod.nexus?.unique,
+          };
+          for (const cell of row.querySelectorAll("[data-field]")) cell.textContent = format(values[cell.dataset.field]);
+        }
+      }
+
+      async function call(path, method, password) {
+        const res = await fetch(path, { method, headers: { authorization: `Bearer ${password}` } });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw Object.assign(new Error(payload.error ?? `Request failed (${res.status}).`), { status: res.status });
+        return payload;
+      }
+
+      function signOut(message = "") {
+        sessionStorage.removeItem(storageKey);
+        body.hidden = true;
+        login.hidden = false;
+        loginError.textContent = message;
+      }
+
+      async function open(password) {
+        loginError.textContent = "";
+        try {
+          const snapshot = await call("/api/admin/stats", "GET", password);
+          sessionStorage.setItem(storageKey, password);
+          login.hidden = true;
+          body.hidden = false;
+          render(snapshot);
+        } catch (error) {
+          signOut(error.message);
+        }
+      }
+
+      login.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const password = String(new FormData(login).get("password") ?? "");
+        if (password) open(password);
+      });
+
+      refreshButton.addEventListener("click", async () => {
+        const password = sessionStorage.getItem(storageKey);
+        if (!password) return signOut();
+        refreshButton.disabled = true;
+        status.textContent = "Fetching Steam, Thunderstore, and Nexus…";
+        try {
+          render(await call("/api/admin/refresh", "POST", password));
+          status.textContent = "Refreshed. Public pages can take up to five minutes to show the new numbers.";
+        } catch (error) {
+          if (error.status === 401) return signOut(error.message);
+          status.textContent = error.message;
+        } finally {
+          refreshButton.disabled = false;
+        }
+      });
+
+      document.querySelector("#admin-logout").addEventListener("click", () => signOut());
+
+      const saved = sessionStorage.getItem(storageKey);
+      if (saved) open(saved);
+    })();
+  </script>
+</Base>
