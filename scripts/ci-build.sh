@@ -2,8 +2,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-if [[ "${BUILDKITE_SOURCE:-}" == "webhook" || "${BUILDKITE_SOURCE:-}" == "schedule" ]]; then
-  echo "Builds start from the Buildkite page, or from a mod release pipeline."
+if [[ "${BUILDKITE_SOURCE:-}" == "schedule" ]]; then
+  echo "Scheduled builds do not run this pipeline."
+  exit 0
+fi
+if [[ "${BUILDKITE_SOURCE:-}" == "webhook" && ( "${BUILDKITE_BRANCH:-}" != "main" || "${BUILDKITE_PULL_REQUEST:-false}" != "false" ) ]]; then
+  echo "Webhook builds run only after a merge to main."
   exit 0
 fi
 if [[ -n "${BUILDKITE_PULL_REQUEST_REPO:-}" && "${BUILDKITE_PULL_REQUEST_REPO}" != "${BUILDKITE_REPO:-}" ]]; then

@@ -1,7 +1,4 @@
 steps:
-  - block: "Deploy the site"
-    prompt: "Deploy main to Cloudflare?"
-
   - label: "Deploy"
     agents:
       queue: deploy
