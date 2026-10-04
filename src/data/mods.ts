@@ -35,12 +35,7 @@ export function findMod(game: string, slug: string): ModEntry | undefined {
 
 const downloadOrigin = "https://downloads.azraelsmods.com";
 
-const notReady = new Set([
-  "rimworld/azrael",
-  "rimworld/living-world",
-  "7-days-to-die/craft-from-chests",
-  "7-days-to-die/upgrade-bench",
-]);
+const notReady = new Set(["rimworld/azrael", "rimworld/living-world"]);
 
 export function isNotReady(mod: ModEntry): boolean {
   return notReady.has(`${mod.game}/${mod.slug}`);
