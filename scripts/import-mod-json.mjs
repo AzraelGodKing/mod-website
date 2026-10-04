@@ -132,13 +132,15 @@ function sunhaven() {
 function sevendays() {
   const root = roots.sevendays;
   const mods = [
-    ["BloodMoonSound", "blood-moon-sound", "Blood Moon Sound"],
-    ["KeepBackpacks", "keep-backpacks", "Keep Backpacks"],
-    ["QuestDisconnectFix", "quest-disconnect-fix", "Quest Disconnect Fix"],
-    ["RemoveZombieDogs", "remove-zombie-dogs", "Remove Zombie Dogs"],
-    ["Speedometer", "speedometer", "Speedometer"],
+    ["BloodMoonSound", "blood-moon-sound", "Blood Moon Sound", "https://www.nexusmods.com/7daystodie/mods/12920"],
+    ["CraftFromChests", "craft-from-chests", "Craft From Chests", "https://www.nexusmods.com/7daystodie/mods/12921"],
+    ["KeepBackpacks", "keep-backpacks", "Keep Backpacks", "https://www.nexusmods.com/7daystodie/mods/12923"],
+    ["QuestDisconnectFix", "quest-disconnect-fix", "Quest Disconnect Fix", "https://www.nexusmods.com/7daystodie/mods/12839"],
+    ["RemoveZombieDogs", "remove-zombie-dogs", "Remove Zombie Dogs", "https://www.nexusmods.com/7daystodie/mods/12841"],
+    ["Speedometer", "speedometer", "Speedometer", "https://www.nexusmods.com/7daystodie/mods/12840"],
+    ["UpgradeBench", "upgrade-bench", "Upgrade Bench", "https://www.nexusmods.com/7daystodie/mods/12922"],
   ];
-  for (const [dir, slug, name] of mods) {
+  for (const [dir, slug, name, nexus] of mods) {
     const xml = readFileSync(path.join(root, dir, "mod", "ModInfo.xml"), "utf8");
     const version = attr(xml, "Version");
     writeMod(path.join(root, dir), {
@@ -149,7 +151,7 @@ function sevendays() {
       version,
       screenshots: [],
       download: { file: `${dir}-${version}.zip` },
-      links: { steam: null, thunderstore: null, nexus: null },
+      links: { steam: null, thunderstore: null, nexus },
     });
   }
 }

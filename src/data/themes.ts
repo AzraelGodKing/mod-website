@@ -192,6 +192,22 @@ const looks: Record<string, ModLook> = {
     accent: "#147a8a",
     accentInk: "#f4fcfd",
   },
+  "craft-from-chests": {
+    mark: "Craft from the claim",
+    wash: "#24180f",
+    heroInk: "#f6efe4",
+    heroMuted: "#d2bfa6",
+    accent: "#e09a4a",
+    accentInk: "#1a1008",
+  },
+  "upgrade-bench": {
+    mark: "Two mods, one step up",
+    wash: "#14181c",
+    heroInk: "#eef3f6",
+    heroMuted: "#b7c4ce",
+    accent: "#7eb0d4",
+    accentInk: "#0c141c",
+  },
   "blood-moon-sound": {
     mark: "Your horde cue",
     wash: "#2a1014",
