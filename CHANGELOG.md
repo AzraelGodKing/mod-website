@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- 7 Days to Die mods link their Nexus pages, so the hourly counter can read those download counts. Craft From Chests and Upgrade Bench are on the catalog. Their zips are not on the download host yet, so Download goes to the not-ready page.
 - `/admin` shows every download counter, when it last refreshed, and when the next hourly refresh runs. Refresh now fetches the stores right away without moving the hourly schedule. The page needs the `ADMIN_TOKEN` Worker secret.
 - Download counters are back. The homepage, game pages, and mod pages show Steam subscribers and Nexus downloads for RimWorld, Thunderstore and Nexus downloads with a combined total for Sun Haven, and Nexus downloads for 7 Days to Die. The Worker refreshes them every hour and keeps the last good count when a store does not answer.
 - The homepage is the workshop door: a dark hero and three game rooms that open the RimWorld, Sun Haven, and 7 Days to Die catalogs.
