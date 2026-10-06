@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Each mod page links the latest zip recorded in `downloads.json` on `downloads.azraelsmods.com`. Blood Moon Sound is 1.1.0.
+- Honk Door Fix is on the 7 Days to Die catalog and links its Nexus page. A report from that page uses the Honk Door Fix label.
 - Craft From Chests and Upgrade Bench downloads are on `downloads.azraelsmods.com`.
 - 7 Days to Die mods link their Nexus pages, so the hourly counter can read those download counts. Craft From Chests and Upgrade Bench are on the catalog.
 - `/admin` shows every download counter, when it last refreshed, and when the next hourly refresh runs. Refresh now fetches the stores right away without moving the hourly schedule. The page needs the `ADMIN_TOKEN` Worker secret.
