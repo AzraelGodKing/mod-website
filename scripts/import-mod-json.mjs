@@ -134,6 +134,7 @@ function sevendays() {
   const mods = [
     ["BloodMoonSound", "blood-moon-sound", "Blood Moon Sound", "https://www.nexusmods.com/7daystodie/mods/12920"],
     ["CraftFromChests", "craft-from-chests", "Craft From Chests", "https://www.nexusmods.com/7daystodie/mods/12921"],
+    ["HonkDoorFix", "honk-door-fix", "Honk Door Fix", "https://www.nexusmods.com/7daystodie/mods/12926"],
     ["KeepBackpacks", "keep-backpacks", "Keep Backpacks", "https://www.nexusmods.com/7daystodie/mods/12923"],
     ["QuestDisconnectFix", "quest-disconnect-fix", "Quest Disconnect Fix", "https://www.nexusmods.com/7daystodie/mods/12839"],
     ["RemoveZombieDogs", "remove-zombie-dogs", "Remove Zombie Dogs", "https://www.nexusmods.com/7daystodie/mods/12841"],

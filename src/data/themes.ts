@@ -200,6 +200,14 @@ const looks: Record<string, ModLook> = {
     accent: "#e09a4a",
     accentInk: "#1a1008",
   },
+  "honk-door-fix": {
+    mark: "Honks stay in range",
+    wash: "#241c10",
+    heroInk: "#f8f1e4",
+    heroMuted: "#d4c4a4",
+    accent: "#f9a825",
+    accentInk: "#1a1408",
+  },
   "upgrade-bench": {
     mark: "Two mods, one step up",
     wash: "#14181c",
