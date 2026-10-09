@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Each mod page links the latest zip recorded in `downloads.json` on `downloads.azraelsmods.com`. Blood Moon Sound is 1.1.0.
+- Each mod page links the latest zip recorded in `downloads.json` on `downloads.azraelsmods.com`. Blood Moon Sound is 1.2.1, Keep Backpacks is 1.2.1, and Remove Any Entity is on the 7 Days to Die catalog.
 - Honk Door Fix is on the 7 Days to Die catalog and links its Nexus page. A report from that page uses the Honk Door Fix label.
 - Craft From Chests and Upgrade Bench downloads are on `downloads.azraelsmods.com`.
 - 7 Days to Die mods link their Nexus pages, so the hourly counter can read those download counts. Craft From Chests and Upgrade Bench are on the catalog.
