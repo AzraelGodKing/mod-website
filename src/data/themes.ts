@@ -240,6 +240,14 @@ const looks: Record<string, ModLook> = {
     accent: "#d7a441",
     accentInk: "#1a1408",
   },
+  "remove-any-entity": {
+    mark: "Choose what spawns",
+    wash: "#1a1c18",
+    heroInk: "#f2f4ee",
+    heroMuted: "#c5ccba",
+    accent: "#6a8f72",
+    accentInk: "#10140f",
+  },
   "remove-zombie-dogs": {
     mark: "No dogs, no screamers",
     wash: "#1c1816",
