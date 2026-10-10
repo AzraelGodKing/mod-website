@@ -137,7 +137,7 @@ function sevendays() {
     ["HonkDoorFix", "honk-door-fix", "Honk Door Fix", "https://www.nexusmods.com/7daystodie/mods/12926"],
     ["KeepBackpacks", "keep-backpacks", "Keep Backpacks", "https://www.nexusmods.com/7daystodie/mods/12923"],
     ["QuestDisconnectFix", "quest-disconnect-fix", "Quest Disconnect Fix", "https://www.nexusmods.com/7daystodie/mods/12839"],
-    ["RemoveZombieDogs", "remove-zombie-dogs", "Remove Zombie Dogs", "https://www.nexusmods.com/7daystodie/mods/12841"],
+    ["RemoveAnyEntity", "remove-any-entity", "Remove Any Entity", "https://www.nexusmods.com/7daystodie/mods/12841"],
     ["Speedometer", "speedometer", "Speedometer", "https://www.nexusmods.com/7daystodie/mods/12840"],
     ["UpgradeBench", "upgrade-bench", "Upgrade Bench", "https://www.nexusmods.com/7daystodie/mods/12922"],
   ];
