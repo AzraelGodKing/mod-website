@@ -704,7 +704,217 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .rw-mod #report-status:not(:empty) {
-  color: #e8c98a;
+  color: var(--accent);
+}
+
+.rw-hub.rw-mod {
+  background:
+    radial-gradient(980px 440px at 8% -12%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 58%),
+    var(--wash);
+  color: var(--hero-ink);
+}
+
+.rw-hub.rw-mod .rw-hero {
+  background: color-mix(in srgb, var(--hero-ink) 10%, var(--wash));
+  border-bottom-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.rw-hub.rw-mod .rw-hero::after {
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.rw-hub.rw-mod .rw-kicker,
+.rw-hub.rw-mod .rw-tagline,
+.rw-hub.rw-mod .rw-stat-num {
+  color: var(--accent);
+}
+
+.rw-hub.rw-mod .rw-hero h1,
+.rw-hub.rw-mod .rw-section h2,
+.rw-hub.rw-mod .rw-more > h2,
+.rw-hub.rw-mod .rw-feature h3,
+.rw-hub.rw-mod .rw-faq h3,
+.rw-hub.rw-mod .rw-compat h3 {
+  color: var(--hero-ink);
+}
+
+.rw-hub.rw-mod .rw-intro,
+.rw-hub.rw-mod .rw-stat-label,
+.rw-hub.rw-mod .rw-feature p,
+.rw-hub.rw-mod .rw-notes,
+.rw-hub.rw-mod .rw-faq p {
+  color: var(--hero-muted);
+}
+
+.rw-hub.rw-mod .rw-intro + .rw-intro {
+  margin-top: 0.8rem;
+}
+
+.rw-hub.rw-mod .rw-stats,
+.rw-hub.rw-mod .rw-feature,
+.rw-hub.rw-mod .rw-faq article,
+.rw-hub.rw-mod .report {
+  background: color-mix(in srgb, var(--hero-ink) 8%, var(--wash));
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  color: var(--hero-muted);
+}
+
+.rw-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.9rem;
+}
+
+.rw-pills span {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--hero-ink);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rw-section {
+  margin-top: 2.6rem;
+}
+
+.rw-section > h2,
+.rw-compat h3,
+.rw-feature h3,
+.rw-faq h3 {
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.rw-section > h2 {
+  margin: 0 0 0.9rem;
+  font-size: 2rem;
+}
+
+.rw-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.rw-tabs button {
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  background: transparent;
+  color: var(--hero-ink);
+  font: 700 0.72rem "Red Hat Text", "Segoe UI", sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.rw-tabs button[aria-selected="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.rw-features,
+.rw-faq,
+.rw-compat {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+  gap: 0.8rem;
+}
+
+.rw-feature,
+.rw-faq article {
+  padding: 0.95rem 1rem 1.05rem;
+}
+
+.rw-feature h3,
+.rw-faq h3,
+.rw-compat h3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  align-items: baseline;
+  margin: 0 0 0.4rem;
+  font-size: 1.35rem;
+}
+
+.rw-feature p,
+.rw-faq p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.rw-feature-tag {
+  color: var(--accent);
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rw-notes {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.rw-notes li + li {
+  margin-top: 0.45rem;
+}
+
+.rw-notes strong {
+  color: var(--hero-ink);
+  font-weight: 700;
+}
+
+.rw-compat {
+  margin-bottom: 0.8rem;
+}
+
+.rw-hub.rw-mod .rw-actions a,
+.rw-hub.rw-mod .rw-actions a:visited {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--hero-ink);
+}
+
+.rw-hub.rw-mod .rw-actions a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.rw-hub.rw-mod .rw-actions a.download,
+.rw-hub.rw-mod .rw-actions a.download:visited,
+.rw-hub.rw-mod .rw-actions a.download:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.rw-hub.rw-mod .report h2,
+.rw-hub.rw-mod .report p,
+.rw-hub.rw-mod .report label {
+  color: var(--hero-ink);
+}
+
+.rw-hub.rw-mod .report p,
+.rw-hub.rw-mod .report label {
+  color: var(--hero-muted);
+}
+
+.rw-hub.rw-mod #report-form input,
+.rw-hub.rw-mod #report-form textarea {
+  background: color-mix(in srgb, var(--wash) 70%, var(--hero-ink));
+  color: var(--hero-ink);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.rw-hub.rw-mod #report-form button {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .sh-hub {
