@@ -1142,6 +1142,41 @@ body.rw-site > header nav a[aria-current] {
   font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
 }
 
+.zd-hub.guide-page {
+  background:
+    radial-gradient(720px 320px at 92% -8%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 62%),
+    var(--wash);
+  color: var(--hero-ink);
+  font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+}
+
+.zd-hub.guide-page h1,
+.zd-hub.guide-page .rw-section > h2,
+.zd-hub.guide-page .rw-feature h3,
+.zd-hub.guide-page .rw-faq h3,
+.zd-hub.guide-page .rw-compat h3,
+.zd-hub.guide-page .rw-stat-num,
+.zd-hub.guide-page .rw-more > h2,
+.zd-hub.guide-page .report h2 {
+  font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.zd-hub.guide-page h1,
+.zd-hub.guide-page .rw-section > h2,
+.zd-hub.guide-page .rw-more > h2 {
+  text-transform: uppercase;
+}
+
+.zd-hub.guide-page .rw-tabs button,
+.zd-hub.guide-page .rw-pills span,
+.zd-hub.guide-page .rw-feature,
+.zd-hub.guide-page .rw-stats,
+.zd-hub.guide-page .rw-faq article,
+.zd-hub.guide-page .rw-actions a {
+  border-radius: 0;
+}
+
 .zd-hero {
   max-width: 40rem;
   padding: 3rem 1.4rem 1.6rem;

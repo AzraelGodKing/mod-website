@@ -43,6 +43,15 @@ test("Sun Haven guides load under sun-haven slugs", () => {
   assert.equal(mods[0].guide.sections[0].id, "halls");
 });
 
+test("7 Days guides load under 7-days-to-die slugs", () => {
+  const file = path.join(path.dirname(fileURLToPath(import.meta.url)), "../src/data/sevendays-guides.json");
+  const guides = loadPackagedGuides(file, "7-days-to-die");
+  assert.ok(guides["7-days-to-die/blood-moon-sound"].overview.length > 0);
+  assert.equal(guides["sun-haven/blood-moon-sound"], undefined);
+  const mods = attachGuides([{ game: "7-days-to-die", slug: "keep-backpacks", name: "Keep Backpacks" }], guides);
+  assert.equal(mods[0].guide.sections[0].id, "times");
+});
+
 test("guides attach only to the matching RimWorld mod", () => {
   const mods = attachGuides(
     [

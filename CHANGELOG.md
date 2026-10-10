@@ -4,6 +4,7 @@
 
 - Each RimWorld mod page uses that mod's colors and explains what it does: overview, feature groups, and what to know before you install.
 - Each Sun Haven mod page does the same: that mod's colors, what it does, and which other mods it pairs with.
+- Each 7 Days to Die mod page does the same, in the night-board look: that mod's colors, what it does, and whether it goes on the server, the player, or both.
 - Each mod page links the latest zip recorded in `downloads.json` on `downloads.azraelsmods.com`. Blood Moon Sound is 1.2.1, Keep Backpacks is 1.2.1, and Remove Any Entity is on the 7 Days to Die catalog.
 - Honk Door Fix is on the 7 Days to Die catalog and links its Nexus page. A report from that page uses the Honk Door Fix label.
 - Craft From Chests and Upgrade Bench downloads are on `downloads.azraelsmods.com`.
