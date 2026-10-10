@@ -707,53 +707,53 @@ body.rw-site > header nav a[aria-current] {
   color: var(--accent);
 }
 
-.rw-hub.rw-mod {
+.guide-page {
   background:
     radial-gradient(980px 440px at 8% -12%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 58%),
     var(--wash);
   color: var(--hero-ink);
 }
 
-.rw-hub.rw-mod .rw-hero {
+.guide-page .rw-hero {
   background: color-mix(in srgb, var(--hero-ink) 10%, var(--wash));
   border-bottom-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.rw-hub.rw-mod .rw-hero::after {
+.guide-page .rw-hero::after {
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
 }
 
-.rw-hub.rw-mod .rw-kicker,
-.rw-hub.rw-mod .rw-tagline,
-.rw-hub.rw-mod .rw-stat-num {
+.guide-page .rw-kicker,
+.guide-page .rw-tagline,
+.guide-page .rw-stat-num {
   color: var(--accent);
 }
 
-.rw-hub.rw-mod .rw-hero h1,
-.rw-hub.rw-mod .rw-section h2,
-.rw-hub.rw-mod .rw-more > h2,
-.rw-hub.rw-mod .rw-feature h3,
-.rw-hub.rw-mod .rw-faq h3,
-.rw-hub.rw-mod .rw-compat h3 {
+.guide-page .rw-hero h1,
+.guide-page .rw-section h2,
+.guide-page .rw-more > h2,
+.guide-page .rw-feature h3,
+.guide-page .rw-faq h3,
+.guide-page .rw-compat h3 {
   color: var(--hero-ink);
 }
 
-.rw-hub.rw-mod .rw-intro,
-.rw-hub.rw-mod .rw-stat-label,
-.rw-hub.rw-mod .rw-feature p,
-.rw-hub.rw-mod .rw-notes,
-.rw-hub.rw-mod .rw-faq p {
+.guide-page .rw-intro,
+.guide-page .rw-stat-label,
+.guide-page .rw-feature p,
+.guide-page .rw-notes,
+.guide-page .rw-faq p {
   color: var(--hero-muted);
 }
 
-.rw-hub.rw-mod .rw-intro + .rw-intro {
+.guide-page .rw-intro + .rw-intro {
   margin-top: 0.8rem;
 }
 
-.rw-hub.rw-mod .rw-stats,
-.rw-hub.rw-mod .rw-feature,
-.rw-hub.rw-mod .rw-faq article,
-.rw-hub.rw-mod .report {
+.guide-page .rw-stats,
+.guide-page .rw-feature,
+.guide-page .rw-faq article,
+.guide-page .report {
   background: color-mix(in srgb, var(--hero-ink) 8%, var(--wash));
   border-color: color-mix(in srgb, var(--accent) 42%, transparent);
   color: var(--hero-muted);
@@ -875,44 +875,44 @@ body.rw-site > header nav a[aria-current] {
   margin-bottom: 0.8rem;
 }
 
-.rw-hub.rw-mod .rw-actions a,
-.rw-hub.rw-mod .rw-actions a:visited {
+.guide-page .rw-actions a,
+.guide-page .rw-actions a:visited {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   color: var(--hero-ink);
 }
 
-.rw-hub.rw-mod .rw-actions a:hover {
+.guide-page .rw-actions a:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.rw-hub.rw-mod .rw-actions a.download,
-.rw-hub.rw-mod .rw-actions a.download:visited,
-.rw-hub.rw-mod .rw-actions a.download:hover {
+.guide-page .rw-actions a.download,
+.guide-page .rw-actions a.download:visited,
+.guide-page .rw-actions a.download:hover {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
 }
 
-.rw-hub.rw-mod .report h2,
-.rw-hub.rw-mod .report p,
-.rw-hub.rw-mod .report label {
+.guide-page .report h2,
+.guide-page .report p,
+.guide-page .report label {
   color: var(--hero-ink);
 }
 
-.rw-hub.rw-mod .report p,
-.rw-hub.rw-mod .report label {
+.guide-page .report p,
+.guide-page .report label {
   color: var(--hero-muted);
 }
 
-.rw-hub.rw-mod #report-form input,
-.rw-hub.rw-mod #report-form textarea {
+.guide-page #report-form input,
+.guide-page #report-form textarea {
   background: color-mix(in srgb, var(--wash) 70%, var(--hero-ink));
   color: var(--hero-ink);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.rw-hub.rw-mod #report-form button {
+.guide-page #report-form button {
   background: var(--accent);
   color: var(--accent-ink);
 }
@@ -923,6 +923,33 @@ body.rw-site > header nav a[aria-current] {
   background: #faf5ea;
   color: #2a2119;
   font-family: Outfit, "Segoe UI", sans-serif;
+}
+
+.sh-hub.guide-page {
+  background:
+    radial-gradient(980px 440px at 8% -12%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 58%),
+    var(--wash);
+  color: var(--hero-ink);
+  font-family: Outfit, "Segoe UI", sans-serif;
+}
+
+.sh-hub.guide-page h1,
+.sh-hub.guide-page .rw-section > h2,
+.sh-hub.guide-page .rw-feature h3,
+.sh-hub.guide-page .rw-faq h3,
+.sh-hub.guide-page .rw-compat h3,
+.sh-hub.guide-page .rw-stat-num,
+.sh-hub.guide-page .rw-more > h2,
+.sh-hub.guide-page .report h2 {
+  font-family: Fraunces, Georgia, serif;
+}
+
+.sh-hub.guide-page .rw-tabs button,
+.sh-hub.guide-page .rw-pills span,
+.sh-hub.guide-page .rw-feature,
+.sh-hub.guide-page .rw-stats,
+.sh-hub.guide-page .rw-faq article {
+  border-radius: 14px;
 }
 
 .sh-hero {

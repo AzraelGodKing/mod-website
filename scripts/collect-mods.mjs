@@ -75,6 +75,14 @@ export function loadRimworldGuides(rimworldRoot, fallbackFile) {
   return guides;
 }
 
+export function loadPackagedGuides(file, game) {
+  if (!existsSync(file)) return {};
+  const extra = JSON.parse(readFileSync(file, "utf8"));
+  const guides = {};
+  for (const [slug, guide] of Object.entries(extra)) guides[`${game}/${slug}`] = guide;
+  return guides;
+}
+
 export function attachGuides(mods, guides) {
   return mods.map((mod) => {
     const guide = guides[`${mod.game}/${mod.slug}`];
@@ -132,10 +140,10 @@ async function main() {
     process.exit(1);
   }
 
-  const guides = loadRimworldGuides(
-    roots[0],
-    path.join(siteRoot, "src", "data", "rimworld-guides.json"),
-  );
+  const guides = {
+    ...loadRimworldGuides(roots[0], path.join(siteRoot, "src", "data", "rimworld-guides.json")),
+    ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sunhaven-guides.json"), "sun-haven"),
+  };
   const guided = attachGuides(mods, guides);
   const files = await hostedFiles();
   const hosted = applyHostedVersions(guided, files);

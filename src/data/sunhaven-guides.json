@@ -1,0 +1,497 @@
+{
+  "senpais-chest": {
+    "overview": [
+      "Smart chests with rules, so loot sorts itself. Label a chest, say what belongs in it, and a scan pulls matching stacks from nearby chests.",
+      "Rules can name an item, a category, an item type, a property, or a group you made yourself. Each character keeps their own chest setup."
+    ],
+    "badges": ["BepInEx", "Storage"],
+    "sections": [
+      {
+        "id": "rules",
+        "label": "Rules",
+        "features": [
+          {
+            "title": "Open a chest and press F9",
+            "body": "Turn on Smart Chest and add the rules for what this chest should collect. Adding a rule turns the chest on unless you switch that off."
+          },
+          {
+            "title": "What a rule can match",
+            "body": "A specific item, a category (Equip, Food, Furniture, Undonated Items, and others), an item type, a property such as gems or meals, or one of your groups."
+          },
+          {
+            "title": "The scan",
+            "body": "Smart chests look through nearby chests on a timer (60 seconds by default) and move matching stacks. They never pull from another Smart Chest, and they skip a chest someone else is using."
+          }
+        ]
+      },
+      {
+        "id": "groups",
+        "label": "Labels and groups",
+        "features": [
+          {
+            "title": "Labels above the chest",
+            "body": "Chests, large wooden chests, and the bank can show a label. Hoppers and animal feeders stay unlabeled. Labels can be always on, only on hover, or hidden."
+          },
+          {
+            "title": "Manage Groups",
+            "body": "The game's Crop type mixes flowers and vegetables. Make a group, search items into it, and attach that group to any chest. Wildcards such as Tomato* work, and the same group can be reused."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Settings live in BepInEx/config/SenpaisChest.cfg. Saves are per character, with a .bak beside each file.",
+      "A chest's rules are tied to where it stands. Picking it up clears that setup.",
+      "Undonated Items only appears when S.M.U.T. is installed."
+    ],
+    "worksWith": [
+      { "name": "S.M.U.T.", "note": "Undonated museum items become their own sorting category when S.M.U.T. is installed." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "the-vault": {
+    "overview": [
+      "A per-character vault for the currencies and keys that clutter a bag. Deposit, withdraw, and let shops spend from the vault when the game checks your pockets.",
+      "Open it with Ctrl+V, F8, or LB+Y. F7 shows or hides the HUD. On Steam Deck, amount chips and touch-sized rows are there, and B closes the window."
+    ],
+    "badges": ["BepInEx", "Storage"],
+    "sections": [
+      {
+        "id": "use",
+        "label": "Using it",
+        "features": [
+          {
+            "title": "Deposit and withdraw",
+            "body": "Pick a row, set an amount (or 1 / 5 / 10 / Max), then withdraw into the bag or deposit from it. Drag the HUD's top strip to park it."
+          },
+          {
+            "title": "Shops and keys",
+            "body": "When the game checks or spends a vault-backed currency, the vault counts. Auto-deposit can put new currency away for you."
+          },
+          {
+            "title": "Custom currencies",
+            "body": "Other mods can register a currency at runtime. Those show on the Custom tab. The API lives in TheVault.Abstractions.dll, which must sit next to TheVault.dll."
+          }
+        ]
+      },
+      {
+        "id": "saves",
+        "label": "Saves",
+        "features": [
+          {
+            "title": "One vault per character",
+            "body": "Balances are stored in this mod's own obfuscated save, not in the bag. Routine updates are meant to keep that data and migrate it when the format changes."
+          },
+          {
+            "title": "Full inspector",
+            "body": "Turn on Full Vault Inspector in HavenDevTools (F11 → Azrael's Mods → The Vault) to list every currency, including zeros, plus a debug dump."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Ship both TheVault.dll and TheVault.Abstractions.dll.",
+      "A release that cannot keep old vault saves says so at the top of the mod readme, on the store pages, and in the log. Until that warning, do not delete the vault save for a normal update."
+    ],
+    "worksWith": [
+      { "name": "HavenDevTools", "note": "The full currency inspector is switched on from HavenDevTools, not from TheVault.cfg." },
+      { "name": "Haven's Almanac", "note": "Almanac can read vault totals into the morning briefing." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "havens-birthright": {
+    "overview": [
+      "Every playable race gets its own bonuses, an active ability, drawbacks, and a few conditional synergies. Angel and Demon pick up Celestial Bloodlines: Font of Light and Soul Harvest.",
+      "Switching saves resets the bonuses cleanly. An optional BonusTransfers list, off by default, can copy passive table bonuses from one race onto another."
+    ],
+    "badges": ["BepInEx", "Skills"],
+    "sections": [
+      {
+        "id": "races",
+        "label": "Races",
+        "features": [
+          {
+            "title": "Twelve races",
+            "body": "Each race has a readable set of passives and one active. Drawbacks sit next to the bonuses so a race is a build, not a flat stat stick."
+          },
+          {
+            "title": "Celestial Bloodlines",
+            "body": "Angel's Font of Light and Demon's Soul Harvest are the extra lines. They reset with the rest of the race data when you change saves."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "BonusTransfers stays off until you write TargetRace|SourceRace|BonusType rules in the Birthright config."
+    ],
+    "worksWith": [
+      {
+        "name": "Faster Races",
+        "note": "While Faster Races' speed bonus is on, Birthright's own movement bonus stays off so the two do not stack."
+      },
+      { "name": "Haven's Respec", "note": "Respec is for skill trees. Birthright is the race layer beside it." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "smut": {
+    "overview": [
+      "S.M.U.T. tracks museum donations across the Hall of Gems, the Hall of Culture, and the Aquarium. You can see what is in, what is still missing, and how close a hall is to done.",
+      "Press Ctrl+C to open it. Each character has a separate list, and items show their icons."
+    ],
+    "badges": ["BepInEx", "Tracking"],
+    "sections": [
+      {
+        "id": "halls",
+        "label": "The halls",
+        "features": [
+          {
+            "title": "Three halls",
+            "body": "Gems, Culture, and the Aquarium are tracked on their own, with a completion percentage for each."
+          },
+          {
+            "title": "Search and filter",
+            "body": "Find an item you are carrying, or filter down to what that hall still wants, instead of walking the museum to check."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "The hotkey is configurable in BepInEx/config/SunHavenMuseumUtilityTracker.cfg."
+    ],
+    "worksWith": [
+      { "name": "Senpai's Chest", "note": "Undonated museum items become a sorting category when this mod is installed." },
+      { "name": "Trinket Fortune", "note": "Fortune biases fishing toward trinkets the aquarium does not have yet. S.M.U.T. shows which those are." },
+      { "name": "Sun Haven Todo", "note": "Museum tasks can name the destination hall and show the item icon." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "birthday-reminder": {
+    "overview": [
+      "NPC birthdays get a reminder before the day passes, with gift suggestions and a note of who you have already given to.",
+      "The HUD can be dragged. It is meant to stay quiet until a birthday is actually close."
+    ],
+    "badges": ["BepInEx", "Social"],
+    "sections": [
+      {
+        "id": "reminders",
+        "label": "Reminders",
+        "features": [
+          {
+            "title": "Before the day",
+            "body": "A reminder surfaces in time to buy or craft a gift, instead of after the birthday has gone."
+          },
+          {
+            "title": "Gift suggestions",
+            "body": "The reminder can point at a fitting gift and track that you already gave one, so the same NPC is not double-counted."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Switching characters cleans up birthday todos so the next farmer does not inherit the last one's list."
+    ],
+    "worksWith": [
+      { "name": "Sun Haven Todo", "note": "Birthday reminders can become todos, and those todos are removed when you change character." },
+      { "name": "Gifting Assistant", "note": "The daily gift roster and the birthday reminder cover the same social loop." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "sunhaven-todo": {
+    "overview": [
+      "An in-game list for farm goals, quests, and the chores that repeat. Tasks have categories and priorities, and each character has their own list.",
+      "Press Ctrl+T. The window is parchment, and long titles wrap instead of getting cut off."
+    ],
+    "badges": ["BepInEx", "QoL"],
+    "sections": [
+      {
+        "id": "tasks",
+        "label": "Tasks",
+        "features": [
+          {
+            "title": "Make the day a list",
+            "body": "Add a task, give it a category and a priority, and check it off. The HUD can show the same rows."
+          },
+          {
+            "title": "Museum tasks",
+            "body": "When S.M.U.T. is installed, a museum task can name the hall it belongs to and show the item's icon."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "The hotkey is in BepInEx/config/SunhavenTodo.cfg.",
+      "The list is saved per character. A failed name lookup will not fall back to the previous farmer."
+    ],
+    "worksWith": [
+      { "name": "Birthday Reminder", "note": "Birthdays can land on the list as tasks." },
+      { "name": "Gifting Assistant", "note": "A finished gift can complete the matching todo." },
+      { "name": "Haven's Almanac", "note": "The morning briefing can include what is still open." },
+      { "name": "S.M.U.T.", "note": "Museum tasks pick up the hall name and item icon." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "havens-almanac": {
+    "overview": [
+      "One place for the other mods. A compact HUD, a full dashboard, and a morning briefing that gathers what those mods already know.",
+      "The dashboard opens with Ctrl+F5 by default. The HUD can be dragged, and the whole UI can be scaled."
+    ],
+    "badges": ["BepInEx", "UI"],
+    "sections": [
+      {
+        "id": "briefing",
+        "label": "Briefing",
+        "features": [
+          {
+            "title": "Morning briefing",
+            "body": "At the start of the day, Almanac summarizes the signals it can see: tasks, birthdays, crops, vault totals, and museum progress, depending on what is installed."
+          },
+          {
+            "title": "HUD and dashboard",
+            "body": "The HUD stays small. Ctrl+F5 opens the full board when you want the detail."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Almanac only shows a mod's data when that mod is installed. Missing mods are skipped."
+    ],
+    "worksWith": [
+      { "name": "Sun Haven Todo", "note": "Open tasks can appear in the briefing." },
+      { "name": "Crop Optimizer", "note": "Forecast totals can appear beside the day's plan." },
+      { "name": "The Vault", "note": "Vault totals can appear in the briefing." },
+      { "name": "Birthday Reminder", "note": "Upcoming birthdays can appear in the briefing." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "faster-races": {
+    "overview": [
+      "A movement speed bonus you can turn up or down. It applies to your character without rewriting each race by hand.",
+      "If Haven's Birthright is also installed, Birthright's own speed bonus stays off while this one is active, so the two do not stack."
+    ],
+    "badges": ["BepInEx", "Skills"],
+    "sections": [
+      {
+        "id": "speed",
+        "label": "Speed",
+        "features": [
+          {
+            "title": "One dial",
+            "body": "Set the bonus in config. The rest of a race's identity, from Birthright or the base game, is left alone."
+          },
+          {
+            "title": "No double speed",
+            "body": "Birthright movement bonuses are suppressed only while Faster Races' bonus is on. Turn this mod's bonus off and Birthright's speed returns."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "This is a speed bonus, not a replacement for Haven's Birthright's abilities and drawbacks."
+    ],
+    "worksWith": [
+      { "name": "Haven's Birthright", "note": "Birthright keeps its abilities. Only the movement bonus yields while Faster Races is active." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "trinket-fortune": {
+    "overview": [
+      "Fishing trinkets you do not own yet become more likely as the aquarium fills in. The last few donations are the ones this mod is for.",
+      "It only biases unowned trinkets. Fish that are gated by level still have to respect that gate."
+    ],
+    "badges": ["BepInEx", "Tracking"],
+    "sections": [
+      {
+        "id": "bias",
+        "label": "The bias",
+        "features": [
+          {
+            "title": "Unowned trinkets",
+            "body": "As donated aquarium entries pile up, drops lean toward trinkets the museum does not have. Owned trinkets are not the target."
+          },
+          {
+            "title": "Level gates stay",
+            "body": "If a drop is locked behind a level, the bias does not skip that requirement."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "S.M.U.T. is the way to see which aquarium entries are still empty."
+    ],
+    "worksWith": [
+      { "name": "S.M.U.T.", "note": "The tracker shows which trinkets the aquarium is still missing." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "crop-optimizer": {
+    "overview": [
+      "A crop forecast on the HUD: what is growing, when it is due, and what it is worth, so the next planting is a choice instead of a guess.",
+      "Nel'Vari and Withergate totals use orb and ticket shop prices. They are not priced as gold."
+    ],
+    "badges": ["BepInEx", "Tracking"],
+    "sections": [
+      {
+        "id": "forecast",
+        "label": "Forecast",
+        "features": [
+          {
+            "title": "Seasonal planning",
+            "body": "The HUD shows growth and value so you can see which plots are worth the day."
+          },
+          {
+            "title": "Other currencies",
+            "body": "Nel'Vari orbs and Withergate tickets are priced from those shops. A gold-only total would undercount those farms."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Todo, Birthday Reminder, and The Vault integrations are soft. They add to the forecast when those mods are installed and stay quiet when they are not."
+    ],
+    "worksWith": [
+      { "name": "Haven's Almanac", "note": "Forecast numbers can feed the morning briefing." },
+      { "name": "Sun Haven Todo", "note": "Optional task hooks for the farming plan." },
+      { "name": "The Vault", "note": "Optional. Vault totals can sit beside the crop plan." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "havens-respec": {
+    "overview": [
+      "Every profession tab gets a Reset button. Confirm it, and that tree is cleared and the points come back. The last reset on a profession can be undone in the same session.",
+      "The confirm dialog says how many points return and what it costs. Hold Shift to skip the dialog. Cost can be nothing, gold, or gems."
+    ],
+    "badges": ["BepInEx", "Skills"],
+    "sections": [
+      {
+        "id": "reset",
+        "label": "Reset",
+        "features": [
+          {
+            "title": "Reset, then undo",
+            "body": "Confirm clears the live skill nodes and returns the points. Undo restores the allocation from just before that reset, for that profession, until you leave the session."
+          },
+          {
+            "title": "Cost",
+            "body": "Default cost is nothing. Gold or gems can be charged per point. The dialog shows the bill before you accept. Both Confirm and Cancel close the prompt."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Settings are in BepInEx/config/HavensRespec.cfg and in BepInEx Configuration Manager.",
+      "Reset reads the skill nodes the game actually placed, so a Sun Haven update that adds a row does not leave a hardcoded list behind."
+    ],
+    "worksWith": [
+      { "name": "Haven's Birthright", "note": "Respec resets skill trees. Birthright remains the race layer." },
+      { "name": "Faster Races", "note": "Movement speed is separate from the skill reset." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "gifting-assistant": {
+    "overview": [
+      "A daily gift list, one row per character. Loved and liked gifts show with icons, you can pin a preferred gift, and the list remembers who already got something today.",
+      "Press Ctrl+G. Priority sort puts the people you care about first."
+    ],
+    "badges": ["BepInEx", "Social"],
+    "sections": [
+      {
+        "id": "roster",
+        "label": "The day's gifts",
+        "features": [
+          {
+            "title": "Loved and liked",
+            "body": "Each NPC row suggests gifts they love or like, with the item icon, plus a heart bar so you can see the relationship beside the plan."
+          },
+          {
+            "title": "Gifted today",
+            "body": "Once you give a gift, that row is marked. The next morning the marks clear. Priority sort keeps the unfinished rows in front."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Config is BepInEx/config/GiftingAssistant.cfg. The mod ships with 16 languages."
+    ],
+    "worksWith": [
+      { "name": "Sun Haven Todo", "note": "A finished gift can complete the matching daily task." },
+      { "name": "Birthday Reminder", "note": "Birthdays and the daily roster cover the same visits." },
+      { "name": "Haven's Almanac", "note": "Gift progress can show up in the briefing." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "havens-mirror": {
+    "overview": [
+      "Your farmer's dialogue portrait comes from PNGs you drop in a gallery folder. The bust sits on the left at the same size as an NPC portrait.",
+      "Seasonal outfits are more pictures in that folder. Ctrl+F8 reloads them without leaving the game. An optional forced look can override an NPC bust."
+    ],
+    "badges": ["BepInEx", "UI"],
+    "sections": [
+      {
+        "id": "busts",
+        "label": "Portraits",
+        "features": [
+          {
+            "title": "A folder of PNGs",
+            "body": "Put portraits in the gallery. Dialogue uses them for your side of the conversation, sized like the NPC bust opposite."
+          },
+          {
+            "title": "Reload",
+            "body": "Ctrl+F8 picks up new files. You do not replace the game's core portraits to change a season or an outfit."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "ForcedLook is optional. Leave it off and only your own bust changes."
+    ],
+    "worksWith": [
+      { "name": "Gifting Assistant", "note": "Both are about the characters you talk to. Mirror does not change the gift list." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "haven-dev-tools": {
+    "overview": [
+      "Inspection tools for people writing or testing mods. Open the menu with F11 and look at game state while the game is running.",
+      "It is not a player aid. It can cost performance, and several other mods hang their debug switches off this menu."
+    ],
+    "badges": ["BepInEx", "Dev"],
+    "sections": [
+      {
+        "id": "inspect",
+        "label": "Inspect",
+        "features": [
+          {
+            "title": "F11",
+            "body": "The Azrael's Mods section is where suite debug flags live, including The Vault's full currency inspector."
+          },
+          {
+            "title": "Mod health",
+            "body": "The suite shares an overnight-unhook revision so a mod can tell when a sibling was built against an older shared helper."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Leave it out of a normal play set if you do not need the inspector.",
+      "The Vault's full inspector is enabled here, in HavenDevTools.cfg, not in TheVault.cfg."
+    ],
+    "worksWith": [
+      { "name": "The Vault", "note": "Full Vault Inspector is toggled from this menu." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  }
+}
