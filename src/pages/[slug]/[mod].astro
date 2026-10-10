@@ -37,8 +37,11 @@ const storeLinks = [
 
 <Base title={mod.name} description={mod.description} game={mod.game}>
   {
-    mod.game === "rimworld" ? (
-      <div class="rw-hub rw-mod" style={heroVars(mod.slug)}>
+    mod.game === "rimworld" || mod.game === "sun-haven" ? (
+      <div
+        class:list={[mod.game === "rimworld" ? "rw-hub rw-mod" : "sh-hub sh-mod", "guide-page"]}
+        style={heroVars(mod.slug)}
+      >
         <header class="rw-hero">
           <div class="rw-wrap rw-hero-layout">
             <div>

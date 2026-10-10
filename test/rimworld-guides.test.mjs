@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { attachGuides, guideFromSiteMod } from "../scripts/collect-mods.mjs";
+import { attachGuides, guideFromSiteMod, loadPackagedGuides } from "../scripts/collect-mods.mjs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 test("a site mod becomes a page guide", () => {
   const guide = guideFromSiteMod({
@@ -30,6 +32,15 @@ test("a site mod becomes a page guide", () => {
   assert.equal(guide.faq.rows[0].pair, "Hearth vs stove");
   assert.equal(guide.worksWith[0].name, "Stormproof");
   assert.deepEqual(guide.compatNotes, ["Harmony is required."]);
+});
+
+test("Sun Haven guides load under sun-haven slugs", () => {
+  const file = path.join(path.dirname(fileURLToPath(import.meta.url)), "../src/data/sunhaven-guides.json");
+  const guides = loadPackagedGuides(file, "sun-haven");
+  assert.ok(guides["sun-haven/the-vault"].overview.length > 0);
+  assert.equal(guides["rimworld/the-vault"], undefined);
+  const mods = attachGuides([{ game: "sun-haven", slug: "smut", name: "S.M.U.T." }], guides);
+  assert.equal(mods[0].guide.sections[0].id, "halls");
 });
 
 test("guides attach only to the matching RimWorld mod", () => {
