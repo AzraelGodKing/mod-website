@@ -1,0 +1,358 @@
+{
+  "blood-moon-sound": {
+    "overview": [
+      "Play your own clips for the blood moon, for entering a world, and for dawn and dusk. Dawn and dusk follow this world's day length, so a short day still rings at sunrise and sunset.",
+      "The public zip has no sounds. Drop bloodmoon, spawn, morning, and night as .ogg, .wav, or .mp3 into the mod folder. A missing file means that cue stays quiet."
+    ],
+    "badges": ["Players", "Optional on the server"],
+    "sections": [
+      {
+        "id": "clips",
+        "label": "Your clips",
+        "features": [
+          {
+            "title": "Blood moon",
+            "body": "PlayAt can be the horde, a warning earlier that day, or both. WarningHour defaults to 21. Joining in the middle of a blood moon does not play the clip. It plays when one starts while you are in the game."
+          },
+          {
+            "title": "Enter the world",
+            "body": "The spawn clip plays once each time you enter a world. Dying and respawning in the same session does not play it again. In 1.2.1 it waits until the clock has settled, so a load does not ring morning and night together."
+          },
+          {
+            "title": "Dawn and dusk",
+            "body": "Morning and night can each be turned on or off. Each one plays once per event day. F1: bmsound shows status, bmsound test plays a clip, and bmsound reload re-reads settings.txt and the files."
+          }
+        ]
+      },
+      {
+        "id": "server",
+        "label": "On the server",
+        "features": [
+          {
+            "title": "A cue for everyone",
+            "body": "On a dedicated server the horde can play a built-in sound (alarm1_oneshot by default) for every player, including people without the mod. Players who have their own bloodmoon clip hear that clip instead, around horde start."
+          },
+          {
+            "title": "Discord",
+            "body": "Optional. Copy discord.example.txt to discord.txt on the server, paste a webhook, then bmdiscord reload and bmdiscord test. Reminders, a daily countdown, horde start, updates, and dawn are all in that file. Players do not need the mod for the posts."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Players launch without EasyAntiCheat. The server does not need the mod for your own clips.",
+      "discord.txt holds a webhook secret. It is not in the public zip.",
+      "F1 commands work on a multiplayer server that does not have the mod. They run on your PC."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "craft-from-chests": {
+    "overview": [
+      "While a crafting screen is open, the recipe list, the have counts, and the craft button also count items in player-placed chests inside the land claim you are standing in.",
+      "If your backpack is short, the missing materials move from those chests into your backpack first, then the normal craft or upgrade runs."
+    ],
+    "badges": ["Players only"],
+    "sections": [
+      {
+        "id": "craft",
+        "label": "Crafting",
+        "features": [
+          {
+            "title": "Which screens",
+            "body": "Backpack, workbench, chemistry station, cement mixer, and campfire. The forge is unchanged. It has its own material slots."
+          },
+          {
+            "title": "What it will take",
+            "body": "Stackable materials. Tools, weapons, and armor are never taken. A recipe that also needs a quality item still takes the stackable parts from the chests. A gyro's wheels can come from a chest. The small engine stays in your backpack."
+          },
+          {
+            "title": "Someone else has the chest open",
+            "body": "On a multiplayer server the mod waits for the server to confirm each chest change. If that chest is in use, nothing is crafted or upgraded, and anything already taken stays in your backpack."
+          }
+        ]
+      },
+      {
+        "id": "upgrades",
+        "label": "Upgrades",
+        "features": [
+          {
+            "title": "Block upgrades",
+            "body": "Upgrading a block with a repair tool uses the same chests for wood, cobblestone, concrete, steel, and the rest."
+          },
+          {
+            "title": "Upgrade Bench",
+            "body": "With the Upgrade Bench mod installed, that bench's material cost comes from the same chests. The two mods you put in the bench still have to be in the bench."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Only players install it. The server needs nothing. Launch without EasyAntiCheat.",
+      "settings.txt is each player's own copy. Restart after editing. AllowAllies lets chests in an ally's claim count too."
+    ],
+    "worksWith": [
+      { "name": "Upgrade Bench", "note": "The bench's material cost can come from claim chests. The two mods being combined stay in the bench." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "honk-door-fix": {
+    "overview": [
+      "Fixes a vanilla bug where honking a vehicle near the top of the world makes the server throw the same error every tick.",
+      "Honking at a trader still opens the doors, the same as vanilla."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "honk",
+        "label": "The honk",
+        "features": [
+          {
+            "title": "What breaks",
+            "body": "A honk scans blocks around the vehicle. The scan skips anything below y 0 and never checks the top of the world, so a honk at the top reads past the chunk and the event never finishes."
+          },
+          {
+            "title": "What this does",
+            "body": "The scan is trimmed to the world height before it runs. A block-scan event that still reads out of range is ended. That covers every block-scan game event, not only the honk."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only. Players install nothing and can leave EasyAntiCheat on.",
+      "In single player, put it in your own Mods folder."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "keep-backpacks": {
+    "overview": [
+      "Death backpacks never disappear. Dropped items, vehicle storage bags, and zombie loot bags last 24 hours. Vanilla is one hour for all of them.",
+      "The server sends the times when a player connects. Change them in settings.txt and reload without a restart."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "times",
+        "label": "How long",
+        "features": [
+          {
+            "title": "Death backpacks",
+            "body": "Permanent by default. The timer only counts while a player is near enough to keep that area loaded. Opened bags that are emptied still disappear, as in vanilla."
+          },
+          {
+            "title": "The other bags",
+            "body": "Dropped items, vehicle storage (a vehicle picked up or destroyed), and zombie loot last 24 hours. Zombie loot stays finite on purpose. Every zombie can drop one, so permanent bags would pile up."
+          },
+          {
+            "title": "How to write a time",
+            "body": "A plain number is seconds. 24h, 90m, 3600s, and permanent also work. 0 makes that bag vanish immediately. permanent is about three years of that area being loaded."
+          }
+        ]
+      },
+      {
+        "id": "commands",
+        "label": "Commands",
+        "features": [
+          {
+            "title": "kbags",
+            "body": "An admin runs kbags to see the times, and kbags reload to re-read settings.txt. People already connected keep the old times until they rejoin."
+          },
+          {
+            "title": "kbclear",
+            "body": "Anyone with the password can remove dropped-item bags and loose items on the ground, in areas that are loaded right then. It does not remove death backpacks, zombie loot, or vehicle storage. kbags password sets that word."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only. Players install nothing and can leave EasyAntiCheat on.",
+      "Replacing this mod's code still needs a server restart. kbags reload only refreshes the bag times.",
+      "1.2.1 is the version that runs on 7 Days 3.3. That update removed the old backpack timer."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "quest-disconnect-fix": {
+    "overview": [
+      "Stops a quest logout crash that leaves a player in the world after they disconnect. Rejoining then fails until the server restarts.",
+      "The logout is allowed to finish even when a quest's saved POI position matches no POI."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "logout",
+        "label": "The logout",
+        "features": [
+          {
+            "title": "Ghost players",
+            "body": "On logout the game unlocks each in-progress quest POI. A saved position that matches no POI throws, the disconnect stops halfway, and the player stays in the world. The server keeps pinging them, and a rejoin hits a duplicate player id."
+          },
+          {
+            "title": "What this does",
+            "body": "It skips the unlock when there is no POI at that position, and logs a skipped-unlock warning. Any other exception in that quest cleanup is caught so the logout still finishes."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only. Players install nothing and can leave EasyAntiCheat on."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "remove-any-entity": {
+    "overview": [
+      "Choose which zombies and animals stop spawning. entities.txt lists every vanilla entity that spawns naturally, all commented out. Remove the # in front of a name, then restart.",
+      "A name also removes its tiered versions. zombieScreamer removes the feral, radiated, charged, and infernal screamers. A full name such as zombieScreamerRadiated removes just that one. Names from other mods work too."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "list",
+        "label": "The list",
+        "features": [
+          {
+            "title": "Where it applies",
+            "body": "Every spawn group: biomes, POI sleepers, wandering and blood moon hordes, and screamer scouts, as the game loads entity groups. Twitch spawn actions too. Creatures already in the world stay. An admin can still spawnentity anything."
+          },
+          {
+            "title": "What fills the gap",
+            "body": "The remaining chances are rescaled, so the rest of a group spawns in the removed entities' place. A group left with nothing real gets a random pick from Replacement (10 basic zombies by default). Its original chance of nothing is kept, so rare spawns stay rare."
+          }
+        ]
+      },
+      {
+        "id": "console",
+        "label": "Console",
+        "features": [
+          {
+            "title": "rae",
+            "body": "Shows what is removed, how many groups changed, and typos in entities.txt."
+          },
+          {
+            "title": "rae group",
+            "body": "Shows what a spawn group can spawn now, with chances. A partial name is suggested when it does not match."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only. Players install nothing. In single player it goes in your own Mods folder.",
+      "Challenges that need a removed creature, such as Kill 50 coyotes, cannot be completed.",
+      "This is a separate mod from Remove Entities. That one changes the list in game with rement and keeps the old mod id. This one reads entities.txt.",
+      "Coming from Remove Zombie Dogs: delete that folder, install this one, and uncomment animalZombieDog, animalCoyote, animalDireWolf, and zombieScreamer for the same result."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": [
+      "Remove Entities is the live-command version of the same idea. Pick one way to edit the spawn list."
+    ]
+  },
+  "remove-zombie-dogs": {
+    "overview": [
+      "The first time it runs, zombie dogs, coyotes, dire wolves, and screamers stop spawning. After that, an admin chooses the list with rement. The choice is saved in removed.txt and applies on the next spawn, with no restart.",
+      "In the game's mod list the name is Remove Entities. The folder is still RemoveZombieDogs, so it updates that install."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "commands",
+        "label": "rement",
+        "features": [
+          {
+            "title": "See the list",
+            "body": "rement shows what is currently removed. rement list is every creature class. rement list dog narrows it. rement list all is every entity class."
+          },
+          {
+            "title": "Change it",
+            "body": "rement remove stops that class from spawning. zombieScreamer* stops every name that starts with that. rement add lets it spawn again. playerMale, playerFemale, and item cannot be removed."
+          },
+          {
+            "title": "Empty groups",
+            "body": "A group that no longer has anything left spawns one of 10 basic zombies. A group that still has a none entry keeps that roll, so rare animal groups stay rare. Creatures already alive are not deleted."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only. Players install nothing and can leave EasyAntiCheat on.",
+      "Ones saved in the world stay that creature. The Kill 50 coyotes challenge cannot be finished while coyotes are removed.",
+      "Remove Any Entity is the other way to do this: a file you edit, then a restart, and its own mod id."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": [
+      "Remove Any Entity reads entities.txt instead of rement. Pick one way to edit the spawn list."
+    ]
+  },
+  "speedometer": {
+    "overview": [
+      "Shows your speed on the HUD, bottom right, above the vehicle gas and health bars. It shows while you are in a vehicle by default.",
+      "Speed is how far you or the vehicle actually moved, smoothed every tenth of a second. It works for drivers, passengers, and on foot, and it ignores teleports."
+    ],
+    "badges": ["Players only"],
+    "sections": [
+      {
+        "id": "hud",
+        "label": "The HUD",
+        "features": [
+          {
+            "title": "Keys",
+            "body": "F5 shows or hides it. F2 switches MPH and KM/H. With the inventory open, clicking the readout switches the unit. Hotkeys are ignored while typing, in menus, or paused. F2 and F5 have no default binding in V3.2, so they do not clash with game controls."
+          },
+          {
+            "title": "speedo",
+            "body": "In the F1 console, speedo shows the settings. speedo off, on, or always is hidden, vehicles only, or on foot too. speedo mph, kmh, or unit picks the unit. speedo key hide and speedo key unit rebind a key. none turns a hotkey off. speedo key reset goes back to F5 and F2."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Only players need it. The server does not. Launch without EasyAntiCheat.",
+      "Settings are saved per player in %APPDATA%\\7DaysToDie\\AzraelSpeedometer.txt.",
+      "The speedo command runs on your PC, including on a multiplayer server that does not have the mod."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "upgrade-bench": {
+    "overview": [
+      "An Upgrade Bench, crafted at a workbench. Put two of the same weapon, armor, tool, or vehicle mod in it, at the same quality, plus the materials in upgrades.txt.",
+      "Both mods and the materials are used. One mod comes back one quality level higher, up to Q6. The upgraded mod keeps its mod slots."
+    ],
+    "badges": ["Server and every player"],
+    "sections": [
+      {
+        "id": "bench",
+        "label": "The bench",
+        "features": [
+          {
+            "title": "What you put in",
+            "body": "Two copies of the same mod, same quality, plus the materials listed for that step. Costs live in upgrades.txt on each player's copy of the mod."
+          },
+          {
+            "title": "Who installs it",
+            "body": "The block and recipe have to be on the server. Clients receive them. The upgrade itself runs on each player's PC, so every player installs the mod too."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Restart after editing upgrades.txt. A typo in an item name shows up in the game log.",
+      "1.0.1 is the version for 7 Days 3.3.",
+      "Players launch without EasyAntiCheat."
+    ],
+    "worksWith": [
+      { "name": "Craft From Chests", "note": "That mod can pull the bench's material cost from claim chests. The two mods being combined still have to be in the bench." }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  }
+}

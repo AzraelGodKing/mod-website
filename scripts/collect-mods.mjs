@@ -143,6 +143,7 @@ async function main() {
   const guides = {
     ...loadRimworldGuides(roots[0], path.join(siteRoot, "src", "data", "rimworld-guides.json")),
     ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sunhaven-guides.json"), "sun-haven"),
+    ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sevendays-guides.json"), "7-days-to-die"),
   };
   const guided = attachGuides(mods, guides);
   const files = await hostedFiles();
