@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove Any Entity replaces Remove Zombie Dogs / Remove Entities on the 7 Days to Die catalog and links its Nexus page (12841). The separate Remove Zombie Dogs page, theme, and report label are gone, and the guide tells players to delete the old `RemoveZombieDogs` folder.
+
 - Each RimWorld mod page uses that mod's colors and explains what it does: overview, feature groups, and what to know before you install.
 - Each Sun Haven mod page does the same: that mod's colors, what it does, and which other mods it pairs with.
 - Each 7 Days to Die mod page does the same, in the night-board look: that mod's colors, what it does, and whether it goes on the server, the player, or both.

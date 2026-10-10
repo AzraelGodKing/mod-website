@@ -248,14 +248,6 @@ const looks: Record<string, ModLook> = {
     accent: "#6a8f72",
     accentInk: "#10140f",
   },
-  "remove-zombie-dogs": {
-    mark: "No dogs, no screamers",
-    wash: "#1c1816",
-    heroInk: "#f4ece8",
-    heroMuted: "#cbb6ae",
-    accent: "#c47a62",
-    accentInk: "#1a100c",
-  },
   speedometer: {
     mark: "Speed on the HUD",
     wash: "#14181c",

@@ -245,50 +245,13 @@
     "notes": [
       "Server only. Players install nothing. In single player it goes in your own Mods folder.",
       "Challenges that need a removed creature, such as Kill 50 coyotes, cannot be completed.",
-      "This is a separate mod from Remove Entities. That one changes the list in game with rement and keeps the old mod id. This one reads entities.txt.",
-      "Coming from Remove Zombie Dogs: delete that folder, install this one, and uncomment animalZombieDog, animalCoyote, animalDireWolf, and zombieScreamer for the same result."
+      "Formerly Remove Zombie Dogs, later Remove Entities. Same Nexus page.",
+      "Coming from Remove Zombie Dogs or Remove Entities: delete the old RemoveZombieDogs folder first, since this version has its own mod id. The old rement list does not carry over. Uncomment the same names in entities.txt; animalZombieDog, animalCoyote, animalDireWolf, and zombieScreamer match the old defaults."
     ],
     "worksWith": [],
     "avoid": [],
     "compatNotes": [
-      "Remove Entities is the live-command version of the same idea. Pick one way to edit the spawn list."
-    ]
-  },
-  "remove-zombie-dogs": {
-    "overview": [
-      "The first time it runs, zombie dogs, coyotes, dire wolves, and screamers stop spawning. After that, an admin chooses the list with rement. The choice is saved in removed.txt and applies on the next spawn, with no restart.",
-      "In the game's mod list the name is Remove Entities. The folder is still RemoveZombieDogs, so it updates that install."
-    ],
-    "badges": ["Server only"],
-    "sections": [
-      {
-        "id": "commands",
-        "label": "rement",
-        "features": [
-          {
-            "title": "See the list",
-            "body": "rement shows what is currently removed. rement list is every creature class. rement list dog narrows it. rement list all is every entity class."
-          },
-          {
-            "title": "Change it",
-            "body": "rement remove stops that class from spawning. zombieScreamer* stops every name that starts with that. rement add lets it spawn again. playerMale, playerFemale, and item cannot be removed."
-          },
-          {
-            "title": "Empty groups",
-            "body": "A group that no longer has anything left spawns one of 10 basic zombies. A group that still has a none entry keeps that roll, so rare animal groups stay rare. Creatures already alive are not deleted."
-          }
-        ]
-      }
-    ],
-    "notes": [
-      "Server only. Players install nothing and can leave EasyAntiCheat on.",
-      "Ones saved in the world stay that creature. The Kill 50 coyotes challenge cannot be finished while coyotes are removed.",
-      "Remove Any Entity is the other way to do this: a file you edit, then a restart, and its own mod id."
-    ],
-    "worksWith": [],
-    "avoid": [],
-    "compatNotes": [
-      "Remove Any Entity reads entities.txt instead of rement. Pick one way to edit the spawn list."
+      "Don't run it next to the old RemoveZombieDogs folder. Delete that one."
     ]
   },
   "speedometer": {
