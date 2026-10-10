@@ -11,6 +11,23 @@ export interface ModDownload {
   url?: string;
 }
 
+export interface ModFeature {
+  title: string;
+  body: string;
+  tag?: string;
+}
+
+export interface ModGuide {
+  overview: string[];
+  badges: string[];
+  sections: { id: string; label: string; features: ModFeature[] }[];
+  notes: string[];
+  faq?: { title: string; intro: string; rows: { pair: string; answer: string }[] };
+  worksWith: { name: string; note: string }[];
+  avoid: { name: string; note: string }[];
+  compatNotes: string[];
+}
+
 export interface ModEntry {
   slug: string;
   name: string;
@@ -21,6 +38,7 @@ export interface ModEntry {
   images: string[];
   download: ModDownload;
   links: ModLinks;
+  guide?: ModGuide;
 }
 
 export const mods = catalog.mods as ModEntry[];

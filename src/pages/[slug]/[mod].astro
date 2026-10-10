@@ -25,6 +25,9 @@ const preview = mod.slug === "azrael" ? undefined : mod.images[0];
 const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
 const notReady = isNotReady(mod);
+const guide = mod.guide;
+const overview = guide?.overview?.length ? guide.overview : [mod.description];
+const sections = guide?.sections ?? [];
 const storeLinks = [
   ["Steam", mod.links.steam],
   ["Thunderstore", mod.links.thunderstore],
@@ -44,7 +47,18 @@ const storeLinks = [
               </p>
               <h1>{mod.name}</h1>
               <p class="rw-tagline">{look.mark}</p>
-              <p class="rw-intro">{mod.description}</p>
+              {
+                guide?.badges?.length ? (
+                  <p class="rw-pills">
+                    {guide.badges.map((badge) => (
+                      <span>{badge}</span>
+                    ))}
+                  </p>
+                ) : null
+              }
+              {overview.map((paragraph) => (
+                <p class="rw-intro">{paragraph}</p>
+              ))}
             </div>
             <aside class="rw-stats">
               <span class="rw-stat-label">Version</span>
@@ -81,6 +95,107 @@ const storeLinks = [
             ))}
           </p>
           {
+            sections.length > 0 && (
+              <section class="rw-section" data-feature-tabs>
+                <h2>What it does</h2>
+                {
+                  sections.length > 1 && (
+                    <div class="rw-tabs" role="tablist" aria-label={`${mod.name} topics`}>
+                      {sections.map((section, index) => (
+                        <button type="button" role="tab" data-tab={section.id} aria-selected={index === 0 ? "true" : "false"}>
+                          {section.label}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                }
+                {sections.map((section, index) => (
+                  <div class="rw-features" role="tabpanel" data-panel={section.id} hidden={index === 0 ? undefined : true}>
+                    {section.features.map((feature) => (
+                      <article class="rw-feature">
+                        <h3>
+                          {feature.title}
+                          {feature.tag && <span class="rw-feature-tag">{feature.tag}</span>}
+                        </h3>
+                        <p>{feature.body}</p>
+                      </article>
+                    ))}
+                  </div>
+                ))}
+              </section>
+            )
+          }
+          {
+            guide?.notes?.length ? (
+              <section class="rw-section">
+                <h2>Good to know</h2>
+                <ul class="rw-notes">
+                  {guide.notes.map((note) => (
+                    <li>{note}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : null
+          }
+          {
+            guide?.faq && (
+              <section class="rw-section">
+                <h2>{guide.faq.title}</h2>
+                {guide.faq.intro && <p class="rw-intro">{guide.faq.intro}</p>}
+                <div class="rw-faq">
+                  {guide.faq.rows.map((row) => (
+                    <article>
+                      <h3>{row.pair}</h3>
+                      <p>{row.answer}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )
+          }
+          {
+            (guide?.worksWith?.length || guide?.avoid?.length || guide?.compatNotes?.length) ? (
+              <section class="rw-section">
+                <h2>Alongside other mods</h2>
+                <div class="rw-compat">
+                  {
+                    guide.worksWith?.length ? (
+                      <div>
+                        <h3>Works with</h3>
+                        <ul class="rw-notes">
+                          {guide.worksWith.map((entry) => (
+                            <li>
+                              <strong>{entry.name}</strong>
+                              {entry.note ? ` — ${entry.note}` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null
+                  }
+                  {
+                    guide.avoid?.length ? (
+                      <div>
+                        <h3>Leave these off</h3>
+                        <ul class="rw-notes">
+                          {guide.avoid.map((entry) => (
+                            <li>
+                              <strong>{entry.name}</strong>
+                              {entry.note ? ` — ${entry.note}` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null
+                  }
+                </div>
+                {guide.compatNotes?.map((note) => (
+                  <p class="rw-intro">{note}</p>
+                ))}
+              </section>
+            ) : null
+          }
+          {
             others.length > 0 && (
               <nav class="rw-more" aria-label={`Other ${game?.name ?? "game"} mods`}>
                 <h2>Other {game?.name} mods</h2>
@@ -110,6 +225,18 @@ const storeLinks = [
           }
           <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
         </div>
+        <script is:inline>
+          const root = document.querySelector("[data-feature-tabs]");
+          if (root) {
+            const tabs = [...root.querySelectorAll("[data-tab]")];
+            const panels = [...root.querySelectorAll("[data-panel]")];
+            const show = (id) => {
+              for (const tab of tabs) tab.setAttribute("aria-selected", tab.dataset.tab === id ? "true" : "false");
+              for (const panel of panels) panel.hidden = panel.dataset.panel !== id;
+            };
+            for (const tab of tabs) tab.addEventListener("click", () => show(tab.dataset.tab));
+          }
+        </script>
       </div>
     ) : (
   <article style={heroVars(mod.slug)}>

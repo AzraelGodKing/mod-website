@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -18,6 +18,68 @@ function walk(dir, found) {
     if (entry.isDirectory()) walk(full, found);
     else if (entry.name === "mod.json") found.push(full);
   }
+}
+
+function namedNotes(entries) {
+  return (entries ?? [])
+    .filter((entry) => entry?.name)
+    .map((entry) => ({ name: entry.name, note: entry.note ?? "" }));
+}
+
+export function guideFromSiteMod(mod) {
+  if (!mod || (!Array.isArray(mod.overview) && !Array.isArray(mod.featureTabs))) return null;
+  const faq = mod.stationFaq?.title
+    ? {
+        title: mod.stationFaq.title,
+        intro: mod.stationFaq.intro ?? "",
+        rows: (mod.stationFaq.rows ?? []).map((row) => ({ pair: row.pair, answer: row.answer })),
+      }
+    : null;
+  return {
+    overview: mod.overview ?? [],
+    badges: mod.badges ?? [],
+    sections: (mod.featureTabs ?? []).map((tab) => ({
+      id: tab.id,
+      label: tab.label,
+      features: (tab.features ?? []).map((feature) => ({
+        title: feature.title,
+        body: feature.body,
+        ...(feature.tag ? { tag: feature.tag } : {}),
+      })),
+    })),
+    notes: mod.goodToKnow ?? [],
+    ...(faq ? { faq } : {}),
+    worksWith: namedNotes(mod.compatibility?.compatibleWith),
+    avoid: namedNotes(mod.compatibility?.incompatibleWith),
+    compatNotes: mod.compatibility?.notes ?? [],
+  };
+}
+
+export function loadRimworldGuides(rimworldRoot, fallbackFile) {
+  const guides = {};
+  const siteFile = path.join(rimworldRoot, "site", "src", "data", "mods.json");
+  if (existsSync(siteFile)) {
+    const site = JSON.parse(readFileSync(siteFile, "utf8"));
+    for (const mod of site.mods ?? []) {
+      const guide = guideFromSiteMod(mod);
+      if (guide && mod.id) guides[`rimworld/${mod.id}`] = guide;
+    }
+  }
+  if (fallbackFile && existsSync(fallbackFile)) {
+    const extra = JSON.parse(readFileSync(fallbackFile, "utf8"));
+    for (const [slug, guide] of Object.entries(extra)) {
+      const key = `rimworld/${slug}`;
+      if (!guides[key]) guides[key] = guide;
+    }
+  }
+  return guides;
+}
+
+export function attachGuides(mods, guides) {
+  return mods.map((mod) => {
+    const guide = guides[`${mod.game}/${mod.slug}`];
+    return guide ? { ...mod, guide } : mod;
+  });
 }
 
 export function applyHostedVersions(mods, files) {
@@ -70,8 +132,13 @@ async function main() {
     process.exit(1);
   }
 
+  const guides = loadRimworldGuides(
+    roots[0],
+    path.join(siteRoot, "src", "data", "rimworld-guides.json"),
+  );
+  const guided = attachGuides(mods, guides);
   const files = await hostedFiles();
-  const hosted = applyHostedVersions(mods, files);
+  const hosted = applyHostedVersions(guided, files);
   for (const mod of hosted) {
     const previous = mods.find((entry) => entry.game === mod.game && entry.slug === mod.slug);
     if (previous && previous.version !== mod.version) {

@@ -1,0 +1,140 @@
+{
+  "azrael": {
+    "overview": [
+      "Series showcase: The Deep Homestead scenario and Hub health in Mod Options. The canonical Azrael storyteller still ships with Homesteader.",
+      "Open Mod Options to see which series mods are loaded, whether their bridges are intact, and what you would have to clear before taking one out."
+    ],
+    "badges": ["RimWorld 1.6", "Requires Harmony"],
+    "sections": [
+      {
+        "id": "hub",
+        "label": "Hub",
+        "features": [
+          {
+            "title": "Series health",
+            "body": "Mod Options inventories the loaded series mods, their build stamps, and Harmony failures. That scan builds once each time you open settings."
+          },
+          {
+            "title": "Load order",
+            "body": "The hub warns when a series mod loads after Azrael. Azrael is meant to load last so it can see the others."
+          },
+          {
+            "title": "Sister bridges",
+            "body": "It checks the live Nemesis to Deep Colony epitaph hook, and only mentions Deep Colony hediffs when a pawn actually has one."
+          }
+        ]
+      },
+      {
+        "id": "removal",
+        "label": "Safe removal",
+        "features": [
+          {
+            "title": "A report, not a save edit",
+            "body": "Each loaded series mod can open a report of its buildings, items, caravan cargo, and blockers. Queued deconstruction does not rewrite the save."
+          },
+          {
+            "title": "What blocks uninstall",
+            "body": "An active or truced Nemesis hunt, colonists still on a Strata floor, Deep Colony family letters, and a parked Nemesis world pawn show up in the report."
+          }
+        ]
+      },
+      {
+        "id": "start",
+        "label": "Deep Homestead",
+        "features": [
+          {
+            "title": "Showcase start",
+            "body": "The Deep Homestead scenario is the series start. Start a new game for the scenario. The storyteller itself is safe to add to an existing save."
+          },
+          {
+            "title": "Storyteller stays with Homesteader",
+            "body": "The Azrael storyteller is packaged with Homesteader. Sibling scenarios lock it when Homesteader is loaded."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Requires Harmony. RimWorld 1.6.",
+      "Safe to add mid-save for the storyteller. Start a new game for The Deep Homestead scenario.",
+      "Chinese Simplified and Russian include the scenario and hub strings."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
+  "living-world": {
+    "overview": [
+      "Off-map faction life: other settlements drift, flip ownership, feud, and make news — without a second storyteller dumping threat at you.",
+      "Personal antagonists stay in Nemesis. Player goodwill stays in Deep Colony. Living World is the chronicle of everyone else."
+    ],
+    "badges": ["RimWorld 1.6", "Requires Harmony"],
+    "sections": [
+      {
+        "id": "chronicle",
+        "label": "Chronicle",
+        "features": [
+          {
+            "title": "World history",
+            "body": "The Chronicle tab keeps what the world did, with faction and hear-channel filters. Click a row to move the world camera to that tile."
+          },
+          {
+            "title": "Rumours",
+            "body": "News from far away can arrive wrong. A later entry corrects it in the chronicle."
+          },
+          {
+            "title": "Big news still lands",
+            "body": "A faction that loses its last settlement gets a collapse letter. When a settlement's prosperity slides into struggle, a distinct famine rumour goes out. Those major letters are not dropped to make room for smaller ones."
+          }
+        ]
+      },
+      {
+        "id": "road",
+        "label": "The road",
+        "features": [
+          {
+            "title": "Miles on the map",
+            "body": "After your caravans have walked eight unique tiles, the road notices. Every fourth new tile on a stretch you already walked can found a way-camp: an easier overnight rest, not a settlement."
+          },
+          {
+            "title": "Road-worn",
+            "body": "A long-running caravan can pick up road-worn: a little faster on the march, fading over a season."
+          },
+          {
+            "title": "Route hazards",
+            "body": "Mud, heat, cold, or wind can sit on tiles you already walked. Way-camps make that rarer. Rest and food take a hit; road-worn pawns take less. Toggle it in Mod Options."
+          }
+        ]
+      },
+      {
+        "id": "settlements",
+        "label": "Settlements",
+        "features": [
+          {
+            "title": "They change without you",
+            "body": "NPC settlements drift, change hands, and feud on their own clock. A morph only spends the yearly budget when it actually happens."
+          },
+          {
+            "title": "Not your threat meter",
+            "body": "This is news and movement off your map. It does not add a second storyteller's raid budget."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Requires Harmony. RimWorld 1.6. Safe to add mid-save.",
+      "Nemesis still owns a named antagonist. Deep Colony still owns your goodwill ledger."
+    ],
+    "worksWith": [
+      {
+        "name": "Deep Colony",
+        "note": "Living World can hand decisive victories, betrayals, and refugee flights to Deep Colony's goodwill ledger. Missing Deep Colony is a no-op."
+      },
+      {
+        "name": "Nemesis",
+        "note": "A personal hunt stays in Nemesis. Living World does not invent a second antagonist."
+      }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  }
+}
