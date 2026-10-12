@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -55,6 +56,10 @@ export function guideFromSiteMod(mod) {
   };
 }
 
+export function catalogFingerprint(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
 export function loadRimworldGuides(rimworldRoot, fallbackFile) {
   const guides = {};
   const siteFile = path.join(rimworldRoot, "site", "src", "data", "mods.json");
@@ -93,9 +98,42 @@ export function attachGuides(mods, guides) {
 export function applyHostedVersions(mods, files) {
   return mods.map((mod) => {
     const hosted = files?.[`${mod.game}/${mod.slug}`];
-    if (!hosted?.version || hosted.version === mod.version) return mod;
-    return { ...mod, version: String(hosted.version) };
+    if (!hosted?.version) return mod;
+    const uploadedAt = hosted.uploadedAt ? { uploadedAt: String(hosted.uploadedAt) } : {};
+    return { ...mod, version: String(hosted.version), ...uploadedAt };
   });
+}
+
+export function compareVersions(a, b) {
+  const left = String(a).split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const right = String(b).split(".").map((part) => Number.parseInt(part, 10) || 0);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return Math.sign(diff);
+  }
+  return 0;
+}
+
+// Parallel releases can overwrite each other's downloads.json entry, so a newer
+// mod.json version counts as hosted when its zip is already in the bucket.
+export async function confirmNewerUploads(mods, files, fetchImpl = globalThis.fetch) {
+  const confirmed = { ...files };
+  await Promise.all(
+    mods.map(async (mod) => {
+      const key = `${mod.game}/${mod.slug}`;
+      const recorded = files?.[key]?.version;
+      if (recorded && compareVersions(mod.version, recorded) <= 0) return;
+      const file = `${mod.slug}-${mod.version}.zip`;
+      const url = new URL(`${mod.game}/${mod.slug}/${mod.version}/${file}`, manifestUrl).href;
+      const response = await fetchImpl(url, { method: "HEAD" }).catch(() => null);
+      if (!response?.ok) return;
+      console.log(`${key} ${mod.version} is in the bucket; downloads.json has ${recorded ?? "nothing"}`);
+      const modified = Date.parse(response.headers?.get?.("last-modified") ?? "");
+      const uploadedAt = Number.isNaN(modified) ? undefined : new Date(modified).toISOString();
+      confirmed[key] = { ...files?.[key], version: String(mod.version), file, uploadedAt };
+    }),
+  );
+  return confirmed;
 }
 
 export async function hostedFiles(fetchImpl = globalThis.fetch) {
@@ -146,7 +184,7 @@ async function main() {
     ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sevendays-guides.json"), "7-days-to-die"),
   };
   const guided = attachGuides(mods, guides);
-  const files = await hostedFiles();
+  const files = await confirmNewerUploads(guided, await hostedFiles());
   const hosted = applyHostedVersions(guided, files);
   for (const mod of hosted) {
     const previous = mods.find((entry) => entry.game === mod.game && entry.slug === mod.slug);
@@ -157,7 +195,10 @@ async function main() {
 
   hosted.sort((a, b) => a.game.localeCompare(b.game) || a.name.localeCompare(b.name));
   const out = path.join(siteRoot, "src", "data", "catalog.json");
-  writeFileSync(out, `${JSON.stringify({ mods: hosted }, null, 2)}\n`);
+  const text = `${JSON.stringify({ mods: hosted }, null, 2)}\n`;
+  writeFileSync(out, text);
+  // Scheduled builds compare this with the live copy to decide whether to deploy.
+  writeFileSync(path.join(siteRoot, "public", "catalog-version.txt"), `${catalogFingerprint(text)}\n`);
   console.log(`Wrote ${hosted.length} mods to ${out}`);
 }
 

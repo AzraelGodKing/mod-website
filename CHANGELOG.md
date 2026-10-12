@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+- Each mod page shows when its download was uploaded ("Updated Oct 11, 2026") under the version. The date comes from `downloads.json`, or from the zip itself when the site finds a newer one in the bucket (AZR-455).
+- A mod whose newer zip is already on `downloads.azraelsmods.com` links that zip even when `downloads.json` lost its entry. Releasing several mods at once had left 16 mods on older downloads (AZR-453).
 - Remove Any Entity replaces Remove Zombie Dogs / Remove Entities on the 7 Days to Die catalog and links its Nexus page (12841). The separate Remove Zombie Dogs page, theme, and report label are gone, and the guide tells players to delete the old `RemoveZombieDogs` folder.
+- A scheduled Buildkite build of `main` rebuilds the catalog from the mod repos and deploys when a mod release changed it, so new versions reach the site without a merge here. The build publishes `/catalog-version.txt` to compare against (AZR-454).
 
 - Each RimWorld mod page uses that mod's colors and explains what it does: overview, feature groups, and what to know before you install.
 - Each Sun Haven mod page does the same: that mod's colors, what it does, and which other mods it pairs with.

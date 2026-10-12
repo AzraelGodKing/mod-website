@@ -22,9 +22,10 @@ Updated 2026-10-02.
 - `mod.json` is on `main` in the three mod repos. The site build reads those `main` branches.
 - The report form runs locally with `npm run dev:worker`. A Linear key is in `.dev.vars`. Test reports AZR-350 and AZR-352 are in Backlog.
 - KatsRics is a separate worker, `kats-rics`, at `kats.azraelsmods.com`. It is not linked from the mod pages. The upload password is `kats/.dev.vars`. The mods Buildkite pipeline does not deploy this worker.
-- Buildkite agents `site` and `deploy` are connected on this machine. The site is deployed at `https://azraelsmods.com`. The workers.dev address still works. A merge to `main` builds and deploys without a manual confirmation.
+- Buildkite agents `site` and `deploy` are connected on this machine. The site is deployed at `https://azraelsmods.com`. The workers.dev address still works. A merge to `main` builds and deploys without a manual confirmation. A scheduled build of `main` rebuilds the catalog from the mod repos and deploys only when it differs from `https://azraelsmods.com/catalog-version.txt` (AZR-454).
 
 ## Waiting on me
 
 - Nothing for the report form. AZR-350 and AZR-352 are the test issues in Backlog. Close or cancel them when you do not need them.
 - Confirm a Buildkite deploy of `main` if the live mod pages still use the GitHub zip links.
+- Add a Buildkite schedule on this pipeline for branch `main` (hourly, cron `40 * * * *`) so mod releases reach the site without a merge here (AZR-454).
