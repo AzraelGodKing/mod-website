@@ -24,10 +24,44 @@ test("a mod with no hosted zip keeps its catalog version", () => {
   assert.equal(mods[0].version, "1.2.0");
 });
 
-test("an already current hosted zip stays as it is", () => {
+test("an already current hosted zip keeps its version and adds the upload date", () => {
   const mod = { game: "rimworld", slug: "strata", version: "3.8.0" };
-  const mods = applyHostedVersions([mod], { "rimworld/strata": { version: "3.8.0" } });
-  assert.equal(mods[0], mod);
+  const mods = applyHostedVersions([mod], {
+    "rimworld/strata": { version: "3.8.0", uploadedAt: "2026-10-11T20:36:39.603Z" },
+  });
+  assert.equal(mods[0].version, "3.8.0");
+  assert.equal(mods[0].uploadedAt, "2026-10-11T20:36:39.603Z");
+  assert.equal(mod.uploadedAt, undefined);
+});
+
+test("a hosted zip with no upload date adds none", () => {
+  const mods = applyHostedVersions([{ game: "rimworld", slug: "strata", version: "3.8.0" }], {
+    "rimworld/strata": { version: "3.8.0" },
+  });
+  assert.equal("uploadedAt" in mods[0], false);
+});
+
+test("a newer zip found in the bucket takes its date from Last-Modified", async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    headers: new Headers({ "last-modified": "Sun, 11 Oct 2026 16:54:20 GMT" }),
+  });
+  const files = await confirmNewerUploads(
+    [{ game: "sun-haven", slug: "the-vault", version: "4.3.1" }],
+    { "sun-haven/the-vault": { version: "4.2.0", uploadedAt: "2026-10-04T19:46:02.048Z" } },
+    fetchImpl,
+  );
+  assert.equal(files["sun-haven/the-vault"].uploadedAt, "2026-10-11T16:54:20.000Z");
+});
+
+test("a newer zip with no Last-Modified drops the older zip's date", async () => {
+  const fetchImpl = async () => ({ ok: true });
+  const files = await confirmNewerUploads(
+    [{ game: "sun-haven", slug: "the-vault", version: "4.3.1" }],
+    { "sun-haven/the-vault": { version: "4.2.0", uploadedAt: "2026-10-04T19:46:02.048Z" } },
+    fetchImpl,
+  );
+  assert.equal(files["sun-haven/the-vault"].uploadedAt, undefined);
 });
 
 test("versions compare by number, not text", () => {
