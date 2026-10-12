@@ -4,6 +4,12 @@ cd "$(dirname "$0")/.."
 
 case "${BUILDKITE_SOURCE:-}" in
   ui|api|trigger_job|webhook) ;;
+  schedule)
+    if [[ "$(buildkite-agent meta-data get catalog-changed --default false)" != "true" ]]; then
+      echo "Deploy stays off this build. The catalog did not change."
+      exit 0
+    fi
+    ;;
   *)
     echo "Deploy stays off this build."
     exit 0

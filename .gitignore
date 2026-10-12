@@ -25,6 +25,7 @@ pnpm-debug.log*
 # generated from the mod repos
 src/data/catalog.json
 public/catalog/
+public/catalog-version.txt
 .catalog-sources/
 
 # Buildkite agent secrets. Examples in .buildkite/*.env.example are safe to commit.
