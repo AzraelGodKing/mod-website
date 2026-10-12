@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -53,6 +54,10 @@ export function guideFromSiteMod(mod) {
     avoid: namedNotes(mod.compatibility?.incompatibleWith),
     compatNotes: mod.compatibility?.notes ?? [],
   };
+}
+
+export function catalogFingerprint(text) {
+  return createHash("sha256").update(text).digest("hex");
 }
 
 export function loadRimworldGuides(rimworldRoot, fallbackFile) {
@@ -157,7 +162,10 @@ async function main() {
 
   hosted.sort((a, b) => a.game.localeCompare(b.game) || a.name.localeCompare(b.name));
   const out = path.join(siteRoot, "src", "data", "catalog.json");
-  writeFileSync(out, `${JSON.stringify({ mods: hosted }, null, 2)}\n`);
+  const text = `${JSON.stringify({ mods: hosted }, null, 2)}\n`;
+  writeFileSync(out, text);
+  // Scheduled builds compare this with the live copy to decide whether to deploy.
+  writeFileSync(path.join(siteRoot, "public", "catalog-version.txt"), `${catalogFingerprint(text)}\n`);
   console.log(`Wrote ${hosted.length} mods to ${out}`);
 }
 
