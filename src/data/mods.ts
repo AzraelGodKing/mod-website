@@ -34,6 +34,7 @@ export interface ModEntry {
   game: string;
   description: string;
   version: string;
+  uploadedAt?: string;
   screenshots: string[];
   images: string[];
   download: ModDownload;
@@ -57,6 +58,15 @@ const notReady = new Set(["rimworld/azrael", "rimworld/living-world"]);
 
 export function isNotReady(mod: ModEntry): boolean {
   return notReady.has(`${mod.game}/${mod.slug}`);
+}
+
+const uploadDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
+
+export function uploadedOn(mod: ModEntry): { iso: string; label: string } | null {
+  if (isNotReady(mod) || !mod.uploadedAt) return null;
+  const date = new Date(mod.uploadedAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return { iso: date.toISOString(), label: uploadDate.format(date) };
 }
 
 export function r2Download(mod: ModEntry): { file: string; url: string } | null {

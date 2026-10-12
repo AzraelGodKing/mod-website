@@ -3,7 +3,7 @@ import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
-import { isNotReady, mods, modsForGame, r2Download, type ModEntry } from "../../data/mods";
+import { isNotReady, mods, modsForGame, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
 import { heroVars, lookFor } from "../../data/themes";
 
 export function getStaticPaths() {
@@ -24,6 +24,7 @@ const look = lookFor(mod.slug);
 const preview = mod.slug === "azrael" ? undefined : mod.images[0];
 const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
+const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
@@ -69,6 +70,13 @@ const storeLinks = [
             <aside class="rw-stats">
               <span class="rw-stat-label">Version</span>
               <span class="rw-stat-num">{mod.version}</span>
+              {
+                updated && (
+                  <span class="rw-stat-date">
+                    Updated <time datetime={updated.iso}>{updated.label}</time>
+                  </span>
+                )
+              }
               <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
             </aside>
           </div>
@@ -252,7 +260,14 @@ const storeLinks = [
       </p>
       <h1>{mod.name}</h1>
       <p class="mark">{look.mark}</p>
-      <p class="version">Version {mod.version}</p>
+      <p class="version">
+        Version {mod.version}
+        {updated && (
+          <>
+            {" "}· Updated <time datetime={updated.iso}>{updated.label}</time>
+          </>
+        )}
+      </p>
       <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
       {
         preview && (

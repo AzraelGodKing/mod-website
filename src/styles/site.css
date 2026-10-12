@@ -389,6 +389,13 @@ button:focus-visible {
   line-height: 1;
 }
 
+.rw-stat-date {
+  display: block;
+  margin-top: 0.35rem;
+  color: #a89882;
+  font-size: 0.8rem;
+}
+
 .rw-controls {
   display: flex;
   flex-wrap: wrap;
@@ -740,6 +747,7 @@ body.rw-site > header nav a[aria-current] {
 
 .guide-page .rw-intro,
 .guide-page .rw-stat-label,
+.guide-page .rw-stat-date,
 .guide-page .rw-feature p,
 .guide-page .rw-notes,
 .guide-page .rw-faq p {

@@ -93,8 +93,9 @@ export function attachGuides(mods, guides) {
 export function applyHostedVersions(mods, files) {
   return mods.map((mod) => {
     const hosted = files?.[`${mod.game}/${mod.slug}`];
-    if (!hosted?.version || hosted.version === mod.version) return mod;
-    return { ...mod, version: String(hosted.version) };
+    if (!hosted?.version) return mod;
+    const uploadedAt = hosted.uploadedAt ? { uploadedAt: String(hosted.uploadedAt) } : {};
+    return { ...mod, version: String(hosted.version), ...uploadedAt };
   });
 }
 
@@ -122,7 +123,9 @@ export async function confirmNewerUploads(mods, files, fetchImpl = globalThis.fe
       const response = await fetchImpl(url, { method: "HEAD" }).catch(() => null);
       if (!response?.ok) return;
       console.log(`${key} ${mod.version} is in the bucket; downloads.json has ${recorded ?? "nothing"}`);
-      confirmed[key] = { ...files?.[key], version: String(mod.version), file };
+      const modified = Date.parse(response.headers?.get?.("last-modified") ?? "");
+      const uploadedAt = Number.isNaN(modified) ? undefined : new Date(modified).toISOString();
+      confirmed[key] = { ...files?.[key], version: String(mod.version), file, uploadedAt };
     }),
   );
   return confirmed;
