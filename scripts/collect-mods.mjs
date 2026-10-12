@@ -98,6 +98,36 @@ export function applyHostedVersions(mods, files) {
   });
 }
 
+export function compareVersions(a, b) {
+  const left = String(a).split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const right = String(b).split(".").map((part) => Number.parseInt(part, 10) || 0);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return Math.sign(diff);
+  }
+  return 0;
+}
+
+// Parallel releases can overwrite each other's downloads.json entry, so a newer
+// mod.json version counts as hosted when its zip is already in the bucket.
+export async function confirmNewerUploads(mods, files, fetchImpl = globalThis.fetch) {
+  const confirmed = { ...files };
+  await Promise.all(
+    mods.map(async (mod) => {
+      const key = `${mod.game}/${mod.slug}`;
+      const recorded = files?.[key]?.version;
+      if (recorded && compareVersions(mod.version, recorded) <= 0) return;
+      const file = `${mod.slug}-${mod.version}.zip`;
+      const url = new URL(`${mod.game}/${mod.slug}/${mod.version}/${file}`, manifestUrl).href;
+      const response = await fetchImpl(url, { method: "HEAD" }).catch(() => null);
+      if (!response?.ok) return;
+      console.log(`${key} ${mod.version} is in the bucket; downloads.json has ${recorded ?? "nothing"}`);
+      confirmed[key] = { ...files?.[key], version: String(mod.version), file };
+    }),
+  );
+  return confirmed;
+}
+
 export async function hostedFiles(fetchImpl = globalThis.fetch) {
   const response = await fetchImpl(manifestUrl);
   if (!response.ok) {
@@ -146,7 +176,7 @@ async function main() {
     ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sevendays-guides.json"), "7-days-to-die"),
   };
   const guided = attachGuides(mods, guides);
-  const files = await hostedFiles();
+  const files = await confirmNewerUploads(guided, await hostedFiles());
   const hosted = applyHostedVersions(guided, files);
   for (const mod of hosted) {
     const previous = mods.find((entry) => entry.game === mod.game && entry.slug === mod.slug);

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A mod whose newer zip is already on `downloads.azraelsmods.com` links that zip even when `downloads.json` lost its entry. Releasing several mods at once had left 16 mods on older downloads (AZR-453).
 - Remove Any Entity replaces Remove Zombie Dogs / Remove Entities on the 7 Days to Die catalog and links its Nexus page (12841). The separate Remove Zombie Dogs page, theme, and report label are gone, and the guide tells players to delete the old `RemoveZombieDogs` folder.
 
 - Each RimWorld mod page uses that mod's colors and explains what it does: overview, feature groups, and what to know before you install.
