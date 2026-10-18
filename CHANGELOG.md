@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- RimWorld pages and downloads use the current hosted versions: Date Night 1.7.2, Deep Colony 1.10.0, Homesteader 1.5.1, Nemesis 1.5.0, Niceties 1.6.1, Stormproof 1.7.0, and Strata 3.11.0. RimWorld badges say 1.6 and 1.7. A leftover version chip such as Strata 3.5 is not shown beside the current version.
 - Each mod page shows when its download was uploaded ("Updated Oct 11, 2026") under the version. The date comes from `downloads.json`, or from the zip itself when the site finds a newer one in the bucket (AZR-455).
 - A mod whose newer zip is already on `downloads.azraelsmods.com` links that zip even when `downloads.json` lost its entry. Releasing several mods at once had left 16 mods on older downloads (AZR-453).
 - Remove Any Entity replaces Remove Zombie Dogs / Remove Entities on the 7 Days to Die catalog and links its Nexus page (12841). The separate Remove Zombie Dogs page, theme, and report label are gone, and the guide tells players to delete the old `RemoveZombieDogs` folder.

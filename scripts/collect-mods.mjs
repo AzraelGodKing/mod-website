@@ -95,6 +95,16 @@ export function attachGuides(mods, guides) {
   });
 }
 
+// The page already shows mod.version. A numeric badge left over from an older
+// release (Strata "3.5") would sit next to the current version.
+export function normalizeRimworldBadges(mod) {
+  if (mod.game !== "rimworld" || !mod.guide?.badges) return mod;
+  const badges = mod.guide.badges
+    .map((badge) => (badge === "RimWorld 1.6" ? "RimWorld 1.6 · 1.7" : badge))
+    .filter((badge) => !/^\d+\.\d+(\.\d+)?$/.test(badge));
+  return { ...mod, guide: { ...mod.guide, badges } };
+}
+
 export function applyHostedVersions(mods, files) {
   return mods.map((mod) => {
     const hosted = files?.[`${mod.game}/${mod.slug}`];
@@ -183,7 +193,7 @@ async function main() {
     ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sunhaven-guides.json"), "sun-haven"),
     ...loadPackagedGuides(path.join(siteRoot, "src", "data", "sevendays-guides.json"), "7-days-to-die"),
   };
-  const guided = attachGuides(mods, guides);
+  const guided = attachGuides(mods, guides).map(normalizeRimworldBadges);
   const files = await confirmNewerUploads(guided, await hostedFiles());
   const hosted = applyHostedVersions(guided, files);
   for (const mod of hosted) {
