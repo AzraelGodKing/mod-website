@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { attachGuides, guideFromSiteMod, loadPackagedGuides } from "../scripts/collect-mods.mjs";
+import { attachGuides, guideFromSiteMod, loadPackagedGuides, normalizeRimworldBadges } from "../scripts/collect-mods.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -50,6 +50,15 @@ test("7 Days guides load under 7-days-to-die slugs", () => {
   assert.equal(guides["sun-haven/blood-moon-sound"], undefined);
   const mods = attachGuides([{ game: "7-days-to-die", slug: "keep-backpacks", name: "Keep Backpacks" }], guides);
   assert.equal(mods[0].guide.sections[0].id, "times");
+});
+
+test("RimWorld badges name 1.6 and 1.7 and drop a leftover version chip", () => {
+  const mod = normalizeRimworldBadges({
+    game: "rimworld",
+    slug: "strata",
+    guide: { badges: ["RimWorld 1.6", "Requires Harmony", "3.5", "Odyssey optional"] },
+  });
+  assert.deepEqual(mod.guide.badges, ["RimWorld 1.6 · 1.7", "Requires Harmony", "Odyssey optional"]);
 });
 
 test("guides attach only to the matching RimWorld mod", () => {
