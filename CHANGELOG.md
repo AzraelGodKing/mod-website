@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The 7 Days to Die page is a compact, sortable list instead of large cards. Each row shows a one-line summary, a type (Fixes, Server admin, Crafting, Gameplay, HUD & sound), where it installs (server only, client only, or both), version, update date, Nexus downloads, and a Download button. Search matches every word, chips filter by type and install side, and the list sorts by name, recently updated, most downloaded, or type, from the dropdown or the column headers. The search, filters, and sort stay in the URL so a filtered list can be shared, and `/` jumps to the search box. Summaries, types, and install sides live in `src/data/sevendays-index.ts`; a new mod without an entry gets its install side from its description.
 - Download buttons always give the newest zip. They point at `/download/<game>/<mod>`, which the Worker answers with the latest version in `downloads.json` (cached five minutes), so a mod release reaches the site without a rebuild or deploy. Mod pages and game hubs also swap in the newer version, zip name, and upload date from `/api/downloads`.
 - A `mod.json` that is not a catalog entry (the XML one inside 7 Days Bait's shipped folder) is skipped, and one saved with a byte order mark (Gyro Safe) loads. Either had stopped every catalog build.
 - A new mod without its own Linear label no longer stops the Worker. Its reports carry the game and website labels. Craftable Signs, Drone Loot Filter, Gyro Safe, No Ding Sound, Slot Lock Fix, Spawn Tuner, Zombie and Animal Bait, and Bait UI need labels in `report-labels.json`.

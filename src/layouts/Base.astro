@@ -73,6 +73,7 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
         fetch("/api/stats")
           .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
           .then((snapshot) => {
+            document.dispatchEvent(new CustomEvent("stats:loaded", { detail: snapshot }));
             for (const list of lists) {
               const values = counts(snapshot, list);
               if (!values) continue;
@@ -102,6 +103,7 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
         fetch("/api/downloads")
           .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
           .then((latest) => {
+            document.dispatchEvent(new CustomEvent("downloads:loaded", { detail: latest }));
             for (const cell of cells) {
               const entry = latest[cell.dataset.latest];
               const value = entry?.[cell.dataset.latestField];
