@@ -1,4 +1,4 @@
-export type StatField = "steam" | "thunderstore" | "nexus" | "nexus_full" | "combined";
+export type StatField = "steam" | "thunderstore" | "nexus" | "nexus_full" | "combined" | "site" | "total";
 
 export type Platform = "steam" | "thunderstore" | "nexus";
 
@@ -19,10 +19,11 @@ export interface StatRow {
   label: string;
 }
 
-// Only Sun Haven gets a combined total: Steam counts subscribers, not downloads.
+// Downloads is this site's clicks plus Thunderstore and Nexus downloads. Steam is
+// listed on its own because it counts subscribers, not downloads.
 export function statRows(game: string, detail: boolean): StatRow[] {
-  const rows: StatRow[] = [];
-  if (game === "sun-haven") rows.push({ field: "combined", label: "Downloads" });
+  const rows: StatRow[] = [{ field: "total", label: "Downloads" }];
+  if (detail) rows.push({ field: "site", label: "This site" });
   for (const platform of platforms[game] ?? []) {
     rows.push({
       field: platform === "nexus" && detail ? "nexus_full" : platform,

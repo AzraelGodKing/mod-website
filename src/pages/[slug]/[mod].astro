@@ -35,8 +35,7 @@ const latestKey = notReady ? undefined : `${mod.game}/${mod.slug}`;
 const sevendays = mod.game === "7-days-to-die";
 const sevenInfo = sevendays ? indexInfo(mod) : undefined;
 const info = sevenInfo ?? hubInfo(mod);
-// The Downloads row on 7 Days to Die pages is Nexus; the other games list each store.
-const countRows = sevendays ? [] : statRows(mod.game, true);
+const countRows = statRows(mod.game, true);
 const commands = sevendays ? commandsFor(mod.slug) : undefined;
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
@@ -110,19 +109,12 @@ const storeLinks = [
                     )}
                   </dd>
                 </div>
-                {sevendays ? (
+                {countRows.map((row) => (
                   <div>
-                    <dt>Downloads</dt>
-                    <dd data-field="nexus_full">—</dd>
+                    <dt>{row.label}</dt>
+                    <dd data-field={row.field}>—</dd>
                   </div>
-                ) : (
-                  countRows.map((row) => (
-                    <div>
-                      <dt>{row.label}</dt>
-                      <dd data-field={row.field}>—</dd>
-                    </div>
-                  ))
-                )}
+                ))}
                 {direct && (
                   <div>
                     <dt>File</dt>

@@ -7,7 +7,7 @@ import { platforms } from "../data/stats";
 type Column = { field: string; label: string };
 
 function columns(game: string): Column[] {
-  const list: Column[] = [];
+  const list: Column[] = [{ field: "site", label: "This site" }];
   for (const platform of platforms[game] ?? []) {
     if (platform === "steam") list.push({ field: "steam", label: "Steam subscribers" });
     if (platform === "thunderstore") list.push({ field: "thunderstore", label: "Thunderstore" });
@@ -20,7 +20,8 @@ function columns(game: string): Column[] {
 
 function totals(game: string): Column[] {
   const list = columns(game);
-  if (game === "sun-haven") list.unshift({ field: "combined", label: "Thunderstore + Nexus" });
+  list.unshift({ field: "total", label: "All downloads" });
+  if (game === "sun-haven") list.splice(2, 0, { field: "combined", label: "Thunderstore + Nexus" });
   return list;
 }
 ---
@@ -154,6 +155,7 @@ function totals(game: string): Column[] {
         for (const row of document.querySelectorAll("[data-admin-mod]")) {
           const mod = snapshot.mods?.[row.dataset.adminMod] ?? {};
           const values = {
+            site: mod.site?.downloads,
             steam: mod.steam?.subscriptions,
             thunderstore: mod.thunderstore?.downloads,
             nexus: mod.nexus?.downloads,

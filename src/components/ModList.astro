@@ -11,24 +11,21 @@ interface Props {
   categories: string[];
   // Rows arrive in featured order, which becomes the default sort.
   featured?: boolean;
-  // Which /api/stats number fills the count column.
-  countField: "nexus" | "combined" | "steam";
-  countLabel: string;
 }
 
-const { game, gameName, rows, categories, featured = false, countField, countLabel } = Astro.props;
+const { game, gameName, rows, categories, featured = false } = Astro.props;
 const installs = rows.some((row) => row.installs);
 const defaultSort = featured ? "featured" : "name";
 const sortOptions = [
   ...(featured ? [["featured", "Featured"]] : []),
   ["name", "Name A–Z"],
   ["updated", "Recently updated"],
-  ["downloads", `Most ${countLabel.toLowerCase()}`],
+  ["downloads", "Most downloaded"],
   ["category", "Category"],
 ];
 ---
 
-<div class="zd-wrap" data-default-sort={defaultSort} data-count-field={countField} id="zd-root">
+<div class="zd-wrap" data-default-sort={defaultSort} id="zd-root">
   <div class="zd-toolbar">
     <label class="zd-search">
       <span class="sr-only">Search mods</span>
@@ -71,7 +68,7 @@ const sortOptions = [
       {installs && <span role="columnheader">Installs on</span>}
       <span role="columnheader">Version</span>
       <button type="button" role="columnheader" data-sort="updated">Updated</button>
-      <button type="button" role="columnheader" data-sort="downloads">{countLabel}</button>
+      <button type="button" role="columnheader" data-sort="downloads">Downloads</button>
       <span role="columnheader"><span class="sr-only">Download</span></span>
     </div>
     <div id="zd-rows">
@@ -110,7 +107,7 @@ const sortOptions = [
             )}
           </span>
           <span class="zd-dl" role="cell">
-            <span class="zd-cell-label">{countLabel} </span>
+            <span class="zd-cell-label">Downloads </span>
             <span data-dl-count>—</span>
           </span>
           <span class="zd-act" role="cell">
@@ -221,17 +218,11 @@ const sortOptions = [
       search.focus();
     });
 
-    const counts = {
-      nexus: (stats) => stats?.nexus?.downloads,
-      steam: (stats) => stats?.steam?.subscriptions,
-      combined: (stats) => {
-        const thunderstore = stats?.thunderstore?.downloads;
-        const nexus = stats?.nexus?.downloads;
-        if (typeof thunderstore !== "number" && typeof nexus !== "number") return undefined;
-        return (thunderstore ?? 0) + (nexus ?? 0);
-      },
+    // This site's clicks plus Thunderstore and Nexus downloads.
+    const countFor = (stats) => {
+      const parts = [stats?.site?.downloads, stats?.thunderstore?.downloads, stats?.nexus?.downloads].filter((value) => typeof value === "number");
+      return parts.length > 0 ? parts.reduce((sum, value) => sum + value, 0) : undefined;
     };
-    const countFor = counts[root.dataset.countField];
 
     document.addEventListener("stats:loaded", (event) => {
       const mods = event.detail?.mods ?? {};

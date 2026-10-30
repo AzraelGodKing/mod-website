@@ -5,6 +5,7 @@ import { handleReport } from "./report/handle.mjs";
 import { adminAuthorized } from "./admin/auth";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, fetchManifestFiles, latestDownloads } from "./downloads/latest.mjs";
+import { isBot, recordDownload, siteCounts, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
   slug: string;
@@ -17,7 +18,8 @@ interface CatalogMod {
 
 // NEXUSMODS_API_KEY is a Worker secret. Without it, Nexus counts stay at the last stored value.
 // ADMIN_TOKEN is the password for /admin. Without it, the admin API answers 503.
-type SiteEnv = Env & { NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string };
+// DOWNLOADS_DB counts clicks on our own Download buttons. Without it, downloads still redirect.
+type SiteEnv = Env & { NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; DOWNLOADS_DB?: D1Database };
 
 type RefreshSource = "scheduled" | "manual" | "first-request";
 
@@ -91,11 +93,26 @@ async function readStats(env: SiteEnv): Promise<StoredSnapshot> {
   return (await env.STATS.get<StoredSnapshot>(STATS_KEY, "json")) ?? (await refreshStats(env, "first-request"));
 }
 
+// Site counts are read live from D1; the store counts come from the hourly snapshot.
+async function readSiteCounts(env: SiteEnv): Promise<Record<string, number> | null> {
+  if (!env.DOWNLOADS_DB) return null;
+  try {
+    return await siteCounts(env.DOWNLOADS_DB);
+  } catch (error) {
+    console.warn(`[downloads] site counts could not be read: ${error}`);
+    return null;
+  }
+}
+
+async function statsWithSite(env: SiteEnv, snapshot: StoredSnapshot): Promise<StoredSnapshot> {
+  return withSiteCounts(snapshot, statsRoster, await readSiteCounts(env));
+}
+
 async function handleStats(request: Request, env: SiteEnv): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
   }
-  const { lastFetched, mods, games: gameStats } = await readStats(env);
+  const { lastFetched, mods, games: gameStats } = await statsWithSite(env, await readStats(env));
   const body = JSON.stringify({ lastFetched, mods, games: gameStats });
   return new Response(request.method === "HEAD" ? null : body, {
     headers: {
@@ -124,14 +141,20 @@ async function handleDownloads(request: Request): Promise<Response> {
   });
 }
 
-async function handleDownloadRedirect(request: Request, pathname: string): Promise<Response> {
+async function handleDownloadRedirect(request: Request, env: SiteEnv, ctx: ExecutionContext, pathname: string): Promise<Response> {
   const key = pathname.replace(/^\/download\//, "").replace(/\/+$/, "");
   if (NOT_READY.has(key)) return Response.redirect(new URL("/not-ready", request.url).href, 302);
   const latest = (await currentDownloads())[key];
   if (!latest) return new Response("Not found", { status: 404 });
+  const db = env.DOWNLOADS_DB;
+  if (db && request.method === "GET" && !isBot(request.headers.get("user-agent"))) {
+    // The redirect does not wait for the write.
+    ctx.waitUntil(recordDownload(db, key, latest.version).catch((error) => console.warn(`[downloads] count failed for ${key}: ${error}`)));
+  }
+  // no-store: a cached redirect would skip the Worker and the click would not be counted.
   return new Response(null, {
     status: 302,
-    headers: { location: latest.url, "cache-control": "public, max-age=300" },
+    headers: { location: latest.url, "cache-control": "no-store" },
   });
 }
 
@@ -156,11 +179,11 @@ async function handleAdmin(request: Request, env: SiteEnv, pathname: string): Pr
     return adminJson(401, { error: "The password was not accepted." });
   }
   const snapshot = action === "refresh" ? await refreshStats(env, "manual") : await readStats(env);
-  return adminJson(200, snapshot);
+  return adminJson(200, await statsWithSite(env, snapshot));
 }
 
 export default {
-  async fetch(request, env): Promise<Response> {
+  async fetch(request, env, ctx): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === "/api/report") {
       return handleReport(request, env, catalog);
@@ -172,7 +195,7 @@ export default {
       return handleDownloads(request);
     }
     if (url.pathname.startsWith("/download/")) {
-      return handleDownloadRedirect(request, url.pathname);
+      return handleDownloadRedirect(request, env, ctx, url.pathname);
     }
     if (url.pathname.startsWith("/api/admin/")) {
       return handleAdmin(request, env, url.pathname);
