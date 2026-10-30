@@ -1226,11 +1226,30 @@ body.rw-site > header nav a[aria-current] {
   padding: 1.3rem 1.25rem 0;
 }
 
-.zd-wrap input {
-  width: min(24rem, 100%);
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.zd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.zd-search {
+  flex: 1 1 18rem;
+}
+
+.zd-search input,
+.zd-sort select {
   box-sizing: border-box;
-  margin-bottom: 1rem;
-  padding: 0.55rem 0.7rem;
   border: 1px solid #3a3028;
   border-radius: 0;
   background: #1a1614;
@@ -1238,80 +1257,298 @@ body.rw-site > header nav a[aria-current] {
   font: 1rem Bahnschrift, "Segoe UI", sans-serif;
 }
 
-.zd-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: 0.85rem;
+.zd-search input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
 }
 
-.zd-card {
+.zd-search input:focus,
+.zd-sort select:focus {
+  outline: 2px solid #e07a3d;
+  outline-offset: 1px;
+}
+
+.zd-sort {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #a89888;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.zd-sort select {
+  padding: 0.55rem 0.6rem;
+}
+
+.zd-filters {
+  display: grid;
   gap: 0.45rem;
-  min-height: 12rem;
-  padding: 0.95rem 1rem 0.85rem;
-  background: #1c1816;
-  color: #f2ebe3;
-  text-decoration: none;
-  border: 1px solid #3a3028;
-  border-left: 4px solid var(--accent);
-  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.28);
+  margin-bottom: 0.9rem;
 }
 
-.zd-card[hidden] {
-  display: none;
+.zd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.zd-card:visited {
-  color: #f2ebe3;
-}
-
-.zd-card:hover {
-  border-color: var(--accent);
-  background: #241c18;
-}
-
-.zd-mark {
-  color: var(--accent);
+.zd-chips-label {
+  min-width: 6.5rem;
+  color: #a89888;
   font-size: 0.72rem;
-  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.zd-card h2 {
-  margin: 0;
-  font-size: 1.35rem;
+.zd-chip {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #3a3028;
+  background: #1a1614;
+  color: #cbbba8;
+  font: 0.85rem Bahnschrift, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.zd-chip:hover {
+  border-color: #e07a3d;
+  color: #f2ebe3;
+}
+
+.zd-chip.is-on {
+  border-color: #e07a3d;
+  background: #e07a3d;
+  color: #1a140c;
+  font-weight: 700;
+}
+
+.zd-count {
+  margin: 0 0 0.4rem;
+  color: #a89888;
+  font-size: 0.82rem;
+}
+
+.zd-list {
+  --zd-cols: minmax(0, 1fr) 6.5rem 8rem 3.8rem 6.6rem 5.4rem 6.2rem;
+  border: 1px solid #3a3028;
+  background: #171311;
+}
+
+.zd-head,
+.zd-row {
+  display: grid;
+  grid-template-columns: var(--zd-cols);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+}
+
+.zd-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid #3a3028;
+  background: #201a17;
+  color: #a89888;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.zd-head button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.zd-head button:hover,
+.zd-head button[aria-sort="ascending"],
+.zd-head button[aria-sort="descending"] {
+  color: #e07a3d;
+}
+
+.zd-head button[aria-sort="ascending"]::after {
+  content: " ▲";
+}
+
+.zd-head button[aria-sort="descending"]::after {
+  content: " ▼";
+}
+
+.zd-row {
+  border-bottom: 1px solid #2a231f;
+  border-left: 3px solid var(--accent);
+  font-size: 0.88rem;
+}
+
+.zd-row:last-child {
+  border-bottom: 0;
+}
+
+.zd-row:hover {
+  background: #221b17;
+}
+
+.zd-row[hidden] {
+  display: none;
+}
+
+.zd-name {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  color: #f2ebe3;
+  text-decoration: none;
+}
+
+.zd-name:visited {
+  color: #f2ebe3;
+}
+
+.zd-name strong {
+  font-size: 1.02rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
-.zd-card p {
-  flex: 1;
-  margin: 0;
-  color: #cbbba8;
-  font-family: "Segoe UI", sans-serif;
-  font-size: 0.92rem;
-}
-
-.zd-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.35rem;
-  color: #a89888;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.zd-open {
+.zd-name:hover strong {
   color: var(--accent);
+  text-decoration: underline;
+}
+
+.zd-name span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #b9a998;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 0.86rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.zd-cat,
+.zd-ver,
+.zd-date,
+.zd-dl {
+  color: #cbbba8;
+}
+
+.zd-ver,
+.zd-dl {
+  font-variant-numeric: tabular-nums;
+}
+
+.zd-side {
+  justify-self: start;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid currentColor;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.zd-side.is-server {
+  color: #8fb7e0;
+}
+
+.zd-side.is-client {
+  color: #9ccf7c;
+}
+
+.zd-side.is-both {
+  color: #e8b85a;
+}
+
+.zd-cell-label {
+  display: none;
+}
+
+.zd-get {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  background: #e07a3d;
+  color: #1a140c;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.zd-get:visited {
+  color: #1a140c;
+}
+
+.zd-get:hover {
+  background: #f0954f;
+}
+
+.zd-get.is-soon {
+  background: #3a3028;
+  color: #cbbba8;
 }
 
 .zd-empty {
   color: #cbbba8;
+}
+
+.zd-empty button {
+  margin-left: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #e07a3d;
+  background: none;
+  color: #e07a3d;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .zd-head {
+    display: none;
+  }
+
+  .zd-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+    padding: 0.75rem 0.8rem;
+  }
+
+  .zd-name {
+    flex-basis: 100%;
+  }
+
+  .zd-cat,
+  .zd-side,
+  .zd-ver,
+  .zd-date,
+  .zd-dl {
+    font-size: 0.78rem;
+  }
+
+  .zd-cell-label {
+    display: inline;
+    color: #8a7a6a;
+  }
+
+  .zd-act {
+    margin-left: auto;
+  }
+
+  .zd-chips-label {
+    min-width: 100%;
+  }
 }
 
 body.entry-site {
@@ -1809,15 +2046,6 @@ body.entry-site main {
 
 .zd-hero .counts dd {
   color: #e07a3d;
-}
-
-.zd-card .counts dd {
-  color: var(--accent);
-}
-
-.zd-card .counts {
-  color: #a89888;
-  letter-spacing: 0.04em;
 }
 
 .rw-card .counts {
