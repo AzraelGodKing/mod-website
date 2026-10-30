@@ -67,3 +67,36 @@ export async function fetchManifestFiles(fetchImpl = globalThis.fetch, log = con
     return null;
   }
 }
+
+/**
+ * Where each mod's download stands, for the admin page: the version the site was
+ * built with, what downloads.json holds, and whether a zip exists at all.
+ * `state` is "live" (manifest matches the build), "newer" (a release since the
+ * last build), "build-only" (not in downloads.json), "behind" (downloads.json is
+ * older than the build), "unknown" (downloads.json could not be read) or "not-ready".
+ *
+ * @param {{ game: string; slug: string; name?: string; version: string; uploadedAt?: string }[]} mods
+ * @param {Record<string, { version?: string; uploadedAt?: string }> | null} files
+ */
+export function releaseStatus(mods, files) {
+  return mods.map((mod) => {
+    const key = `${mod.game}/${mod.slug}`;
+    const hosted = files?.[key] ?? null;
+    let state;
+    if (NOT_READY.has(key)) state = "not-ready";
+    else if (!files) state = "unknown";
+    else if (!hosted?.version) state = "build-only";
+    else {
+      const diff = compareVersions(hosted.version, mod.version);
+      state = diff > 0 ? "newer" : diff < 0 ? "behind" : "live";
+    }
+    return {
+      key,
+      game: mod.game,
+      name: mod.name ?? mod.slug,
+      built: { version: String(mod.version), uploadedAt: mod.uploadedAt ?? null },
+      hosted: hosted?.version ? { version: String(hosted.version), uploadedAt: hosted.uploadedAt ?? null } : null,
+      state,
+    };
+  });
+}

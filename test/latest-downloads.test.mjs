@@ -51,3 +51,28 @@ test("the manifest's files map is returned", async () => {
   const read = await fetchManifestFiles(async () => ({ ok: true, json: async () => ({ files }) }));
   assert.deepEqual(read, files);
 });
+
+test("release status compares downloads.json with the build", async () => {
+  const { releaseStatus } = await import("../src/downloads/latest.mjs");
+  const mods = [
+    strata,
+    { game: "rimworld", slug: "spark", version: "1.2.0" },
+    { game: "rimworld", slug: "old", version: "2.0.0" },
+    { game: "rimworld", slug: "fresh", version: "1.0.0" },
+    { game: "rimworld", slug: "azrael", version: "1.0.0" },
+  ];
+  const files = {
+    "rimworld/strata": { version: "3.11.0" },
+    "rimworld/old": { version: "1.9.0" },
+    "rimworld/fresh": { version: "1.1.0", uploadedAt: "2026-10-29T08:00:00.000Z" },
+  };
+  const states = Object.fromEntries(releaseStatus(mods, files).map((row) => [row.key, row.state]));
+  assert.deepEqual(states, {
+    "rimworld/strata": "live",
+    "rimworld/spark": "build-only",
+    "rimworld/old": "behind",
+    "rimworld/fresh": "newer",
+    "rimworld/azrael": "not-ready",
+  });
+  assert.equal(releaseStatus([strata], null)[0].state, "unknown");
+});

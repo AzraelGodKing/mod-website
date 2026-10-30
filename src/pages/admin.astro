@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import { games } from "../data/games";
-import { modsForGame } from "../data/mods";
+import { mods, modsForGame } from "../data/mods";
 import { platforms } from "../data/stats";
 
 type Column = { field: string; label: string };
@@ -9,7 +9,7 @@ type Column = { field: string; label: string };
 function columns(game: string): Column[] {
   const list: Column[] = [{ field: "site", label: "This site" }];
   for (const platform of platforms[game] ?? []) {
-    if (platform === "steam") list.push({ field: "steam", label: "Steam subscribers" });
+    if (platform === "steam") list.push({ field: "steam", label: "Steam subs" });
     if (platform === "thunderstore") list.push({ field: "thunderstore", label: "Thunderstore" });
     if (platform === "nexus") {
       list.push({ field: "nexus", label: "Nexus" }, { field: "nexus_unique", label: "Nexus unique" });
@@ -24,145 +24,403 @@ function totals(game: string): Column[] {
   if (game === "sun-haven") list.splice(2, 0, { field: "combined", label: "Thunderstore + Nexus" });
   return list;
 }
+
+const tabs = [
+  ["overview", "Overview"],
+  ["downloads", "Downloads"],
+  ["releases", "Releases"],
+  ["activity", "Activity"],
+  ["signin", "Sign-in"],
+];
+
+// Names for keys the API returns ("<game>/<mod>"), so Activity and Releases can show them.
+const names = Object.fromEntries(mods.map((mod) => [`${mod.game}/${mod.slug}`, mod.name]));
+const gameNames = Object.fromEntries(games.map((game) => [game.slug, game.name]));
+const csvColumns = [...new Set(games.flatMap((game) => columns(game.slug).map((column) => column.field)))];
+
+const links = [
+  ["Cloudflare dashboard", "https://dash.cloudflare.com/"],
+  ["Public stats API", "/api/stats"],
+  ["Live downloads API", "/api/downloads"],
+  ["downloads.json", "https://downloads.azraelsmods.com/downloads.json"],
+  ["Website repo", "https://github.com/AzraelGodKing/mod-website"],
+  ...games.map((game) => [`${game.name} repo`, game.repo]),
+];
 ---
 
-<Base title="Admin · Azrael's Mods" description="Download counter admin." admin>
-  <div class="admin">
-    <header class="admin-head">
-      <p class="entry-kicker">Admin</p>
-      <h1>Download counters</h1>
-      <p class="admin-lede">
-        The Worker refreshes every hour at 17 minutes past. Refresh now fetches the stores immediately and does not
-        move the hourly schedule.
-      </p>
+<Base title="Admin · Azrael's Mods" description="Site admin." admin>
+  <div class="adm">
+    <header class="adm-hero">
+      <p class="adm-kicker">Azrael's Mods · Admin</p>
+      <h1>Dashboard</h1>
+      <p class="adm-lede" id="adm-greeting">Download counters, releases, and sign-in in one place.</p>
     </header>
+    <div class="adm-strip" aria-hidden="true"></div>
 
-    <div class="admin-login" id="admin-login" hidden>
-      <button type="button" id="admin-passkey-login" hidden>Sign in with a passkey</button>
-      <form id="admin-password-login" hidden>
-        <label>
-          Password
-          <input name="password" type="password" autocomplete="current-password" required />
-        </label>
-        <button type="submit">Open</button>
-      </form>
-      <p class="admin-error" id="admin-login-error" role="alert"></p>
+    <div class="adm-login" id="admin-login" hidden>
+      <div class="adm-login-card">
+        <svg class="adm-lock" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4.5" y="10.5" width="15" height="10" rx="1.5"></rect>
+          <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path>
+        </svg>
+        <h2>Sign in</h2>
+        <p class="adm-muted">This page is only for running the site.</p>
+        <button type="button" class="adm-btn is-primary adm-wide" id="admin-passkey-login" hidden>Sign in with a passkey</button>
+        <p class="adm-or" id="admin-or" hidden><span>or</span></p>
+        <form class="adm-password" id="admin-password-login" hidden>
+          <label>
+            <span>Password</span>
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button type="submit" class="adm-btn">Open</button>
+        </form>
+        <p class="adm-error" id="admin-login-error" role="alert"></p>
+      </div>
     </div>
 
-    <section class="admin-body" id="admin-body" hidden>
-      <div class="admin-bar">
-        <dl class="admin-times">
+    <section class="adm-body" id="admin-body" hidden>
+      <div class="adm-bar">
+        <dl class="adm-times">
           <div>
             <dt>Last refresh</dt>
             <dd id="admin-last">—</dd>
           </div>
           <div>
-            <dt>Last hourly refresh</dt>
+            <dt>Last hourly</dt>
             <dd id="admin-hourly">—</dd>
           </div>
           <div>
-            <dt>Next hourly refresh</dt>
+            <dt>Next hourly</dt>
             <dd id="admin-next">—</dd>
           </div>
         </dl>
-        <div class="admin-actions">
-          <button type="button" id="admin-refresh">Refresh now</button>
-          <button type="button" class="admin-quiet" id="admin-logout">Sign out</button>
+        <div class="adm-actions">
+          <button type="button" class="adm-btn is-primary" id="admin-refresh">Refresh now</button>
+          <button type="button" class="adm-btn" id="admin-export">Export CSV</button>
+          <button type="button" class="adm-btn is-quiet" id="admin-logout">Sign out</button>
         </div>
       </div>
-      <p class="admin-status" id="admin-status" role="status"></p>
+      <p class="adm-status" id="admin-status" role="status"></p>
+      <ul class="adm-warnings" id="admin-warnings" hidden></ul>
 
-      <section class="admin-passkeys">
-        <h2>Passkeys</h2>
-        <p class="admin-lede">
-          Sign in with a passkey from your password manager. Once one works, you can remove the ADMIN_TOKEN secret to
-          turn password sign-in off.
-        </p>
-        <ul class="admin-passkey-list" id="admin-passkey-list"></ul>
-        <form class="admin-passkey-add" id="admin-passkey-add">
-          <label>
-            Name
-            <input name="name" type="text" maxlength="60" placeholder="LastPass" />
-          </label>
-          <button type="submit">Add passkey</button>
-        </form>
-        <p class="admin-status" id="admin-passkey-status" role="status"></p>
+      <nav class="adm-tabs" role="tablist" aria-label="Admin sections">
+        {
+          tabs.map(([id, label]) => (
+            <button type="button" role="tab" id={`tab-${id}`} aria-controls={`panel-${id}`} data-tab={id}>
+              {label}
+              {id === "releases" && <span class="adm-badge" id="adm-release-badge" hidden></span>}
+            </button>
+          ))
+        }
+      </nav>
+
+      <section class="adm-panel" role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" data-panel="overview">
+        <div class="adm-tiles">
+          <div class="adm-tile is-lead">
+            <span class="adm-tile-label">All downloads</span>
+            <strong id="adm-sum-total">—</strong>
+            <span class="adm-tile-note">This site, Thunderstore, and Nexus</span>
+          </div>
+          <div class="adm-tile">
+            <span class="adm-tile-label">This site</span>
+            <strong id="adm-sum-site">—</strong>
+            <span class="adm-tile-note">Download button clicks</span>
+          </div>
+          <div class="adm-tile">
+            <span class="adm-tile-label">Steam subscribers</span>
+            <strong id="adm-sum-steam">—</strong>
+            <span class="adm-tile-note">Counted on their own</span>
+          </div>
+          <div class="adm-tile">
+            <span class="adm-tile-label">Mods listed</span>
+            <strong>{mods.length}</strong>
+            <span class="adm-tile-note">{games.length} games</span>
+          </div>
+        </div>
+
+        <div class="adm-games">
+          {
+            games.map((game) => (
+              <a class="adm-game-card" href="#downloads" data-jump-game={game.slug} data-game={game.slug}>
+                <span class="adm-game-name">{game.name}</span>
+                <strong data-overview-game={game.slug}>—</strong>
+                <span class="adm-tile-note">
+                  {modsForGame(game.slug).length} mods · top: <span data-top-mod={game.slug}>—</span>
+                </span>
+              </a>
+            ))
+          }
+        </div>
+
+        <div class="adm-split">
+          <section class="adm-card">
+            <h2>Health</h2>
+            <ul class="adm-checks" id="adm-checks">
+              <li><span class="adm-dot"></span>Checking…</li>
+            </ul>
+          </section>
+          <section class="adm-card">
+            <h2>Shortcuts</h2>
+            <ul class="adm-links">
+              {
+                links.map(([label, href]) => (
+                  <li>
+                    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noopener">
+                      {label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+        </div>
       </section>
-      <ul class="admin-warnings" id="admin-warnings" hidden></ul>
 
-      {
-        games.map((game) => (
-          <section class="admin-game">
-            <h2>{game.name}</h2>
-            <dl class="admin-totals" data-admin-game={game.slug}>
-              {totals(game.slug).map((column) => (
-                <div>
-                  <dt>{column.label}</dt>
-                  <dd data-field={column.field}>—</dd>
-                </div>
-              ))}
-            </dl>
-            <div class="admin-table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Mod</th>
-                    {columns(game.slug).map((column) => (
-                      <th scope="col">{column.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {modsForGame(game.slug).map((mod) => (
-                    <tr data-admin-mod={`${game.slug}/${mod.slug}`}>
-                      <th scope="row">
-                        <a href={`/${game.slug}/${mod.slug}`}>{mod.name}</a>
+      <section class="adm-panel" role="tabpanel" id="panel-downloads" aria-labelledby="tab-downloads" data-panel="downloads" hidden>
+        <div class="adm-toolbar">
+          <label class="adm-search">
+            <span class="sr-only">Find a mod</span>
+            <input id="adm-search" type="search" placeholder="Find a mod…" autocomplete="off" />
+          </label>
+          <div class="adm-chips" role="group" aria-label="Game">
+            <button type="button" class="adm-chip is-on" data-game-filter="" aria-pressed="true">All games</button>
+            {
+              games.map((game) => (
+                <button type="button" class="adm-chip" data-game-filter={game.slug} aria-pressed="false">
+                  {game.name}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+        {
+          games.map((game) => (
+            <section class="adm-game" data-game={game.slug}>
+              <h2>{game.name}</h2>
+              <dl class="adm-totals" data-admin-game={game.slug}>
+                {totals(game.slug).map((column) => (
+                  <div>
+                    <dt>{column.label}</dt>
+                    <dd data-field={column.field}>—</dd>
+                  </div>
+                ))}
+              </dl>
+              <div class="adm-table-wrap">
+                <table class="adm-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">
+                        <button type="button" data-sort="name">Mod</button>
                       </th>
                       {columns(game.slug).map((column) => (
-                        <td data-field={column.field}>—</td>
+                        <th scope="col">
+                          <button type="button" data-sort={column.field}>{column.label}</button>
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {modsForGame(game.slug).map((mod) => (
+                      <tr data-admin-mod={`${game.slug}/${mod.slug}`} data-name={mod.name.toLowerCase()}>
+                        <th scope="row">
+                          <a href={`/${game.slug}/${mod.slug}`}>{mod.name}</a>
+                          <span class="adm-ver">v{mod.version}</span>
+                        </th>
+                        {columns(game.slug).map((column) => (
+                          <td data-field={column.field}>—</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))
+        }
+        <p class="adm-empty" id="adm-search-empty" hidden>No mods match.</p>
+      </section>
+
+      <section class="adm-panel" role="tabpanel" id="panel-releases" aria-labelledby="tab-releases" data-panel="releases" hidden>
+        <div class="adm-toolbar">
+          <p class="adm-muted">
+            The version each page was built with next to what <code>downloads.json</code> holds right now. A newer upload
+            shows on the site without a rebuild.
+          </p>
+          <label class="adm-toggle">
+            <input type="checkbox" id="adm-release-attention" />
+            <span>Needs attention only</span>
+          </label>
+        </div>
+        <div class="adm-table-wrap">
+          <table class="adm-table is-left">
+            <thead>
+              <tr>
+                <th scope="col">Mod</th>
+                <th scope="col">Game</th>
+                <th scope="col">Site build</th>
+                <th scope="col">downloads.json</th>
+                <th scope="col">Uploaded</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="adm-releases">
+              <tr><td colspan="6" class="adm-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="adm-panel" role="tabpanel" id="panel-activity" aria-labelledby="tab-activity" data-panel="activity" hidden>
+        <div class="adm-toolbar">
+          <p class="adm-muted">Clicks on this site's Download buttons, per mod and version, newest first. Bots are skipped.</p>
+        </div>
+        <div class="adm-table-wrap">
+          <table class="adm-table is-left">
+            <thead>
+              <tr>
+                <th scope="col">Mod</th>
+                <th scope="col">Game</th>
+                <th scope="col">Version</th>
+                <th scope="col" class="is-num">Clicks</th>
+                <th scope="col">Last click</th>
+              </tr>
+            </thead>
+            <tbody id="adm-activity">
+              <tr><td colspan="5" class="adm-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="adm-panel" role="tabpanel" id="panel-signin" aria-labelledby="tab-signin" data-panel="signin" hidden>
+        <div class="adm-split">
+          <section class="adm-card">
+            <h2>Passkeys</h2>
+            <p class="adm-muted">
+              Sign in with a passkey from your password manager. Once one works, you can remove the ADMIN_TOKEN secret to
+              turn password sign-in off.
+            </p>
+            <ul class="adm-passkeys" id="admin-passkey-list"></ul>
+            <form class="adm-passkey-add" id="admin-passkey-add">
+              <label>
+                <span>Name</span>
+                <input name="name" type="text" maxlength="60" placeholder="LastPass" />
+              </label>
+              <button type="submit" class="adm-btn is-primary">Add passkey</button>
+            </form>
+            <p class="adm-status" id="admin-passkey-status" role="status"></p>
           </section>
-        ))
-      }
+          <section class="adm-card">
+            <h2>Sessions</h2>
+            <p class="adm-muted">Each sign-in lasts 12 hours. Signing out everywhere ends every session, this one too.</p>
+            <p class="adm-session-count"><strong id="adm-sessions">—</strong> <span id="adm-sessions-label">active sessions</span></p>
+            <button type="button" class="adm-btn is-danger" id="adm-signout-all">Sign out everywhere</button>
+          </section>
+        </div>
+      </section>
     </section>
   </div>
 
+  <script type="application/json" id="adm-data" set:html={JSON.stringify({ names, gameNames, csvColumns })} />
+
   <script is:inline>
     (() => {
-      const login = document.querySelector("#admin-login");
-      const loginError = document.querySelector("#admin-login-error");
-      const passkeyLogin = document.querySelector("#admin-passkey-login");
-      const passwordLogin = document.querySelector("#admin-password-login");
-      const body = document.querySelector("#admin-body");
-      const status = document.querySelector("#admin-status");
-      const warnings = document.querySelector("#admin-warnings");
-      const refreshButton = document.querySelector("#admin-refresh");
-      const passkeyList = document.querySelector("#admin-passkey-list");
-      const passkeyAdd = document.querySelector("#admin-passkey-add");
-      const passkeyStatus = document.querySelector("#admin-passkey-status");
+      const $ = (selector) => document.querySelector(selector);
+      const login = $("#admin-login");
+      const loginError = $("#admin-login-error");
+      const passkeyLogin = $("#admin-passkey-login");
+      const passwordLogin = $("#admin-password-login");
+      const loginOr = $("#admin-or");
+      const body = $("#admin-body");
+      const status = $("#admin-status");
+      const warnings = $("#admin-warnings");
+      const refreshButton = $("#admin-refresh");
+      const passkeyList = $("#admin-passkey-list");
+      const passkeyAdd = $("#admin-passkey-add");
+      const passkeyStatus = $("#admin-passkey-status");
+      const { names, gameNames, csvColumns } = JSON.parse($("#adm-data").textContent);
       const sources = { scheduled: "hourly", manual: "manual", "first-request": "first visit" };
       const passkeysSupported = typeof window.PublicKeyCredential === "function";
+      let snapshot = null;
 
       const format = (value) => (typeof value === "number" ? value.toLocaleString("en-US") : "—");
       const when = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
+
+      function ago(iso) {
+        if (!iso) return "—";
+        const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+        const abs = Math.abs(seconds);
+        if (abs < 30) return "just now";
+        const [amount, unit] =
+          abs < 3600 ? [Math.round(abs / 60), "min"] : abs < 86400 ? [Math.round(abs / 3600), "h"] : [Math.round(abs / 86400), "d"];
+        return seconds < 0 ? `in ${amount} ${unit}` : `${amount} ${unit} ago`;
+      }
+
+      function stamp(element, iso, extra = "") {
+        element.textContent = iso ? `${ago(iso)}${extra}` : "—";
+        element.title = when(iso);
+      }
 
       function nextHourly() {
         const next = new Date();
         next.setUTCMinutes(17, 0, 0);
         if (next <= new Date()) next.setUTCHours(next.getUTCHours() + 1);
-        return next.toLocaleString();
+        return next.toISOString();
       }
 
-      function render(snapshot) {
-        document.querySelector("#admin-last").textContent =
-          `${when(snapshot.lastFetched)} (${sources[snapshot.source] ?? snapshot.source ?? "unknown"})`;
-        document.querySelector("#admin-hourly").textContent = when(snapshot.lastScheduled);
-        document.querySelector("#admin-next").textContent = nextHourly();
+      function stampTimes() {
+        stamp($("#admin-last"), snapshot.lastFetched, ` · ${sources[snapshot.source] ?? snapshot.source ?? "unknown"}`);
+        stamp($("#admin-hourly"), snapshot.lastScheduled);
+        stamp($("#admin-next"), nextHourly());
+      }
+
+      function greet() {
+        const hour = new Date().getHours();
+        const part = hour < 5 ? "Up late" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+        $("#adm-greeting").textContent = `${part}, Azrael. Here is how the mods are doing.`;
+      }
+
+      // ---- Tabs ----
+      const tabButtons = [...document.querySelectorAll("[data-tab]")];
+      const panels = [...document.querySelectorAll("[data-panel]")];
+      const loaded = new Set();
+      function showTab(id, remember = true) {
+        if (!tabButtons.some((button) => button.dataset.tab === id)) id = "overview";
+        for (const button of tabButtons) button.setAttribute("aria-selected", String(button.dataset.tab === id));
+        for (const panel of panels) panel.hidden = panel.dataset.panel !== id;
+        if (remember) history.replaceState(null, "", `#${id}`);
+        if (!body.hidden) loadTab(id);
+      }
+      function loadTab(id) {
+        if (loaded.has(id)) return;
+        loaded.add(id);
+        if (id === "releases") loadReleases();
+        if (id === "activity") loadActivity();
+      }
+      for (const button of tabButtons) button.addEventListener("click", () => showTab(button.dataset.tab));
+      for (const card of document.querySelectorAll("[data-jump-game]")) {
+        card.addEventListener("click", (event) => {
+          event.preventDefault();
+          filterGame(card.dataset.jumpGame);
+          showTab("downloads");
+        });
+      }
+
+      // ---- Downloads ----
+      function modValues(key) {
+        const mod = snapshot?.mods?.[key] ?? {};
+        return {
+          site: mod.site?.downloads,
+          steam: mod.steam?.subscriptions,
+          thunderstore: mod.thunderstore?.downloads,
+          nexus: mod.nexus?.downloads,
+          nexus_unique: mod.nexus?.unique,
+        };
+      }
+
+      function render(next) {
+        snapshot = next;
+        stampTimes();
 
         warnings.replaceChildren(
           ...(snapshot.warnings ?? []).map((message) => {
@@ -173,23 +431,123 @@ function totals(game: string): Column[] {
         );
         warnings.hidden = warnings.children.length === 0;
 
+        const sums = { total: 0, site: 0, steam: 0 };
+        for (const [game, stats] of Object.entries(snapshot.games ?? {})) {
+          for (const field of Object.keys(sums)) if (typeof stats?.[field] === "number") sums[field] += stats[field];
+          for (const cell of document.querySelectorAll(`[data-overview-game="${game}"]`)) cell.textContent = format(stats?.total);
+        }
+        $("#adm-sum-total").textContent = format(sums.total);
+        $("#adm-sum-site").textContent = format(sums.site);
+        $("#adm-sum-steam").textContent = format(sums.steam);
+
         for (const list of document.querySelectorAll("[data-admin-game]")) {
           const totals = snapshot.games?.[list.dataset.adminGame] ?? {};
           for (const cell of list.querySelectorAll("[data-field]")) cell.textContent = format(totals[cell.dataset.field]);
         }
+
+        const top = {};
         for (const row of document.querySelectorAll("[data-admin-mod]")) {
-          const mod = snapshot.mods?.[row.dataset.adminMod] ?? {};
-          const values = {
-            site: mod.site?.downloads,
-            steam: mod.steam?.subscriptions,
-            thunderstore: mod.thunderstore?.downloads,
-            nexus: mod.nexus?.downloads,
-            nexus_unique: mod.nexus?.unique,
-          };
-          for (const cell of row.querySelectorAll("[data-field]")) cell.textContent = format(values[cell.dataset.field]);
+          const values = modValues(row.dataset.adminMod);
+          for (const cell of row.querySelectorAll("[data-field]")) {
+            const value = values[cell.dataset.field];
+            cell.textContent = format(value);
+            cell.dataset.value = typeof value === "number" ? value : -1;
+            cell.classList.toggle("is-zero", !value);
+          }
+          const [game] = row.dataset.adminMod.split("/");
+          const score = (values.site ?? 0) + (values.thunderstore ?? 0) + (values.nexus ?? 0) + (values.steam ?? 0);
+          if (!top[game] || score > top[game].score) top[game] = { score, name: names[row.dataset.adminMod] };
+        }
+        for (const cell of document.querySelectorAll("[data-top-mod]")) {
+          cell.textContent = top[cell.dataset.topMod]?.score ? top[cell.dataset.topMod].name : "—";
+        }
+        markLeaders();
+      }
+
+      // The biggest number in each column gets a highlight.
+      function markLeaders() {
+        for (const table of document.querySelectorAll(".adm-game table")) {
+          const best = {};
+          for (const cell of table.querySelectorAll("tbody td[data-field]")) {
+            const value = Number(cell.dataset.value);
+            if (value > 0 && value > (best[cell.dataset.field]?.value ?? 0)) best[cell.dataset.field] = { value, cell };
+            cell.classList.remove("is-best");
+          }
+          for (const { cell } of Object.values(best)) cell.classList.add("is-best");
         }
       }
 
+      // Numbers sort biggest first on the first click, names A to Z.
+      for (const table of document.querySelectorAll(".adm-game table")) {
+        const tbody = table.querySelector("tbody");
+        for (const button of table.querySelectorAll("[data-sort]")) {
+          button.addEventListener("click", () => {
+            const field = button.dataset.sort;
+            const first = field === "name" ? "ascending" : "descending";
+            const current = button.getAttribute("aria-sort");
+            const order = current === first ? (first === "ascending" ? "descending" : "ascending") : first;
+            for (const other of table.querySelectorAll("[data-sort]")) other.removeAttribute("aria-sort");
+            button.setAttribute("aria-sort", order);
+            const direction = order === "ascending" ? 1 : -1;
+            const value = (row) => Number(row.querySelector(`[data-field="${field}"]`)?.dataset.value ?? -1);
+            const rows = [...tbody.rows].sort((a, b) =>
+              field === "name"
+                ? direction * a.dataset.name.localeCompare(b.dataset.name)
+                : direction * (value(a) - value(b)) || a.dataset.name.localeCompare(b.dataset.name),
+            );
+            tbody.append(...rows);
+          });
+        }
+      }
+
+      const search = $("#adm-search");
+      const chips = [...document.querySelectorAll("[data-game-filter]")];
+      let gameFilter = "";
+      function filterGame(game) {
+        gameFilter = game;
+        for (const chip of chips) {
+          const on = chip.dataset.gameFilter === game;
+          chip.classList.toggle("is-on", on);
+          chip.setAttribute("aria-pressed", String(on));
+        }
+        applyFilters();
+      }
+      function applyFilters() {
+        const query = search.value.trim().toLowerCase();
+        let shown = 0;
+        for (const section of document.querySelectorAll(".adm-game")) {
+          let rows = 0;
+          for (const row of section.querySelectorAll("tbody tr")) {
+            row.hidden = !!query && !row.dataset.name.includes(query);
+            if (!row.hidden) rows += 1;
+          }
+          section.hidden = (!!gameFilter && section.dataset.game !== gameFilter) || rows === 0;
+          if (!section.hidden) shown += 1;
+        }
+        $("#adm-search-empty").hidden = shown > 0;
+      }
+      for (const chip of chips) chip.addEventListener("click", () => filterGame(chip.dataset.gameFilter));
+      search.addEventListener("input", applyFilters);
+
+      $("#admin-export").addEventListener("click", () => {
+        if (!snapshot) return;
+        const quote = (value) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+        const lines = [["game", "mod", ...csvColumns].join(",")];
+        for (const row of document.querySelectorAll("[data-admin-mod]")) {
+          const key = row.dataset.adminMod;
+          const values = modValues(key);
+          const [game] = key.split("/");
+          const fields = [gameNames[game] ?? game, names[key] ?? key, ...csvColumns.map((field) => values[field] ?? "")];
+          lines.push(fields.map((value) => quote(String(value))).join(","));
+        }
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([lines.join("\n") + "\n"], { type: "text/csv" }));
+        link.download = `azraels-mods-downloads-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      });
+
+      // ---- API ----
       // The session is an HttpOnly cookie, so requests carry it on their own.
       async function call(path, method = "GET", payload) {
         const res = await fetch(path, {
@@ -203,6 +561,142 @@ function totals(game: string): Column[] {
         return data;
       }
 
+      function cell(text, className) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        if (className) td.className = className;
+        return td;
+      }
+
+      function timeCell(iso) {
+        const td = cell(ago(iso));
+        td.title = when(iso);
+        return td;
+      }
+
+      function emptyRow(tbody, columns, text) {
+        const row = document.createElement("tr");
+        const td = cell(text, "adm-muted");
+        td.colSpan = columns;
+        row.append(td);
+        tbody.replaceChildren(row);
+      }
+
+      // ---- Releases ----
+      const stateLabels = {
+        live: ["Live", "ok"],
+        newer: ["New upload", "info"],
+        "build-only": ["Not in downloads.json", "warn"],
+        behind: ["downloads.json is older", "warn"],
+        unknown: ["Manifest unreadable", "muted"],
+        "not-ready": ["No public zip", "muted"],
+      };
+      const needsAttention = (mod) => stateLabels[mod.state]?.[1] === "warn";
+      let releases = [];
+      const attention = $("#adm-release-attention");
+      function renderReleases() {
+        const tbody = $("#adm-releases");
+        const list = attention.checked ? releases.filter(needsAttention) : releases;
+        if (list.length === 0) return emptyRow(tbody, 6, attention.checked ? "Nothing needs attention." : "No mods.");
+        tbody.replaceChildren(
+          ...list.map((mod) => {
+            const row = document.createElement("tr");
+            const name = document.createElement("th");
+            name.scope = "row";
+            const link = document.createElement("a");
+            link.href = `/${mod.key}`;
+            link.textContent = mod.name;
+            name.append(link);
+            const [label, tone] = stateLabels[mod.state] ?? [mod.state, "muted"];
+            const pill = document.createElement("span");
+            pill.className = `adm-pill is-${tone}`;
+            pill.textContent = label;
+            const state = document.createElement("td");
+            state.append(pill);
+            row.append(
+              name,
+              cell(gameNames[mod.game] ?? mod.game),
+              cell(`v${mod.built.version}`),
+              cell(mod.hosted ? `v${mod.hosted.version}` : "—"),
+              timeCell(mod.hosted?.uploadedAt ?? mod.built.uploadedAt),
+              state,
+            );
+            return row;
+          }),
+        );
+      }
+      async function loadReleases() {
+        try {
+          const data = await call("/api/admin/releases");
+          releases = data.mods;
+          const issues = releases.filter(needsAttention).length;
+          const badge = $("#adm-release-badge");
+          badge.textContent = String(issues);
+          badge.hidden = issues === 0;
+          setCheck("manifest", data.manifest, data.manifest ? "downloads.json is readable" : "downloads.json could not be read");
+          if (data.manifest) setCheck("releases", issues === 0, issues === 0 ? "Every release is live" : `${issues} release${issues === 1 ? "" : "s"} need attention`);
+          renderReleases();
+        } catch (error) {
+          loaded.delete("releases");
+          if (error.status === 401) return showLogin(error.message);
+          emptyRow($("#adm-releases"), 6, error.message);
+        }
+      }
+      attention.addEventListener("change", renderReleases);
+
+      // ---- Activity ----
+      async function loadActivity() {
+        const tbody = $("#adm-activity");
+        try {
+          const { rows } = await call("/api/admin/site-downloads");
+          if (rows.length === 0) return emptyRow(tbody, 5, "No clicks yet.");
+          tbody.replaceChildren(
+            ...rows.slice(0, 100).map((entry) => {
+              const row = document.createElement("tr");
+              const [game] = entry.key.split("/");
+              const name = document.createElement("th");
+              name.scope = "row";
+              name.textContent = names[entry.key] ?? entry.key;
+              row.append(name, cell(gameNames[game] ?? game), cell(`v${entry.version}`), cell(format(entry.count), "is-num"), timeCell(entry.lastAt));
+              return row;
+            }),
+          );
+        } catch (error) {
+          loaded.delete("activity");
+          if (error.status === 401) return showLogin(error.message);
+          emptyRow(tbody, 5, error.message);
+        }
+      }
+
+      // ---- Health ----
+      const checks = new Map();
+      function setCheck(id, ok, text) {
+        checks.set(id, { ok, text });
+        $("#adm-checks").replaceChildren(
+          ...[...checks.values()].map((check) => {
+            const item = document.createElement("li");
+            const dot = document.createElement("span");
+            dot.className = `adm-dot${check.ok === true ? " is-ok" : check.ok === false ? " is-bad" : ""}`;
+            item.append(dot, document.createTextNode(check.text));
+            return item;
+          }),
+        );
+      }
+      async function loadOverview() {
+        try {
+          const data = await call("/api/admin/overview");
+          setCheck("db", data.database, data.database ? "D1 database connected" : "No D1 database: no site counts or passkeys");
+          setCheck("nexus", data.nexusKey, data.nexusKey ? "Nexus API key set" : "No Nexus API key: Nexus counts are frozen");
+          setCheck("password", data.password ? null : true, data.password ? "Password sign-in is on (ADMIN_TOKEN set)" : "Password sign-in is off");
+          $("#adm-sessions").textContent = format(data.sessions);
+          $("#adm-sessions-label").textContent = data.sessions === 1 ? "active session" : "active sessions";
+        } catch (error) {
+          if (error.status === 401) return showLogin(error.message);
+          setCheck("overview", false, error.message);
+        }
+      }
+
+      // ---- Passkeys ----
       // WebAuthn wants ArrayBuffers; the server speaks base64url JSON.
       const toBytes = (value) =>
         Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0));
@@ -243,14 +737,19 @@ function totals(game: string): Column[] {
       }
 
       function renderPasskeys(passkeys) {
+        setCheck("passkeys", passkeys.length > 0 ? true : null, `${passkeys.length} passkey${passkeys.length === 1 ? "" : "s"} registered`);
         passkeyList.replaceChildren(
           ...passkeys.map((passkey) => {
             const item = document.createElement("li");
-            const label = document.createElement("span");
-            label.textContent = `${passkey.name} · added ${when(passkey.createdAt)} · last used ${when(passkey.lastUsedAt)}`;
+            const text = document.createElement("div");
+            const name = document.createElement("strong");
+            name.textContent = passkey.name;
+            const meta = document.createElement("span");
+            meta.textContent = `Added ${when(passkey.createdAt)} · last used ${passkey.lastUsedAt ? ago(passkey.lastUsedAt) : "never"}`;
+            text.append(name, meta);
             const remove = document.createElement("button");
             remove.type = "button";
-            remove.className = "admin-quiet";
+            remove.className = "adm-btn is-quiet";
             remove.textContent = "Remove";
             remove.addEventListener("click", async () => {
               if (!confirm(`Remove the passkey "${passkey.name}"?`)) return;
@@ -262,12 +761,13 @@ function totals(game: string): Column[] {
                 passkeyStatus.textContent = error.message;
               }
             });
-            item.append(label, remove);
+            item.append(text, remove);
             return item;
           }),
         );
         if (passkeys.length === 0) {
           const item = document.createElement("li");
+          item.className = "adm-muted";
           item.textContent = "No passkeys yet.";
           passkeyList.append(item);
         }
@@ -281,26 +781,34 @@ function totals(game: string): Column[] {
         }
       }
 
+      // ---- Sign-in ----
       async function showLogin(message = "") {
         body.hidden = true;
         login.hidden = false;
+        loaded.clear();
         loginError.textContent = message;
         const state = await call("/api/admin/session").catch((error) => ({ error: error.message }));
         if (state.signedIn) return openAdmin();
         passkeyLogin.hidden = !(passkeysSupported && state.passkeys);
         passwordLogin.hidden = !state.password;
+        loginOr.hidden = passkeyLogin.hidden || passwordLogin.hidden;
         if (state.error && !message) loginError.textContent = state.error;
         else if (!state.passkeys && !state.password && !message) loginError.textContent = "No sign-in method is set up.";
       }
 
       async function openAdmin() {
         try {
-          const snapshot = await call("/api/admin/stats");
+          const next = await call("/api/admin/stats");
           login.hidden = true;
           body.hidden = false;
           loginError.textContent = "";
-          render(snapshot);
+          greet();
+          render(next);
           loadPasskeys();
+          loadOverview();
+          // Releases feed the tab badge and the health list, so they load straight away.
+          loadTab("releases");
+          showTab(location.hash.slice(1) || "overview", false);
         } catch (error) {
           if (error.status === 401) return showLogin();
           showLogin(error.message);
@@ -372,6 +880,8 @@ function totals(game: string): Column[] {
         try {
           render(await call("/api/admin/refresh", "POST", {}));
           status.textContent = "Refreshed. Public pages can take up to five minutes to show the new numbers.";
+          loaded.delete("activity");
+          if (!$("#panel-activity").hidden) loadTab("activity");
         } catch (error) {
           if (error.status === 401) return showLogin(error.message);
           status.textContent = error.message;
@@ -380,13 +890,30 @@ function totals(game: string): Column[] {
         }
       });
 
-      document.querySelector("#admin-logout").addEventListener("click", async () => {
+      $("#admin-logout").addEventListener("click", async () => {
         await call("/api/admin/logout", "POST", {}).catch(() => {});
         showLogin();
       });
 
+      $("#adm-signout-all").addEventListener("click", async () => {
+        if (!confirm("Sign out every browser, including this one?")) return;
+        try {
+          await call("/api/admin/sessions/clear", "POST", {});
+          showLogin("Signed out everywhere.");
+        } catch (error) {
+          passkeyStatus.textContent = error.message;
+        }
+      });
+
+      // Keeps the "ago" times honest while the page sits open.
+      setInterval(() => {
+        if (!body.hidden && snapshot) stampTimes();
+      }, 30_000);
+
       // The old page kept the password in sessionStorage; clear it.
-      sessionStorage.removeItem("azraels-admin-password");
+      try {
+        sessionStorage.removeItem("azraels-admin-password");
+      } catch {}
       openAdmin();
     })();
   </script>

@@ -64,6 +64,23 @@ export async function siteCounts(db) {
 }
 
 /**
+ * Every (mod, version) row, newest click first, for the admin page.
+ *
+ * @param {D1Database} db
+ * @returns {Promise<{ key: string, version: string, count: number, lastAt: string }[]>}
+ */
+export async function siteDownloadLog(db) {
+  await ensureTable(db);
+  const { results } = await db.prepare("SELECT key, version, count, last_at FROM site_downloads ORDER BY last_at DESC").all();
+  return (results ?? []).map((row) => ({
+    key: String(row.key),
+    version: String(row.version),
+    count: Number(row.count ?? 0),
+    lastAt: String(row.last_at),
+  }));
+}
+
+/**
  * Adds the site counts to a store snapshot. `site` is this site's clicks and
  * `total` is site + Thunderstore + Nexus downloads. Steam is left out of the
  * total because it counts subscribers, not downloads.

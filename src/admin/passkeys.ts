@@ -239,6 +239,18 @@ export async function endSession(db: D1Database, token: string): Promise<void> {
   await db.prepare("DELETE FROM admin_sessions WHERE token_hash = ?1").bind(await sha256Hex(token)).run();
 }
 
+export async function activeSessions(db: D1Database, now = Date.now()): Promise<number> {
+  await ensureTables(db);
+  const row = await db.prepare("SELECT COUNT(*) AS total FROM admin_sessions WHERE expires_at >= ?1").bind(now).first<{ total: number }>();
+  return Number(row?.total ?? 0);
+}
+
+// Signs out every browser, this one included.
+export async function endAllSessions(db: D1Database): Promise<void> {
+  await ensureTables(db);
+  await db.prepare("DELETE FROM admin_sessions").run();
+}
+
 export function sessionCookie(token: string): string {
   return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_TTL_MS / 1000}`;
 }
