@@ -1,0 +1,247 @@
+{
+  "zombie-and-animal-bait": {
+    "intro": "Type these in game chat. /t, /tame and /thralls work in place of /thrall, and thrall in the F1 console does the same. A number comes from /thrall list, and a thrall's name works anywhere a number does.",
+    "groups": [
+      {
+        "title": "Your thralls",
+        "rows": [
+          { "cmd": "/thrall list", "does": "List your tamed creatures, numbered." },
+          { "cmd": "/thrall hp", "does": "Show their health." },
+          { "cmd": "/thrall name <n> <name>", "does": "Rename one." },
+          { "cmd": "/thrall call <n>", "does": "Bring a stowed one out." },
+          { "cmd": "/thrall stow [n|all|active|tethered]", "does": "Put away one or a group." },
+          { "cmd": "/thrall stay <n|all>", "does": "Hold position." },
+          { "cmd": "/thrall follow <n|all>", "does": "Follow you again." },
+          { "cmd": "/thrall mode <n|all> <mode>", "does": "aggressive, defensive, passive or invulnerable." },
+          { "cmd": "/thrall heal <n>", "does": "Heal one." },
+          { "cmd": "/thrall revive <n>", "does": "Bring a dead one back." },
+          { "cmd": "/thrall autorevive <n|all> [on|off]", "does": "Revive it when it dies, using 3 plain bait from your inventory." },
+          { "cmd": "/thrall autoheal <n|all> [on|off]", "does": "Heal it below 30% health, using 1 plain bait from your inventory." },
+          { "cmd": "/thrall here [n|all]", "does": "Bring stuck thralls to your side." },
+          { "cmd": "/thrall where [n]", "does": "Distance and direction to your thralls or their tethers." },
+          { "cmd": "/thrall tether <n|all> [radius]", "does": "Keep them within a radius of where they stand." },
+          { "cmd": "/thrall untether <n|all>", "does": "Remove the tether, guard post or patrol." },
+          { "cmd": "/thrall release <n>", "does": "Let one go for good." },
+          { "cmd": "/thrall kill <n|all>", "does": "Kill one or all." }
+        ]
+      },
+      {
+        "title": "Groups and roster",
+        "rows": [
+          { "cmd": "/thrall team list", "does": "Your saved teams." },
+          { "cmd": "/thrall team save <team> <numbers|names|active>", "does": "Save a group as a team." },
+          { "cmd": "/thrall team call <team>", "does": "Swap your active thralls to that team." },
+          { "cmd": "/thrall team delete <team>", "does": "Forget a team." },
+          { "cmd": "/thrall move <n> <pos|top|bottom|up|down>", "does": "Reorder your roster." },
+          { "cmd": "/thrall kennel <n|all>", "does": "Walk to your nearest Thrall Kennel and stay there." },
+          { "cmd": "/thrall goto <n|all> <x> <y> <z>", "does": "Walk to a spot and stay there." },
+          { "cmd": "/thrall alias <name> <command>", "does": "Save your own shortcut: /t <name> runs that command." },
+          { "cmd": "/thrall last", "does": "Repeat your last command." }
+        ]
+      },
+      {
+        "title": "Roles and progress",
+        "rows": [
+          { "cmd": "/thrall perk <n> [tough|hit|regen|taunt|reset]", "does": "Show or pick a perk. Slots open at levels 10, 25 and 50. Reset costs 1 Feast Bait." },
+          { "cmd": "/thrall guard <n|all> [radius]", "does": "Guard post where you stand. It attacks hostiles that come in." },
+          { "cmd": "/thrall patrol <n|all> add|start|stop|clear|list", "does": "Patrol route: add 2 to 8 points where you stand, then start." },
+          { "cmd": "/thrall bloodmoon off|call|fight|both", "does": "Your blood moon mode: call brings tethered thralls to you, fight makes followers aggressive, until dawn." },
+          { "cmd": "/thrall scout <n>", "does": "Runs 30 m ahead the way you look and reports hostiles." },
+          { "cmd": "/thrall scream <n>", "does": "A tamed screamer calls wild zombies to it." },
+          { "cmd": "/thrall evolve <n>", "does": "A level 50+ zombie becomes its feral, radiated or charged version for 3 Feast Bait." },
+          { "cmd": "/thrall secondchance <n>", "does": "On permadeath servers, 1 Feast Bait saves it from its next death once." },
+          { "cmd": "/thrall retire <n> yes", "does": "A level 25+ thrall leaves for good and you get bait back." },
+          { "cmd": "/thrall deaths", "does": "Your last 10 thrall deaths and what killed them." },
+          { "cmd": "/thrall stats [server]", "does": "Lifetime numbers: tamed, kills, deaths, bait fed." },
+          { "cmd": "/thrall top [kills]", "does": "Server top 10 thralls by level, or by kills." }
+        ]
+      },
+      {
+        "title": "PvP",
+        "rows": [
+          { "cmd": "/thrall pvp on|off", "does": "Your thralls fight players who turned it on too, never your party or allies. Off until an admin sets PvpThralls=true." },
+          { "cmd": "/thrall duel <player> <n>", "does": "Challenge a player's thrall to a duel. Nobody dies: it ends at 10% health." },
+          { "cmd": "/thrall duel accept <n>", "does": "Accept with one of your thralls." },
+          { "cmd": "/thrall duel decline", "does": "Turn the duel down." }
+        ]
+      },
+      {
+        "title": "Settings and admin",
+        "rows": [
+          { "cmd": "/thrall config [name]", "does": "Show the Bait settings, or one of them." },
+          { "cmd": "/thrall config <name> <value>", "does": "Change a setting, saved per world.", "admin": true },
+          { "cmd": "/thrall config preset casual|default|hardcore", "does": "Set every setting from a preset.", "admin": true },
+          { "cmd": "/thrall exclude list", "does": "Creatures that can't be tamed." },
+          { "cmd": "/thrall exclude add|remove <class>", "does": "Add or remove one, like animalDireWolf.", "admin": true },
+          { "cmd": "/thrall exclude clear", "does": "Empty the exclude list.", "admin": true },
+          { "cmd": "/thrall admin who", "does": "Who owns thralls.", "admin": true },
+          { "cmd": "/thrall admin list <player>", "does": "A player's thralls.", "admin": true },
+          { "cmd": "/thrall admin release <player> <n>", "does": "Release a player's thrall.", "admin": true },
+          { "cmd": "/thrall admin limit <player> <owned> <active>", "does": "Set a player's caps. 0 means the server default.", "admin": true },
+          { "cmd": "/thrall admin heal|revive|tp <player> <n|all>", "does": "Heal, revive or bring back a player's thralls.", "admin": true },
+          { "cmd": "/thrall admin give <from> <to>", "does": "Move every thrall of one owner to another player.", "admin": true },
+          { "cmd": "/thrall admin log [n]", "does": "The last admin and settings changes.", "admin": true },
+          { "cmd": "/thrall admin banword list|add|remove <word>", "does": "Words thrall names can't use.", "admin": true },
+          { "cmd": "/thrall admin ui [player]", "does": "Fill the Bait UI admin window.", "admin": true }
+        ]
+      }
+    ]
+  },
+  "zombie-and-animal-bait-ui": {
+    "intro": "Type these in the F1 console. They change only your own game.",
+    "groups": [
+      {
+        "title": "Console",
+        "rows": [
+          { "cmd": "baitui", "does": "Show your current UI settings." },
+          { "cmd": "baitui open", "does": "Open or close the roster window." },
+          { "cmd": "baitui nameplates on|off", "does": "Name tags and health bars over your thralls." },
+          { "cmd": "baitui party on|off", "does": "The health list on the left." },
+          { "cmd": "baitui feed on|off", "does": "\"Fed x/y\" tags over creatures you're taming." },
+          { "cmd": "baitui scale <number>", "does": "Size of the tags and party list (default 1.6)." },
+          { "cmd": "baitui reset", "does": "Party list back to its default spot and size." },
+          { "cmd": "baitui key <key|none>", "does": "Roster window hotkey (default Home)." },
+          { "cmd": "baitui followkey|staykey|herekey <key|none>", "does": "Group hotkeys: follow all, stay all, bring all here (default F6, F7, F8)." },
+          { "cmd": "baitui wheelkey <key|none>", "does": "Hold for the quick-actions wheel (default the middle mouse button)." },
+          { "cmd": "baitui version", "does": "Your Bait UI version and the server's Bait version." }
+        ]
+      }
+    ]
+  },
+  "blood-moon-sound": {
+    "groups": [
+      {
+        "title": "Players: game chat",
+        "note": "Works on servers running the mod, even if you don't have it. Only you see the answer.",
+        "rows": [
+          { "cmd": "/bm", "does": "Blood moon day and the time left." },
+          { "cmd": "/bm me", "does": "Your blood moon record." },
+          { "cmd": "/bm top", "does": "The leaderboard." }
+        ]
+      },
+      {
+        "title": "Players: F1 console",
+        "rows": [
+          { "cmd": "bmsound", "does": "Status: sounds loaded, next blood moon." },
+          { "cmd": "bmsound ui", "does": "Open the settings window (same as the Insert key)." },
+          { "cmd": "bmsound test", "does": "Play the blood moon clip." },
+          { "cmd": "bmsound test spawn|morning|night|survived", "does": "Play the spawn clip, a bell or the survived clip." },
+          { "cmd": "bmsound test banner", "does": "Show the warning banner and red pulse." },
+          { "cmd": "bmsound reload", "does": "Re-read settings.txt and the sound files." }
+        ]
+      },
+      {
+        "title": "Server: console",
+        "rows": [
+          { "cmd": "bmdiscord", "does": "Status and the full post schedule.", "admin": true },
+          { "cmd": "bmdiscord test", "does": "Post a test message.", "admin": true },
+          { "cmd": "bmdiscord test reminder <n>", "does": "Post reminder n now.", "admin": true },
+          { "cmd": "bmdiscord test countdown|start|update|end", "does": "Post that message now.", "admin": true },
+          { "cmd": "bmdiscord test serverstart|serverstop|join|leave", "does": "Post that message now.", "admin": true },
+          { "cmd": "bmdiscord test death|laststanding|leaderboard|moved|skipped", "does": "Post that message now.", "admin": true },
+          { "cmd": "bmdiscord recap", "does": "The horde recap so far, or from the last horde.", "admin": true },
+          { "cmd": "bmdiscord history", "does": "The last 10 blood moons on this world.", "admin": true },
+          { "cmd": "bmdiscord leaderboard", "does": "Show the leaderboard in the console.", "admin": true },
+          { "cmd": "bmdiscord sound [warning|dawn]", "does": "Play the horde (or warning, or dawn) sound for everyone online.", "admin": true },
+          { "cmd": "bmdiscord reload", "does": "Re-read discord.txt and settings.txt.", "admin": true }
+        ]
+      }
+    ]
+  },
+  "drone-loot-filter": {
+    "intro": "Type these in game chat. The server can change the /dai prefix in its settings.",
+    "groups": [
+      {
+        "title": "Game chat",
+        "rows": [
+          { "cmd": "/dai", "does": "Help." },
+          { "cmd": "/dai list", "does": "What your drone leaves alone." },
+          { "cmd": "/dai last", "does": "What the drone took recently, numbered." },
+          { "cmd": "/dai skip <n>", "does": "Ignore item n from /dai last." },
+          { "cmd": "/dai add <item|pattern*|held>", "does": "Ignore an item, a wildcard, or what you're holding. /dai ignore works too." },
+          { "cmd": "/dai remove <n|name>", "does": "Let the drone take it again. /dai unignore and /dai allow work too." },
+          { "cmd": "/dai clear", "does": "Empty your ignore list." },
+          { "cmd": "/dai find <part of name>", "does": "Look up item names." }
+        ]
+      }
+    ]
+  },
+  "keep-backpacks": {
+    "groups": [
+      {
+        "title": "Players: game chat",
+        "rows": [
+          { "cmd": "/mybag", "does": "Where your death backpacks are, even in unloaded areas. The server can rename it (BagCommand=)." }
+        ]
+      },
+      {
+        "title": "Server: console",
+        "rows": [
+          { "cmd": "kbags", "does": "Show the current despawn times.", "admin": true },
+          { "cmd": "kbags reload", "does": "Re-read settings.txt without a restart. Connected players keep the old times until they rejoin.", "admin": true },
+          { "cmd": "kbags password <word>", "does": "Set the password kbclear needs.", "admin": true },
+          { "cmd": "kbclear <password> [r=<blocks>] [count]", "does": "Remove dropped-item bags and loose items in loaded areas, or only within r blocks of you. count only counts. Death backpacks, zombie loot and vehicle bags stay.", "admin": true }
+        ]
+      }
+    ]
+  },
+  "remove-any-entity": {
+    "intro": "Server console commands. Creatures already in the world stay unless you cull them.",
+    "groups": [
+      {
+        "title": "Server: console",
+        "aliases": "removeanyentity",
+        "rows": [
+          { "cmd": "rae", "does": "Removed entities, and what changed when the world loaded.", "admin": true },
+          { "cmd": "rae group <name>", "does": "What a spawn group can spawn now, with chances.", "admin": true },
+          { "cmd": "rae remove <name>", "does": "Stop it (and its tiers) spawning, saved and applied now.", "admin": true },
+          { "cmd": "rae remove <name> in <biome>[,<biome>]", "does": "Stop it spawning in the open world of those biomes only: pine_forest, burnt_forest, desert, snow, wasteland.", "admin": true },
+          { "cmd": "rae replace <name> <other>", "does": "Spawn <other> wherever <name> would have spawned.", "admin": true },
+          { "cmd": "rae keep <name>", "does": "Let it spawn again. Undoes remove, remove-in and replace.", "admin": true },
+          { "cmd": "rae cull [name]", "does": "Despawn creatures already out that the rules no longer allow. Players and Bait thralls are never touched.", "admin": true },
+          { "cmd": "rae cull count [name]", "does": "Only count what cull would despawn.", "admin": true },
+          { "cmd": "rae reload", "does": "Re-read entities.txt and apply it now.", "admin": true }
+        ]
+      }
+    ]
+  },
+  "spawn-tuner": {
+    "intro": "Server console commands. Settings: DayDensity, NightDensity, AnimalDayDensity, AnimalNightDensity (none, default or 1 to 100); DayRespawn, NightRespawn, AnimalDayRespawn, AnimalNightRespawn (default, veryslow, slow, normal, fast, veryfast); BloodMoonCount, MaxZombies, MaxAnimals; HordeFrequency and HordeSize (percent, 100 is vanilla).",
+    "groups": [
+      {
+        "title": "Server: console",
+        "aliases": "spawntuner",
+        "rows": [
+          { "cmd": "spawns", "does": "Every setting, now and the world's value.", "admin": true },
+          { "cmd": "spawns <setting> <value>", "does": "Change one, apply it now, save it to spawns.txt.", "admin": true },
+          { "cmd": "spawns <setting> world", "does": "Back to the world's own value.", "admin": true },
+          { "cmd": "spawns ramp <setting> +1 every 7 [max 6]", "does": "Raise (or lower) a setting as the game days pass.", "admin": true },
+          { "cmd": "spawns ramp <setting> off", "does": "Stop ramping it.", "admin": true },
+          { "cmd": "spawns save <name>", "does": "Save every change as a preset.", "admin": true },
+          { "cmd": "spawns load <name>", "does": "Switch to a preset. Replaces every change.", "admin": true },
+          { "cmd": "spawns presets", "does": "List the presets.", "admin": true },
+          { "cmd": "spawns refresh", "does": "Restart respawn timers in loaded areas so changes show now.", "admin": true },
+          { "cmd": "spawns reload", "does": "Re-read spawns.txt.", "admin": true }
+        ]
+      }
+    ]
+  },
+  "speedometer": {
+    "intro": "Type these in the F1 console. You can also click the speedometer with your inventory open to switch units.",
+    "groups": [
+      {
+        "title": "Console",
+        "aliases": "speedometer",
+        "rows": [
+          { "cmd": "speedo", "does": "Current settings." },
+          { "cmd": "speedo off|on|always", "does": "Hide it, show it in vehicles (default), or show it on foot too." },
+          { "cmd": "speedo mph|kmh", "does": "Pick the unit." },
+          { "cmd": "speedo unit", "does": "Switch between MPH and KM/H." },
+          { "cmd": "speedo key hide <key|none>", "does": "Show/hide hotkey (default F5)." },
+          { "cmd": "speedo key unit <key|none>", "does": "Unit hotkey (default F2)." },
+          { "cmd": "speedo key reset", "does": "Hotkeys back to F5 and F2." }
+        ]
+      }
+    ]
+  }
+}

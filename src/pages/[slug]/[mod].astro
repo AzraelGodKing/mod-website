@@ -4,6 +4,7 @@ import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { isNotReady, mods, modsForGame, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { commandsFor } from "../../data/sevendays-commands";
 import { indexInfo, installHints, installLabels } from "../../data/sevendays-index";
 import { heroVars, lookFor } from "../../data/themes";
 
@@ -23,13 +24,15 @@ const game = games.find((entry) => entry.slug === mod.game);
 const look = lookFor(mod.slug);
 // Azrael's preview file is the Homesteader poster, so this page does not show it again.
 const preview = mod.slug === "azrael" ? undefined : mod.images[0];
-const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
+// 7 Days to Die pages link back to the full list instead of repeating the other mods.
+const others = mod.game === "7-days-to-die" ? [] : modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
 const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
 const latestKey = notReady ? undefined : `${mod.game}/${mod.slug}`;
 const sevendays = mod.game === "7-days-to-die";
 const info = sevendays ? indexInfo(mod) : undefined;
+const commands = sevendays ? commandsFor(mod.slug) : undefined;
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
 const sections = guide?.sections ?? [];
@@ -182,6 +185,43 @@ const storeLinks = [
                         <p>{feature.body}</p>
                       </article>
                     ))}
+                  </div>
+                ))}
+              </section>
+            )
+          }
+          {
+            commands && (
+              <section class="rw-section zd-commands">
+                <h2>Commands</h2>
+                {commands.intro && <p class="rw-intro">{commands.intro}</p>}
+                {commands.groups.map((group) => (
+                  <div class="zd-command-group">
+                    <h3>
+                      {group.title}
+                      {group.aliases && <span class="rw-feature-tag">Also: {group.aliases}</span>}
+                    </h3>
+                    {group.note && <p class="rw-intro">{group.note}</p>}
+                    <dl>
+                      {group.rows.map((row) => (
+                        <div>
+                          <dt>
+                            <code>
+                              {row.cmd.split("|").map((part, index) => (
+                                <>
+                                  {index > 0 && <>|<wbr /></>}
+                                  {part}
+                                </>
+                              ))}
+                            </code>
+                          </dt>
+                          <dd>
+                            {row.does}
+                            {row.admin && <span class="rw-feature-tag">Admin</span>}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
                   </div>
                 ))}
               </section>
