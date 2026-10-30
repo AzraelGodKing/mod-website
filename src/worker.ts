@@ -2,7 +2,21 @@ import catalogFile from "./data/catalog.json";
 import labels from "./data/report-labels.json";
 import { games } from "./data/games";
 import { handleReport } from "./report/handle.mjs";
-import { adminAuthorized } from "./admin/auth";
+import { adminAuthorized, passwordMatches } from "./admin/auth";
+import {
+  authenticationOptions,
+  clearedSessionCookie,
+  createSession,
+  deletePasskey,
+  endSession,
+  listPasskeys,
+  registerPasskey,
+  registrationOptions,
+  sessionCookie,
+  sessionToken,
+  sessionValid,
+  verifyPasskey,
+} from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, fetchManifestFiles, latestDownloads } from "./downloads/latest.mjs";
 import { isBot, recordDownload, siteCounts, withSiteCounts } from "./downloads/count.mjs";
@@ -17,9 +31,12 @@ interface CatalogMod {
 }
 
 // NEXUSMODS_API_KEY is a Worker secret. Without it, Nexus counts stay at the last stored value.
-// ADMIN_TOKEN is the password for /admin. Without it, the admin API answers 503.
-// DOWNLOADS_DB counts clicks on our own Download buttons. Without it, downloads still redirect.
-type SiteEnv = Env & { NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; DOWNLOADS_DB?: D1Database };
+// ADMIN_TOKEN is the /admin password. Without it, only passkeys sign in.
+// DOWNLOADS_DB counts clicks on our own Download buttons, and holds the admin passkeys and sessions.
+// Without it, downloads still redirect and /admin accepts only the password as a Bearer token.
+// ADMIN_ORIGIN is for local testing only: wrangler dev rewrites request URLs to the production
+// host, so set it to http://localhost:8787 in .dev.vars to register passkeys locally.
+type SiteEnv = Env & { NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; ADMIN_ORIGIN?: string; DOWNLOADS_DB?: D1Database };
 
 type RefreshSource = "scheduled" | "manual" | "first-request";
 
@@ -158,28 +175,141 @@ async function handleDownloadRedirect(request: Request, env: SiteEnv, ctx: Execu
   });
 }
 
-function adminJson(status: number, payload: unknown): Response {
+function adminJson(status: number, payload: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers },
   });
 }
 
-async function handleAdmin(request: Request, env: SiteEnv, pathname: string): Promise<Response> {
-  const action = pathname === "/api/admin/stats" ? "read" : pathname === "/api/admin/refresh" ? "refresh" : null;
-  if (!action) return adminJson(404, { error: "Not found." });
-  const method = action === "read" ? "GET" : "POST";
-  if (request.method !== method) return adminJson(405, { error: `Use ${method}.` });
-  if (!env.ADMIN_TOKEN) {
-    console.log(JSON.stringify({ event: "admin", result: "unconfigured", action }));
+async function readJson<T>(request: Request): Promise<T | null> {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+// The session cookie is SameSite=Strict; checking Origin on writes is a second guard against CSRF.
+function sameOrigin(request: Request, url: URL): boolean {
+  return request.method === "GET" || request.headers.get("origin") === url.origin;
+}
+
+async function signedIn(request: Request, env: SiteEnv): Promise<boolean> {
+  if (await adminAuthorized(request, env.ADMIN_TOKEN)) return true;
+  const token = sessionToken(request);
+  return !!token && !!env.DOWNLOADS_DB && (await sessionValid(env.DOWNLOADS_DB, token));
+}
+
+async function startSession(db: D1Database, method: "password" | "passkey"): Promise<Response> {
+  const token = await createSession(db, method);
+  console.log(JSON.stringify({ event: "admin", result: "signed-in", method }));
+  return adminJson(200, { signedIn: true }, { "set-cookie": sessionCookie(token) });
+}
+
+type AdminRoute = (request: Request, env: SiteEnv, url: URL, db: D1Database | undefined) => Promise<Response>;
+
+const needsDb = () => adminJson(503, { error: "Passkeys need the D1 database binding." });
+
+// Routes anyone can call: they are how you sign in.
+const publicAdminRoutes: Record<string, AdminRoute> = {
+  "GET /api/admin/session": async (request, env, _url, db) => {
+    const passkeys = db ? (await listPasskeys(db)).length : 0;
+    return adminJson(200, {
+      signedIn: await signedIn(request, env),
+      password: !!env.ADMIN_TOKEN && !!db,
+      passkeys: passkeys > 0,
+    });
+  },
+  "POST /api/admin/login": async (request, env, _url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ password?: string }>(request);
+    if (!(await passwordMatches(String(body?.password ?? ""), env.ADMIN_TOKEN))) {
+      console.log(JSON.stringify({ event: "admin", result: "denied", method: "password" }));
+      return adminJson(401, { error: "The password was not accepted." });
+    }
+    return startSession(db, "password");
+  },
+  "POST /api/admin/passkey/login-options": async (_request, _env, url, db) => {
+    if (!db) return needsDb();
+    return adminJson(200, await authenticationOptions(db, url));
+  },
+  "POST /api/admin/passkey/login": async (request, _env, url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ response?: Parameters<typeof verifyPasskey>[2] }>(request);
+    let verified = false;
+    try {
+      verified = !!body?.response && (await verifyPasskey(db, url, body.response));
+    } catch (error) {
+      console.log(JSON.stringify({ event: "admin", result: "passkey-error", error: String(error) }));
+    }
+    if (!verified) {
+      console.log(JSON.stringify({ event: "admin", result: "denied", method: "passkey" }));
+      return adminJson(401, { error: "That passkey was not accepted." });
+    }
+    return startSession(db, "passkey");
+  },
+  "POST /api/admin/logout": async (request, _env, _url, db) => {
+    const token = sessionToken(request);
+    if (token && db) await endSession(db, token);
+    return adminJson(200, { signedIn: false }, { "set-cookie": clearedSessionCookie() });
+  },
+};
+
+// Routes behind sign-in.
+const privateAdminRoutes: Record<string, AdminRoute> = {
+  "GET /api/admin/stats": async (_request, env) => adminJson(200, await statsWithSite(env, await readStats(env))),
+  "POST /api/admin/refresh": async (_request, env) => adminJson(200, await statsWithSite(env, await refreshStats(env, "manual"))),
+  "GET /api/admin/passkeys": async (_request, _env, _url, db) => (db ? adminJson(200, { passkeys: await listPasskeys(db) }) : needsDb()),
+  "POST /api/admin/passkey/register-options": async (_request, _env, url, db) => {
+    if (!db) return needsDb();
+    return adminJson(200, await registrationOptions(db, url));
+  },
+  "POST /api/admin/passkey/register": async (request, _env, url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ response?: Parameters<typeof registerPasskey>[2]; name?: string }>(request);
+    let passkey = null;
+    try {
+      passkey = body?.response ? await registerPasskey(db, url, body.response, String(body.name ?? "")) : null;
+    } catch (error) {
+      console.log(JSON.stringify({ event: "admin", result: "register-error", error: String(error) }));
+    }
+    if (!passkey) return adminJson(400, { error: "The passkey could not be saved. Try again." });
+    console.log(JSON.stringify({ event: "admin", result: "passkey-added" }));
+    return adminJson(200, { passkey });
+  },
+};
+
+async function handleAdmin(request: Request, env: SiteEnv, url: URL): Promise<Response> {
+  const db = env.DOWNLOADS_DB;
+  if (!env.ADMIN_TOKEN && !db) {
+    console.log(JSON.stringify({ event: "admin", result: "unconfigured" }));
     return adminJson(503, { error: "The admin page is not configured." });
   }
-  if (!(await adminAuthorized(request, env.ADMIN_TOKEN))) {
-    console.log(JSON.stringify({ event: "admin", result: "denied", action }));
-    return adminJson(401, { error: "The password was not accepted." });
+  if (!sameOrigin(request, url)) return adminJson(403, { error: "Cross-site request refused." });
+  // Passkeys are bound to this origin.
+  const site = env.ADMIN_ORIGIN ? new URL(env.ADMIN_ORIGIN) : url;
+
+  const key = `${request.method} ${url.pathname}`;
+  const publicRoute = publicAdminRoutes[key];
+  if (publicRoute) return publicRoute(request, env, site, db);
+
+  const removal = request.method === "DELETE" && url.pathname.match(/^\/api\/admin\/passkeys\/([^/]+)$/);
+  const privateRoute = privateAdminRoutes[key];
+  if (!privateRoute && !removal) return adminJson(404, { error: "Not found." });
+  if (!(await signedIn(request, env))) {
+    console.log(JSON.stringify({ event: "admin", result: "denied", route: key }));
+    return adminJson(401, { error: "Sign in again." });
   }
-  const snapshot = action === "refresh" ? await refreshStats(env, "manual") : await readStats(env);
-  return adminJson(200, await statsWithSite(env, snapshot));
+  if (privateRoute) return privateRoute(request, env, site, db);
+
+  if (!db) return needsDb();
+  // Without a password, removing the last passkey would lock everyone out.
+  if (!env.ADMIN_TOKEN && (await listPasskeys(db)).length <= 1) {
+    return adminJson(409, { error: "This is the only way in. Add another passkey or set ADMIN_TOKEN first." });
+  }
+  const removed = await deletePasskey(db, decodeURIComponent((removal as RegExpMatchArray)[1]));
+  return removed ? adminJson(200, { removed: true }) : adminJson(404, { error: "That passkey no longer exists." });
 }
 
 export default {
@@ -198,7 +328,7 @@ export default {
       return handleDownloadRedirect(request, env, ctx, url.pathname);
     }
     if (url.pathname.startsWith("/api/admin/")) {
-      return handleAdmin(request, env, url.pathname);
+      return handleAdmin(request, env, url);
     }
     return env.ASSETS.fetch(request);
   },

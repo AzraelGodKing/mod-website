@@ -21,6 +21,7 @@
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@simplewebauthn/server": "^13.2.2",
     "astro": "^7.3.5"
   },
   "allowScripts": {

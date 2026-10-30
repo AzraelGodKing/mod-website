@@ -2430,27 +2430,32 @@ body.entry-site main {
   background: transparent;
 }
 
-.admin-login {
+.admin-login,
+.admin-login form,
+.admin-passkey-add {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
   gap: 0.75rem;
 }
 
+.admin-login [hidden],
 .admin-login[hidden],
 .admin-body[hidden],
 .admin-warnings[hidden] {
   display: none;
 }
 
-.admin-login label {
+.admin-login label,
+.admin-passkey-add label {
   display: grid;
   gap: 0.35rem;
   font-size: 0.85rem;
   letter-spacing: 0.04em;
 }
 
-.admin-login input {
+.admin-login input,
+.admin-passkey-add input {
   font: inherit;
   min-width: 16rem;
   padding: 0.55rem 0.75rem;
@@ -2465,6 +2470,32 @@ body.entry-site main {
   margin: 0;
   min-height: 1.25rem;
   color: #f2a08f;
+}
+
+.admin-passkeys {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-passkeys h2,
+.admin-passkeys .admin-lede {
+  margin: 0;
+}
+
+.admin-passkey-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-passkey-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .admin-body {

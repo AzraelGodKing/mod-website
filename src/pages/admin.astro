@@ -37,14 +37,17 @@ function totals(game: string): Column[] {
       </p>
     </header>
 
-    <form class="admin-login" id="admin-login">
-      <label>
-        Password
-        <input name="password" type="password" autocomplete="current-password" required />
-      </label>
-      <button type="submit">Open</button>
+    <div class="admin-login" id="admin-login" hidden>
+      <button type="button" id="admin-passkey-login" hidden>Sign in with a passkey</button>
+      <form id="admin-password-login" hidden>
+        <label>
+          Password
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit">Open</button>
+      </form>
       <p class="admin-error" id="admin-login-error" role="alert"></p>
-    </form>
+    </div>
 
     <section class="admin-body" id="admin-body" hidden>
       <div class="admin-bar">
@@ -68,6 +71,23 @@ function totals(game: string): Column[] {
         </div>
       </div>
       <p class="admin-status" id="admin-status" role="status"></p>
+
+      <section class="admin-passkeys">
+        <h2>Passkeys</h2>
+        <p class="admin-lede">
+          Sign in with a passkey from your password manager. Once one works, you can remove the ADMIN_TOKEN secret to
+          turn password sign-in off.
+        </p>
+        <ul class="admin-passkey-list" id="admin-passkey-list"></ul>
+        <form class="admin-passkey-add" id="admin-passkey-add">
+          <label>
+            Name
+            <input name="name" type="text" maxlength="60" placeholder="LastPass" />
+          </label>
+          <button type="submit">Add passkey</button>
+        </form>
+        <p class="admin-status" id="admin-passkey-status" role="status"></p>
+      </section>
       <ul class="admin-warnings" id="admin-warnings" hidden></ul>
 
       {
@@ -114,14 +134,19 @@ function totals(game: string): Column[] {
 
   <script is:inline>
     (() => {
-      const storageKey = "azraels-admin-password";
       const login = document.querySelector("#admin-login");
       const loginError = document.querySelector("#admin-login-error");
+      const passkeyLogin = document.querySelector("#admin-passkey-login");
+      const passwordLogin = document.querySelector("#admin-password-login");
       const body = document.querySelector("#admin-body");
       const status = document.querySelector("#admin-status");
       const warnings = document.querySelector("#admin-warnings");
       const refreshButton = document.querySelector("#admin-refresh");
+      const passkeyList = document.querySelector("#admin-passkey-list");
+      const passkeyAdd = document.querySelector("#admin-passkey-add");
+      const passkeyStatus = document.querySelector("#admin-passkey-status");
       const sources = { scheduled: "hourly", manual: "manual", "first-request": "first visit" };
+      const passkeysSupported = typeof window.PublicKeyCredential === "function";
 
       const format = (value) => (typeof value === "number" ? value.toLocaleString("en-US") : "—");
       const when = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
@@ -165,59 +190,204 @@ function totals(game: string): Column[] {
         }
       }
 
-      async function call(path, method, password) {
-        const res = await fetch(path, { method, headers: { authorization: `Bearer ${password}` } });
-        const payload = await res.json().catch(() => ({}));
-        if (!res.ok) throw Object.assign(new Error(payload.error ?? `Request failed (${res.status}).`), { status: res.status });
-        return payload;
+      // The session is an HttpOnly cookie, so requests carry it on their own.
+      async function call(path, method = "GET", payload) {
+        const res = await fetch(path, {
+          method,
+          credentials: "same-origin",
+          headers: payload === undefined ? {} : { "content-type": "application/json" },
+          body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw Object.assign(new Error(data.error ?? `Request failed (${res.status}).`), { status: res.status });
+        return data;
       }
 
-      function signOut(message = "") {
-        sessionStorage.removeItem(storageKey);
-        body.hidden = true;
-        login.hidden = false;
-        loginError.textContent = message;
+      // WebAuthn wants ArrayBuffers; the server speaks base64url JSON.
+      const toBytes = (value) =>
+        Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0));
+      const toText = (buffer) =>
+        buffer
+          ? btoa(String.fromCharCode(...new Uint8Array(buffer)))
+              .replace(/\+/g, "-")
+              .replace(/\//g, "_")
+              .replace(/=+$/, "")
+          : undefined;
+      const withIds = (list) => (list ?? []).map((entry) => ({ ...entry, id: toBytes(entry.id) }));
+
+      function credentialJson(credential) {
+        const { response } = credential;
+        const json = {
+          id: credential.id,
+          rawId: toText(credential.rawId),
+          type: credential.type,
+          clientExtensionResults: credential.getClientExtensionResults?.() ?? {},
+          authenticatorAttachment: credential.authenticatorAttachment ?? undefined,
+          response: { clientDataJSON: toText(response.clientDataJSON) },
+        };
+        if (response.attestationObject) {
+          json.response.attestationObject = toText(response.attestationObject);
+          json.response.transports = response.getTransports?.() ?? [];
+        } else {
+          json.response.authenticatorData = toText(response.authenticatorData);
+          json.response.signature = toText(response.signature);
+          json.response.userHandle = toText(response.userHandle);
+        }
+        return json;
       }
 
-      async function open(password) {
-        loginError.textContent = "";
-        try {
-          const snapshot = await call("/api/admin/stats", "GET", password);
-          sessionStorage.setItem(storageKey, password);
-          login.hidden = true;
-          body.hidden = false;
-          render(snapshot);
-        } catch (error) {
-          signOut(error.message);
+      function passkeyError(error) {
+        if (error?.name === "NotAllowedError") return "The passkey prompt was closed or timed out.";
+        if (error?.name === "InvalidStateError") return "That passkey is already added.";
+        return error?.message ?? "Something went wrong.";
+      }
+
+      function renderPasskeys(passkeys) {
+        passkeyList.replaceChildren(
+          ...passkeys.map((passkey) => {
+            const item = document.createElement("li");
+            const label = document.createElement("span");
+            label.textContent = `${passkey.name} · added ${when(passkey.createdAt)} · last used ${when(passkey.lastUsedAt)}`;
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "admin-quiet";
+            remove.textContent = "Remove";
+            remove.addEventListener("click", async () => {
+              if (!confirm(`Remove the passkey "${passkey.name}"?`)) return;
+              try {
+                await call(`/api/admin/passkeys/${encodeURIComponent(passkey.id)}`, "DELETE");
+                passkeyStatus.textContent = "Passkey removed.";
+                loadPasskeys();
+              } catch (error) {
+                passkeyStatus.textContent = error.message;
+              }
+            });
+            item.append(label, remove);
+            return item;
+          }),
+        );
+        if (passkeys.length === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No passkeys yet.";
+          passkeyList.append(item);
         }
       }
 
-      login.addEventListener("submit", (event) => {
+      async function loadPasskeys() {
+        try {
+          renderPasskeys((await call("/api/admin/passkeys")).passkeys);
+        } catch (error) {
+          passkeyStatus.textContent = error.message;
+        }
+      }
+
+      async function showLogin(message = "") {
+        body.hidden = true;
+        login.hidden = false;
+        loginError.textContent = message;
+        const state = await call("/api/admin/session").catch((error) => ({ error: error.message }));
+        if (state.signedIn) return openAdmin();
+        passkeyLogin.hidden = !(passkeysSupported && state.passkeys);
+        passwordLogin.hidden = !state.password;
+        if (state.error && !message) loginError.textContent = state.error;
+        else if (!state.passkeys && !state.password && !message) loginError.textContent = "No sign-in method is set up.";
+      }
+
+      async function openAdmin() {
+        try {
+          const snapshot = await call("/api/admin/stats");
+          login.hidden = true;
+          body.hidden = false;
+          loginError.textContent = "";
+          render(snapshot);
+          loadPasskeys();
+        } catch (error) {
+          if (error.status === 401) return showLogin();
+          showLogin(error.message);
+        }
+      }
+
+      passwordLogin.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const password = String(new FormData(login).get("password") ?? "");
-        if (password) open(password);
+        const password = String(new FormData(passwordLogin).get("password") ?? "");
+        if (!password) return;
+        loginError.textContent = "";
+        try {
+          await call("/api/admin/login", "POST", { password });
+          passwordLogin.reset();
+          openAdmin();
+        } catch (error) {
+          loginError.textContent = error.message;
+        }
+      });
+
+      passkeyLogin.addEventListener("click", async () => {
+        loginError.textContent = "";
+        passkeyLogin.disabled = true;
+        try {
+          const options = await call("/api/admin/passkey/login-options", "POST", {});
+          const credential = await navigator.credentials.get({
+            publicKey: { ...options, challenge: toBytes(options.challenge), allowCredentials: withIds(options.allowCredentials) },
+          });
+          await call("/api/admin/passkey/login", "POST", { response: credentialJson(credential) });
+          openAdmin();
+        } catch (error) {
+          loginError.textContent = passkeyError(error);
+        } finally {
+          passkeyLogin.disabled = false;
+        }
+      });
+
+      passkeyAdd.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!passkeysSupported) {
+          passkeyStatus.textContent = "This browser does not support passkeys.";
+          return;
+        }
+        const name = String(new FormData(passkeyAdd).get("name") ?? "");
+        passkeyStatus.textContent = "Follow your password manager's prompt…";
+        try {
+          const options = await call("/api/admin/passkey/register-options", "POST", {});
+          const credential = await navigator.credentials.create({
+            publicKey: {
+              ...options,
+              challenge: toBytes(options.challenge),
+              user: { ...options.user, id: toBytes(options.user.id) },
+              excludeCredentials: withIds(options.excludeCredentials),
+            },
+          });
+          await call("/api/admin/passkey/register", "POST", { response: credentialJson(credential), name });
+          passkeyAdd.reset();
+          passkeyStatus.textContent = "Passkey added. Sign out and back in to try it.";
+          loadPasskeys();
+        } catch (error) {
+          if (error.status === 401) return showLogin(error.message);
+          passkeyStatus.textContent = passkeyError(error);
+        }
       });
 
       refreshButton.addEventListener("click", async () => {
-        const password = sessionStorage.getItem(storageKey);
-        if (!password) return signOut();
         refreshButton.disabled = true;
         status.textContent = "Fetching Steam, Thunderstore, and Nexus…";
         try {
-          render(await call("/api/admin/refresh", "POST", password));
+          render(await call("/api/admin/refresh", "POST", {}));
           status.textContent = "Refreshed. Public pages can take up to five minutes to show the new numbers.";
         } catch (error) {
-          if (error.status === 401) return signOut(error.message);
+          if (error.status === 401) return showLogin(error.message);
           status.textContent = error.message;
         } finally {
           refreshButton.disabled = false;
         }
       });
 
-      document.querySelector("#admin-logout").addEventListener("click", () => signOut());
+      document.querySelector("#admin-logout").addEventListener("click", async () => {
+        await call("/api/admin/logout", "POST", {}).catch(() => {});
+        showLogin();
+      });
 
-      const saved = sessionStorage.getItem(storageKey);
-      if (saved) open(saved);
+      // The old page kept the password in sessionStorage; clear it.
+      sessionStorage.removeItem("azraels-admin-password");
+      openAdmin();
     })();
   </script>
 </Base>
