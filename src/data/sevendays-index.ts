@@ -1,6 +1,6 @@
 import type { ModEntry } from "./mods";
 
-export type Installs = "server" | "client" | "both";
+export type Installs = "server" | "client" | "both" | "optional";
 
 export interface IndexInfo {
   category: string;
@@ -14,13 +14,21 @@ export const installLabels: Record<Installs, string> = {
   server: "Server only",
   client: "Client only",
   both: "Server + clients",
+  optional: "Server, client optional",
+};
+
+export const installHints: Record<Installs, string> = {
+  server: "Install on the server. Players install nothing.",
+  client: "Each player installs it. The server needs nothing.",
+  both: "Install on the server and on every player's game.",
+  optional: "Install on the server. Players can add it too; each side works without the other.",
 };
 
 const known: Record<string, IndexInfo> = {
   "blood-moon-sound": {
     category: "HUD & sound",
-    installs: "client",
-    short: "Custom blood moon sounds, countdown and warnings. Optional Discord alerts on the server.",
+    installs: "optional",
+    short: "Server posts blood moon alerts to Discord and chat. Players can add custom sounds, a countdown and warnings.",
   },
   "craft-from-chests": {
     category: "Crafting",

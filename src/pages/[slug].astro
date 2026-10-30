@@ -3,7 +3,7 @@ import Base from "../layouts/Base.astro";
 import StoreCounts from "../components/StoreCounts.astro";
 import { games } from "../data/games";
 import { modsForGame, r2Download, uploadedOn } from "../data/mods";
-import { indexInfo, installLabels, sevendaysCategories } from "../data/sevendays-index";
+import { indexInfo, installHints, installLabels, sevendaysCategories } from "../data/sevendays-index";
 import { heroVars, lookFor } from "../data/themes";
 
 export function getStaticPaths() {
@@ -291,7 +291,7 @@ const sunMods = [...gameMods].sort((a, b) => {
             </div>
             <div class="zd-chips" role="group" aria-label="Installs on" data-filter="side">
               <span class="zd-chips-label">Installs on</span>
-              {[["", "Anywhere"], ["server", "Server only"], ["client", "Client only"], ["both", "Server + clients"]].map(([value, name]) => (
+              {[["", "Anywhere"], ["server", "Server only"], ["client", "Client only"], ["both", "Server + clients"], ["optional", "Server, client optional"]].map(([value, name]) => (
                 <button type="button" class:list={["zd-chip", value === "" && "is-on"]} data-value={value} aria-pressed={value === "" ? "true" : "false"}>
                   {name}
                 </button>
@@ -330,7 +330,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                     <span>{info.short}</span>
                   </a>
                   <span class="zd-cat" role="cell">{info.category}</span>
-                  <span class:list={["zd-side", `is-${info.installs}`]} role="cell">{installLabels[info.installs]}</span>
+                  <span class:list={["zd-side", `is-${info.installs}`]} role="cell" title={installHints[info.installs]}>{installLabels[info.installs]}</span>
                   <span class="zd-ver" role="cell">
                     v<span data-latest={`${mod.game}/${mod.slug}`} data-latest-field="version">{mod.version}</span>
                   </span>
