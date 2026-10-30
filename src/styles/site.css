@@ -1453,7 +1453,6 @@ body.rw-site > header nav a[aria-current] {
   border: 1px solid currentColor;
   font-size: 0.74rem;
   letter-spacing: 0.05em;
-  white-space: nowrap;
 }
 
 .zd-side.is-server {
@@ -1466,6 +1465,10 @@ body.rw-site > header nav a[aria-current] {
 
 .zd-side.is-both {
   color: #e8b85a;
+}
+
+.zd-side.is-optional {
+  color: #c9a4e8;
 }
 
 .zd-cell-label {
