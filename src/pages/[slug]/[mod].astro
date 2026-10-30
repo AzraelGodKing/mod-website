@@ -26,6 +26,7 @@ const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
 const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
+const latestKey = notReady ? undefined : `${mod.game}/${mod.slug}`;
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
 const sections = guide?.sections ?? [];
@@ -69,11 +70,11 @@ const storeLinks = [
             </div>
             <aside class="rw-stats">
               <span class="rw-stat-label">Version</span>
-              <span class="rw-stat-num">{mod.version}</span>
+              <span class="rw-stat-num" data-latest={latestKey} data-latest-field="version">{mod.version}</span>
               {
                 updated && (
                   <span class="rw-stat-date">
-                    Updated <time datetime={updated.iso}>{updated.label}</time>
+                    Updated <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
                   </span>
                 )
               }
@@ -93,7 +94,7 @@ const storeLinks = [
             {
               direct && (
                 <a class="download" href={direct.url}>
-                  Download {direct.file}
+                  Download <span data-latest={latestKey} data-latest-field="file">{direct.file}</span>
                 </a>
               )
             }
@@ -261,10 +262,10 @@ const storeLinks = [
       <h1>{mod.name}</h1>
       <p class="mark">{look.mark}</p>
       <p class="version">
-        Version {mod.version}
+        Version <span data-latest={latestKey} data-latest-field="version">{mod.version}</span>
         {updated && (
           <>
-            {" "}· Updated <time datetime={updated.iso}>{updated.label}</time>
+            {" "}· Updated <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
           </>
         )}
       </p>
@@ -280,7 +281,7 @@ const storeLinks = [
       {
         direct && (
           <a class="download" href={direct.url}>
-            Download {direct.file}
+            Download <span data-latest={latestKey} data-latest-field="file">{direct.file}</span>
           </a>
         )
       }

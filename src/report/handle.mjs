@@ -80,7 +80,7 @@ async function readLimited(request, max) {
  * @param {string} input.slug
  * @param {string} input.summary
  * @param {string} input.details
- * @param {{ gameName: string, modName: string, version: string, labelId: string, gameLabelId: string }} input.target
+ * @param {{ gameName: string, modName: string, version: string, labelId?: string, gameLabelId: string }} input.target
  */
 export function buildIssueBody(input) {
   const title = `${input.target.modName}: ${input.summary}`;
@@ -104,7 +104,8 @@ export function buildIssueBody(input) {
         teamId: input.teamId,
         title,
         description,
-        labelIds: [input.target.labelId, input.target.gameLabelId, input.websiteLabelId],
+        // A mod released before its Linear label exists is still reported under its game.
+        labelIds: [input.target.labelId, input.target.gameLabelId, input.websiteLabelId].filter(Boolean),
       },
     },
   };
@@ -144,7 +145,7 @@ function hostnameSet(raw) {
 /**
  * @param {Request} request
  * @param {{ TURNSTILE_SECRET?: string, TURNSTILE_HOSTNAMES?: string, LINEAR_API_KEY?: string, LINEAR_TEAM_ID?: string }} env
- * @param {{ websiteLabelId: string, mods: Record<string, { gameName: string, modName: string, version: string, labelId: string, gameLabelId: string }> }} catalog
+ * @param {{ websiteLabelId: string, mods: Record<string, { gameName: string, modName: string, version: string, labelId?: string, gameLabelId: string }> }} catalog
  * @param {typeof fetch} [fetchImpl]
  */
 export async function handleReport(request, env, catalog, fetchImpl = fetch) {

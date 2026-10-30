@@ -125,7 +125,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                     <p>{mod.description}</p>
                     <StoreCounts game={game.slug} mod={mod.slug} variant="card" />
                     <span class="rw-badges">
-                      <span>Version {mod.version}</span>
+                      <span>Version <span data-latest={`${mod.game}/${mod.slug}`} data-latest-field="version">{mod.version}</span></span>
                       <span>{look.mark}</span>
                     </span>
                   </span>
@@ -206,7 +206,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                       <h2>{mod.name}</h2>
                       <span class="sh-sub">{look.mark}</span>
                     </span>
-                    <span class="sh-ver">v{mod.version}</span>
+                    <span class="sh-ver">v<span data-latest={`${mod.game}/${mod.slug}`} data-latest-field="version">{mod.version}</span></span>
                   </span>
                   <p>{mod.description}</p>
                   <StoreCounts game={game.slug} mod={mod.slug} variant="card" />
@@ -277,7 +277,7 @@ const sunMods = [...gameMods].sort((a, b) => {
                   <p>{mod.description}</p>
                   <StoreCounts game={game.slug} mod={mod.slug} variant="card" />
                   <span class="zd-foot">
-                    <span>v{mod.version}</span>
+                    <span>v<span data-latest={`${mod.game}/${mod.slug}`} data-latest-field="version">{mod.version}</span></span>
                     <span class="zd-open">Open</span>
                   </span>
                 </a>
@@ -313,7 +313,7 @@ const sunMods = [...gameMods].sort((a, b) => {
             <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
               <span class="mark">{lookFor(mod.slug).mark}</span>
               <strong>{mod.name}</strong>
-              <span class="ver">{mod.version}</span>
+              <span class="ver"><span data-latest={`${mod.game}/${mod.slug}`} data-latest-field="version">{mod.version}</span></span>
               <p>{mod.description}</p>
             </a>
           ))}

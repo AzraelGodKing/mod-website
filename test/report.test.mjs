@@ -66,7 +66,20 @@ test("issue body uses cleaned text and both labels", () => {
   assert.match(issue.variables.input.description, /Version: 1\.3\.0/);
 });
 
-test("every catalog mod has a label", async () => {
+test("a mod with no label of its own is reported under its game", () => {
+  const issue = buildIssueBody({
+    teamId: "team",
+    websiteLabelId: "website-label",
+    game: "7-days-to-die",
+    slug: "gyro-safe",
+    summary: "Gyrocopter still breaks blocks",
+    details: "Landing on a wall broke the wall.",
+    target: { gameName: "7 Days to Die", modName: "Gyro Safe", version: "1.0.0", gameLabelId: "game-label" },
+  });
+  assert.deepEqual(issue.variables.input.labelIds, ["game-label", "website-label"]);
+});
+
+test("every catalog mod has a game label", async () => {
   let catalog;
   try {
     catalog = (await import("../src/data/catalog.json", { with: { type: "json" } })).default;
@@ -76,7 +89,7 @@ test("every catalog mod has a label", async () => {
   }
   for (const mod of catalog.mods) {
     const key = `${mod.game}/${mod.slug}`;
-    assert.equal(typeof labels.mods[key], "string", key);
+    assert.equal(typeof labels.games[mod.game], "string", key);
   }
 });
 
