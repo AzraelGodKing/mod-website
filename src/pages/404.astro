@@ -1,8 +1,22 @@
 ---
 import Base from "../layouts/Base.astro";
+import { games } from "../data/games";
+import { modsForGame } from "../data/mods";
 ---
 
-<Base title="Page not found" description="That page is not on this site.">
-  <h1>Page not found</h1>
-  <p><a href="/">Back to the mod list</a></p>
+<Base title="Page not found" description="That page is not on this site." noindex>
+  <section class="plain-page">
+    <h1>Page not found</h1>
+    <p>That page is not here. The mod may have moved or been renamed. Pick a catalog to find it again:</p>
+    <ul class="plain-links">
+      {
+        games.map((game) => (
+          <li>
+            <a href={`/${game.slug}`}>{game.name}</a> <span>{modsForGame(game.slug).length} mods</span>
+          </li>
+        ))
+      }
+    </ul>
+    <p><a href="/">Back to the home page</a></p>
+  </section>
 </Base>

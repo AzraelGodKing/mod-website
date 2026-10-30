@@ -109,6 +109,28 @@ export function imageSize(buffer) {
   return null;
 }
 
+// The list rows show the preview at about 76px wide, so they get a small WebP
+// instead of the full poster. Square icons stay square. Without sharp the rows
+// fall back to the full image.
+export async function writeThumb(source, dest, square) {
+  let sharp;
+  try {
+    sharp = (await import("sharp")).default;
+  } catch {
+    return false;
+  }
+  try {
+    const image = sharp(source);
+    await (square ? image.resize(96, 96, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }) : image.resize(240, 150, { fit: "cover" }))
+      .webp({ quality: 78 })
+      .toFile(dest);
+    return true;
+  } catch (error) {
+    console.warn(`Could not make a thumbnail from ${source}: ${error.message}`);
+    return false;
+  }
+}
+
 export function catalogFingerprint(text) {
   return createHash("sha256").update(text).digest("hex");
 }
@@ -236,7 +258,10 @@ async function main() {
           src = `/catalog/${mod.game}/${mod.slug}/${filename}`;
         }
         const size = imageSize(readFileSync(found.source));
-        preview = { src, ...(size ?? {}) };
+        const square = Boolean(size && size.width === size.height);
+        const thumbFile = path.join(destDir, "thumb.webp");
+        const thumb = (await writeThumb(found.source, thumbFile, square)) ? `/catalog/${mod.game}/${mod.slug}/thumb.webp` : undefined;
+        preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}) };
       }
       mods.push({ ...mod, images, ...(preview ? { preview } : {}) });
     }

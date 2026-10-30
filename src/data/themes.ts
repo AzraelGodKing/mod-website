@@ -398,3 +398,9 @@ export function gameVars(slug: string | undefined): string | undefined {
   if (!slug) return undefined;
   return gameLooks[slug];
 }
+
+// The browser bar colour on phones, matched to each page's header.
+export function themeColor(slug: string | undefined): string {
+  if (!slug || slug === "rimworld") return slug ? "#181310" : "#110e0c";
+  return gameLooks[slug]?.match(/--bar:(#[0-9a-f]{3,8})/i)?.[1] ?? "#110e0c";
+}

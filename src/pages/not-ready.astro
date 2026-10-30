@@ -1,9 +1,21 @@
 ---
 import Base from "../layouts/Base.astro";
+import { games } from "../data/games";
 ---
 
-<Base title="Not ready" description="This mod is not ready for download yet.">
-  <h1>Not ready</h1>
-  <p>This mod is not ready for download yet.</p>
-  <p><a href="/">Back to the mods</a></p>
+<Base title="Not ready" description="This mod is not ready for download yet." noindex>
+  <section class="plain-page">
+    <h1>Not ready yet</h1>
+    <p>This mod is still being worked on, so there is no download yet. Its page will get a download button as soon as the first release is out.</p>
+    <p>In the meantime, the rest of the catalog is ready to go:</p>
+    <ul class="plain-links">
+      {
+        games.map((game) => (
+          <li>
+            <a href={`/${game.slug}`}>{game.name} mods</a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
 </Base>
