@@ -1139,15 +1139,144 @@ body.rw-site > header nav a[aria-current] {
   background: #d7a86a;
 }
 
+/* The game pages share one list layout. Each game sets these to its own look;
+   the defaults are 7 Days to Die. */
 .zd-hub {
-  margin: -1.5rem -1.5rem -4rem;
-  padding: 0 0 3rem;
-  background:
+  --ml-page:
     radial-gradient(520px 280px at 88% 0%, rgba(80, 120, 60, 0.28), transparent 70%),
     radial-gradient(640px 320px at 10% 8%, rgba(176, 48, 32, 0.24), transparent 68%),
     #12100e;
-  color: #f2ebe3;
-  font-family: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+  --ml-ink: #f2ebe3;
+  --ml-soft: #cbbba8;
+  --ml-desc: #b9a998;
+  --ml-muted: #a89888;
+  --ml-faint: #8a7a6a;
+  --ml-line: #3a3028;
+  --ml-line-soft: #2a231f;
+  --ml-field: #1a1614;
+  --ml-panel: #171311;
+  --ml-head: #201a17;
+  --ml-hover: #221b17;
+  --ml-hot: #e07a3d;
+  --ml-hot-2: #f0954f;
+  --ml-hot-ink: #1a140c;
+  --ml-strip: repeating-linear-gradient(-45deg, #e07a3d 0 10px, #1a140c 10px 20px);
+  --ml-font: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+  --ml-display: Bahnschrift, "Segoe UI", "Arial Narrow", sans-serif;
+  --ml-case: uppercase;
+  --ml-radius: 0;
+  margin: -1.5rem -1.5rem -4rem;
+  padding: 0 0 3rem;
+  background: var(--ml-page);
+  color: var(--ml-ink);
+  font-family: var(--ml-font);
+}
+
+.zd-hub.ml-rimworld {
+  --ml-page:
+    radial-gradient(1100px 480px at 6% -12%, color-mix(in srgb, #8b1a2b 32%, transparent), transparent 58%),
+    radial-gradient(900px 420px at 94% 0%, color-mix(in srgb, #c9a15b 16%, transparent), transparent 52%),
+    #110e0c;
+  --ml-ink: #f4ece1;
+  --ml-soft: #d6c8b4;
+  --ml-desc: #b8a994;
+  --ml-muted: #a3927c;
+  --ml-faint: #8a7a66;
+  --ml-line: #2d251f;
+  --ml-line-soft: #241d18;
+  --ml-field: #181310;
+  --ml-panel: #15110e;
+  --ml-head: #1c1612;
+  --ml-hover: #201913;
+  --ml-hot: #c9a15b;
+  --ml-hot-2: #dcb56e;
+  --ml-hot-ink: #181310;
+  --ml-strip: linear-gradient(90deg, transparent, #c9a15b, transparent);
+  --ml-font: "Red Hat Text", "Segoe UI", sans-serif;
+  --ml-display: "Cormorant Garamond", Palatino, serif;
+  --ml-case: none;
+  --ml-radius: 2px;
+}
+
+.zd-hub.ml-sunhaven {
+  --ml-page: #faf5ea;
+  --ml-ink: #2a2119;
+  --ml-soft: #5c4a38;
+  --ml-desc: #6b5843;
+  --ml-muted: #8a6d4e;
+  --ml-faint: #9a8268;
+  --ml-line: #e6d5b8;
+  --ml-line-soft: #f0e4cf;
+  --ml-field: #fffdf8;
+  --ml-panel: #fffdf8;
+  --ml-head: #f8ecd6;
+  --ml-hover: #fdf3e2;
+  --ml-hot: #b45309;
+  --ml-hot-2: #c96a1a;
+  --ml-hot-ink: #fffaf0;
+  --ml-strip: linear-gradient(90deg, #fbd396, #e8a34f, #fbd396);
+  --ml-font: Outfit, "Segoe UI", sans-serif;
+  --ml-display: Fraunces, Georgia, serif;
+  --ml-case: none;
+  --ml-radius: 10px;
+}
+
+.ml-rimworld .zd-hero h1 {
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ml-rimworld .zd-name strong {
+  font-family: var(--ml-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.ml-sunhaven .zd-hero {
+  max-width: none;
+  background:
+    radial-gradient(900px 420px at 78% 118%, rgba(180, 83, 9, 0.3), transparent 65%),
+    linear-gradient(#fde8c8, #fbd396);
+}
+
+.ml-sunhaven .zd-hero > * {
+  max-width: 40rem;
+}
+
+.ml-sunhaven .zd-hero h1 {
+  max-width: 48rem;
+  font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.ml-sunhaven .zd-hero h1 em {
+  color: #b45309;
+  font-weight: 560;
+}
+
+.ml-sunhaven .zd-hero p {
+  color: #5c4a38;
+}
+
+.ml-sunhaven .zd-kicker {
+  color: #9a5418;
+}
+
+.ml-sunhaven .zd-name strong {
+  font-family: var(--ml-display);
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+
+.ml-sunhaven .zd-list {
+  overflow: hidden;
+}
+
+.ml-sunhaven .zd-head {
+  border-radius: 0;
 }
 
 .zd-hub.guide-page {
@@ -1192,7 +1321,7 @@ body.rw-site > header nav a[aria-current] {
 
 .zd-kicker {
   margin: 0 0 0.45rem;
-  color: #e07a3d;
+  color: var(--ml-hot);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -1201,23 +1330,28 @@ body.rw-site > header nav a[aria-current] {
 
 .zd-hero h1 {
   margin: 0 0 0.55rem;
+  font-family: var(--ml-display);
   font-size: clamp(2.6rem, 7vw, 4.4rem);
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 0.95;
-  text-transform: uppercase;
+  text-transform: var(--ml-case);
 }
 
 .zd-hero p {
   margin: 0;
   max-width: 38rem;
-  color: #cbbba8;
+  color: var(--ml-soft);
   font-size: 1.05rem;
 }
 
 .zd-hazard {
   height: 0.45rem;
-  background: repeating-linear-gradient(-45deg, #e07a3d 0 10px, #1a140c 10px 20px);
+  background: var(--ml-strip);
+}
+
+.ml-rimworld .zd-hazard {
+  height: 1px;
 }
 
 .zd-wrap {
@@ -1250,11 +1384,11 @@ body.rw-site > header nav a[aria-current] {
 .zd-search input,
 .zd-sort select {
   box-sizing: border-box;
-  border: 1px solid #3a3028;
-  border-radius: 0;
-  background: #1a1614;
-  color: #f2ebe3;
-  font: 1rem Bahnschrift, "Segoe UI", sans-serif;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  background: var(--ml-field);
+  color: var(--ml-ink);
+  font: 1rem var(--ml-font);
 }
 
 .zd-search input {
@@ -1264,7 +1398,7 @@ body.rw-site > header nav a[aria-current] {
 
 .zd-search input:focus,
 .zd-sort select:focus {
-  outline: 2px solid #e07a3d;
+  outline: 2px solid var(--ml-hot);
   outline-offset: 1px;
 }
 
@@ -1272,7 +1406,7 @@ body.rw-site > header nav a[aria-current] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #a89888;
+  color: var(--ml-muted);
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1297,7 +1431,7 @@ body.rw-site > header nav a[aria-current] {
 
 .zd-chips-label {
   min-width: 6.5rem;
-  color: #a89888;
+  color: var(--ml-muted);
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1305,35 +1439,41 @@ body.rw-site > header nav a[aria-current] {
 
 .zd-chip {
   padding: 0.3rem 0.7rem;
-  border: 1px solid #3a3028;
-  background: #1a1614;
-  color: #cbbba8;
-  font: 0.85rem Bahnschrift, "Segoe UI", sans-serif;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  background: var(--ml-field);
+  color: var(--ml-soft);
+  font: 0.85rem var(--ml-font);
   cursor: pointer;
 }
 
 .zd-chip:hover {
-  border-color: #e07a3d;
-  color: #f2ebe3;
+  border-color: var(--ml-hot);
+  color: var(--ml-ink);
 }
 
 .zd-chip.is-on {
-  border-color: #e07a3d;
-  background: #e07a3d;
-  color: #1a140c;
+  border-color: var(--ml-hot);
+  background: var(--ml-hot);
+  color: var(--ml-hot-ink);
   font-weight: 700;
 }
 
 .zd-count {
   margin: 0 0 0.4rem;
-  color: #a89888;
+  color: var(--ml-muted);
   font-size: 0.82rem;
 }
 
 .zd-list {
   --zd-cols: minmax(0, 1fr) 6.5rem 8rem 3.8rem 6.6rem 5.4rem 6.2rem;
-  border: 1px solid #3a3028;
-  background: #171311;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  background: var(--ml-panel);
+}
+
+.zd-list.no-installs {
+  --zd-cols: minmax(0, 1fr) 6.5rem 4.4rem 6.6rem 6.4rem 6.2rem;
 }
 
 .zd-head,
@@ -1349,9 +1489,9 @@ body.rw-site > header nav a[aria-current] {
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: 1px solid #3a3028;
-  background: #201a17;
-  color: #a89888;
+  border-bottom: 1px solid var(--ml-line);
+  background: var(--ml-head);
+  color: var(--ml-muted);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1372,7 +1512,7 @@ body.rw-site > header nav a[aria-current] {
 .zd-head button:hover,
 .zd-head button[aria-sort="ascending"],
 .zd-head button[aria-sort="descending"] {
-  color: #e07a3d;
+  color: var(--ml-hot);
 }
 
 .zd-head button[aria-sort="ascending"]::after {
@@ -1384,7 +1524,7 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .zd-row {
-  border-bottom: 1px solid #2a231f;
+  border-bottom: 1px solid var(--ml-line-soft);
   border-left: 3px solid var(--accent);
   font-size: 0.88rem;
 }
@@ -1394,7 +1534,7 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .zd-row:hover {
-  background: #221b17;
+  background: var(--ml-hover);
 }
 
 .zd-row[hidden] {
@@ -1405,18 +1545,41 @@ body.rw-site > header nav a[aria-current] {
   display: grid;
   gap: 0.1rem;
   min-width: 0;
-  color: #f2ebe3;
+  color: var(--ml-ink);
   text-decoration: none;
 }
 
+.zd-name.has-thumb {
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  column-gap: 0.85rem;
+  align-items: center;
+}
+
+.zd-name.has-thumb img {
+  grid-row: span 2;
+  width: 4.75rem;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  object-fit: cover;
+}
+
+.zd-name.has-thumb strong {
+  align-self: end;
+}
+
+.zd-name.has-thumb span {
+  align-self: start;
+}
+
 .zd-name:visited {
-  color: #f2ebe3;
+  color: var(--ml-ink);
 }
 
 .zd-name strong {
   font-size: 1.02rem;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
+  text-transform: var(--ml-case);
 }
 
 .zd-name:hover strong {
@@ -1427,7 +1590,7 @@ body.rw-site > header nav a[aria-current] {
 .zd-name span {
   display: -webkit-box;
   overflow: hidden;
-  color: #b9a998;
+  color: var(--ml-desc);
   font-family: "Segoe UI", sans-serif;
   font-size: 0.86rem;
   -webkit-box-orient: vertical;
@@ -1439,7 +1602,7 @@ body.rw-site > header nav a[aria-current] {
 .zd-ver,
 .zd-date,
 .zd-dl {
-  color: #cbbba8;
+  color: var(--ml-soft);
 }
 
 .zd-ver,
@@ -1631,39 +1794,40 @@ body.rw-site > header nav a[aria-current] {
 .zd-get {
   display: inline-block;
   padding: 0.4rem 0.75rem;
-  background: #e07a3d;
-  color: #1a140c;
+  border-radius: var(--ml-radius);
+  background: var(--ml-hot);
+  color: var(--ml-hot-ink);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-align: center;
   text-decoration: none;
-  text-transform: uppercase;
+  text-transform: var(--ml-case);
   font-size: 0.78rem;
 }
 
 .zd-get:visited {
-  color: #1a140c;
+  color: var(--ml-hot-ink);
 }
 
 .zd-get:hover {
-  background: #f0954f;
+  background: var(--ml-hot-2);
 }
 
 .zd-get.is-soon {
-  background: #3a3028;
-  color: #cbbba8;
+  background: var(--ml-line);
+  color: var(--ml-soft);
 }
 
 .zd-empty {
-  color: #cbbba8;
+  color: var(--ml-soft);
 }
 
 .zd-empty button {
   margin-left: 0.4rem;
   padding: 0.3rem 0.6rem;
-  border: 1px solid #e07a3d;
+  border: 1px solid var(--ml-hot);
   background: none;
-  color: #e07a3d;
+  color: var(--ml-hot);
   font: inherit;
   cursor: pointer;
 }
@@ -1695,7 +1859,7 @@ body.rw-site > header nav a[aria-current] {
 
   .zd-cell-label {
     display: inline;
-    color: #8a7a6a;
+    color: var(--ml-faint);
   }
 
   .zd-act {
@@ -1704,6 +1868,16 @@ body.rw-site > header nav a[aria-current] {
 
   .zd-chips-label {
     min-width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .zd-name.has-thumb {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .zd-name.has-thumb img {
+    display: none;
   }
 }
 
