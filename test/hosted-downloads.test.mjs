@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyHostedVersions, compareVersions, confirmNewerUploads } from "../scripts/collect-mods.mjs";
+import { applyHostedVersions, compareVersions, confirmNewerUploads, parseCatalogEntry } from "../scripts/collect-mods.mjs";
 
 function bucketWith(...urls) {
   const calls = [];
@@ -117,4 +117,14 @@ test("a failed bucket check keeps the recorded zip", async () => {
     fetchImpl,
   );
   assert.equal(files["rimworld/nemesis"].version, "1.4.0");
+});
+
+test("a mod.json saved with a byte order mark still loads", () => {
+  const mod = parseCatalogEntry('\uFEFF{"game":"7-days-to-die","slug":"gyro-safe","version":"1.0.0"}');
+  assert.equal(mod.slug, "gyro-safe");
+});
+
+test("a mod.json that is not a catalog entry is skipped", () => {
+  assert.equal(parseCatalogEntry('<?xml version="1.0"?><xml><Name value="AzraelBait"/></xml>'), null);
+  assert.equal(parseCatalogEntry('{"name":"no slug"}'), null);
 });

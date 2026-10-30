@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Download buttons always give the newest zip. They point at `/download/<game>/<mod>`, which the Worker answers with the latest version in `downloads.json` (cached five minutes), so a mod release reaches the site without a rebuild or deploy. Mod pages and game hubs also swap in the newer version, zip name, and upload date from `/api/downloads`.
+- A `mod.json` that is not a catalog entry (the XML one inside 7 Days Bait's shipped folder) is skipped, and one saved with a byte order mark (Gyro Safe) loads. Either had stopped every catalog build.
+- A new mod without its own Linear label no longer stops the Worker. Its reports carry the game and website labels. Craftable Signs, Drone Loot Filter, Gyro Safe, No Ding Sound, Slot Lock Fix, Spawn Tuner, Zombie and Animal Bait, and Bait UI need labels in `report-labels.json`.
 - RimWorld pages and downloads use the current hosted versions: Date Night 1.7.2, Deep Colony 1.10.0, Homesteader 1.5.1, Nemesis 1.5.0, Niceties 1.6.1, Stormproof 1.7.0, and Strata 3.11.0. RimWorld badges say 1.6 and 1.7. A leftover version chip such as Strata 3.5 is not shown beside the current version.
 - Each mod page shows when its download was uploaded ("Updated Oct 11, 2026") under the version. The date comes from `downloads.json`, or from the zip itself when the site finds a newer one in the bucket (AZR-455).
 - A mod whose newer zip is already on `downloads.azraelsmods.com` links that zip even when `downloads.json` lost its entry. Releasing several mods at once had left 16 mods on older downloads (AZR-453).

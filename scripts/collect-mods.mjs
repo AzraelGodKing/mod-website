@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { compareVersions } from "../src/downloads/latest.mjs";
+
+export { compareVersions };
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const roots = [
@@ -25,6 +28,24 @@ function namedNotes(entries) {
   return (entries ?? [])
     .filter((entry) => entry?.name)
     .map((entry) => ({ name: entry.name, note: entry.note ?? "" }));
+}
+
+// A mod's shipped folder can hold its own mod.json (7 Days Bait has the game's
+// XML there). Only a JSON entry with a game and slug is a catalog entry.
+export function parseCatalogEntry(text) {
+  try {
+    // Some mod.json files are saved with a byte order mark (7 Days Gyro Safe).
+    const mod = JSON.parse(text.replace(/^\uFEFF/, ""));
+    return mod && typeof mod.game === "string" && typeof mod.slug === "string" ? mod : null;
+  } catch {
+    return null;
+  }
+}
+
+function readCatalogEntry(file) {
+  const mod = parseCatalogEntry(readFileSync(file, "utf8"));
+  if (!mod) console.warn(`Skipping ${file}: not a catalog mod.json`);
+  return mod;
 }
 
 export function guideFromSiteMod(mod) {
@@ -114,16 +135,6 @@ export function applyHostedVersions(mods, files) {
   });
 }
 
-export function compareVersions(a, b) {
-  const left = String(a).split(".").map((part) => Number.parseInt(part, 10) || 0);
-  const right = String(b).split(".").map((part) => Number.parseInt(part, 10) || 0);
-  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
-    const diff = (left[i] ?? 0) - (right[i] ?? 0);
-    if (diff !== 0) return Math.sign(diff);
-  }
-  return 0;
-}
-
 // Parallel releases can overwrite each other's downloads.json entry, so a newer
 // mod.json version counts as hosted when its zip is already in the bucket.
 export async function confirmNewerUploads(mods, files, fetchImpl = globalThis.fetch) {
@@ -168,7 +179,8 @@ async function main() {
     const files = [];
     walk(root, files);
     for (const file of files) {
-      const mod = JSON.parse(readFileSync(file, "utf8"));
+      const mod = readCatalogEntry(file);
+      if (!mod) continue;
       const modDir = path.dirname(file);
       const images = [];
       for (const relative of mod.screenshots ?? []) {

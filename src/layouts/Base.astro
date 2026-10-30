@@ -92,5 +92,32 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
           .catch(() => {});
       })();
     </script>
+    <script is:inline>
+      // The build's versions are already on the page. A mod released since then
+      // shows its newer version and zip name from the Worker.
+      (() => {
+        const cells = document.querySelectorAll("[data-latest]");
+        if (cells.length === 0) return;
+        const day = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
+        fetch("/api/downloads")
+          .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+          .then((latest) => {
+            for (const cell of cells) {
+              const entry = latest[cell.dataset.latest];
+              const value = entry?.[cell.dataset.latestField];
+              if (!value) continue;
+              if (cell.dataset.latestField === "uploadedAt") {
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) continue;
+                cell.setAttribute("datetime", date.toISOString());
+                cell.textContent = day.format(date);
+              } else {
+                cell.textContent = value;
+              }
+            }
+          })
+          .catch(() => {});
+      })();
+    </script>
   </body>
 </html>

@@ -4,12 +4,14 @@ import { games } from "./data/games";
 import { handleReport } from "./report/handle.mjs";
 import { adminAuthorized } from "./admin/auth";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
+import { NOT_READY, fetchManifestFiles, latestDownloads } from "./downloads/latest.mjs";
 
 interface CatalogMod {
   slug: string;
   name: string;
   game: string;
   version: string;
+  uploadedAt?: string;
   links: { steam: string | null; thunderstore: string | null; nexus: string | null };
 }
 
@@ -29,7 +31,7 @@ interface ReportMod {
   gameName: string;
   modName: string;
   version: string;
-  labelId: string;
+  labelId?: string;
   gameLabelId: string;
 }
 
@@ -39,8 +41,10 @@ function reportCatalog() {
   const mods: Record<string, ReportMod> = {};
   for (const mod of catalogMods) {
     const key = `${mod.game}/${mod.slug}`;
-    const labelId = labels.mods[key as keyof typeof labels.mods];
-    if (!labelId) throw new Error(`Missing report label for ${key}`);
+    // A new mod can reach the catalog before its Linear label is added here.
+    // Its reports keep the game and website labels instead of failing the Worker.
+    const labelId: string | undefined = labels.mods[key as keyof typeof labels.mods];
+    if (!labelId) console.warn(`No report label for ${key}; reports use the game label.`);
     const game = games.find((entry) => entry.slug === mod.game);
     const gameLabelId = labels.games[mod.game as keyof typeof labels.games];
     if (!game || !gameLabelId) throw new Error(`Missing game for ${key}`);
@@ -48,7 +52,7 @@ function reportCatalog() {
       gameName: game.name,
       modName: mod.name,
       version: mod.version,
-      labelId,
+      ...(labelId ? { labelId } : {}),
       gameLabelId,
     };
   }
@@ -101,6 +105,36 @@ async function handleStats(request: Request, env: SiteEnv): Promise<Response> {
   });
 }
 
+// downloads.json is read on each request (edge-cached for five minutes), so a mod
+// release reaches the download buttons without rebuilding the site.
+async function currentDownloads() {
+  return latestDownloads(catalogMods, await fetchManifestFiles((input, init) => fetch(input, init)));
+}
+
+async function handleDownloads(request: Request): Promise<Response> {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
+  }
+  const body = JSON.stringify(await currentDownloads());
+  return new Response(request.method === "HEAD" ? null : body, {
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "public, max-age=300",
+    },
+  });
+}
+
+async function handleDownloadRedirect(request: Request, pathname: string): Promise<Response> {
+  const key = pathname.replace(/^\/download\//, "").replace(/\/+$/, "");
+  if (NOT_READY.has(key)) return Response.redirect(new URL("/not-ready", request.url).href, 302);
+  const latest = (await currentDownloads())[key];
+  if (!latest) return new Response("Not found", { status: 404 });
+  return new Response(null, {
+    status: 302,
+    headers: { location: latest.url, "cache-control": "public, max-age=300" },
+  });
+}
+
 function adminJson(status: number, payload: unknown): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -133,6 +167,12 @@ export default {
     }
     if (url.pathname === "/api/stats") {
       return handleStats(request, env);
+    }
+    if (url.pathname === "/api/downloads") {
+      return handleDownloads(request);
+    }
+    if (url.pathname.startsWith("/download/")) {
+      return handleDownloadRedirect(request, url.pathname);
     }
     if (url.pathname.startsWith("/api/admin/")) {
       return handleAdmin(request, env, url.pathname);
