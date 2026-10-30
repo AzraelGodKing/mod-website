@@ -4,6 +4,7 @@ import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { isNotReady, mods, modsForGame, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { indexInfo, installHints, installLabels } from "../../data/sevendays-index";
 import { heroVars, lookFor } from "../../data/themes";
 
 export function getStaticPaths() {
@@ -27,6 +28,8 @@ const direct = r2Download(mod);
 const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
 const latestKey = notReady ? undefined : `${mod.game}/${mod.slug}`;
+const sevendays = mod.game === "7-days-to-die";
+const info = sevendays ? indexInfo(mod) : undefined;
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
 const sections = guide?.sections ?? [];
@@ -51,7 +54,7 @@ const storeLinks = [
           <div class="rw-wrap rw-hero-layout">
             <div>
               <p class="rw-kicker">
-                <a href={`/${mod.game}`}>{game?.name}</a>
+                <a href={`/${mod.game}`}>{sevendays ? `← All ${game?.name} mods` : game?.name}</a>
               </p>
               <h1>{mod.name}</h1>
               <p class="rw-tagline">{look.mark}</p>
@@ -68,6 +71,49 @@ const storeLinks = [
                 <p class="rw-intro">{paragraph}</p>
               ))}
             </div>
+            {info ? (
+              <aside class="rw-stats zd-details" aria-labelledby="mod-details" data-stat-scope="mod" data-stat-key={`${mod.game}/${mod.slug}`}>
+                <h2 class="rw-stat-label" id="mod-details">Details</h2>
+                <p class="zd-details-summary">{info.short}</p>
+                <dl>
+                  <div>
+                    <dt>Type</dt>
+                    <dd>{info.category}</dd>
+                  </div>
+                  <div>
+                    <dt>Installs on</dt>
+                    <dd>
+                      <span class:list={["zd-side", `is-${info.installs}`]}>{installLabels[info.installs]}</span>
+                      <small>{installHints[info.installs]}</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Version</dt>
+                    <dd>v<span data-latest={latestKey} data-latest-field="version">{mod.version}</span></dd>
+                  </div>
+                  <div>
+                    <dt>Updated</dt>
+                    <dd>
+                      {updated ? (
+                        <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
+                      ) : (
+                        "—"
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Downloads</dt>
+                    <dd data-field="nexus_full">—</dd>
+                  </div>
+                  {direct && (
+                    <div>
+                      <dt>File</dt>
+                      <dd data-latest={latestKey} data-latest-field="file">{direct.file}</dd>
+                    </div>
+                  )}
+                </dl>
+              </aside>
+            ) : (
             <aside class="rw-stats">
               <span class="rw-stat-label">Version</span>
               <span class="rw-stat-num" data-latest={latestKey} data-latest-field="version">{mod.version}</span>
@@ -80,6 +126,7 @@ const storeLinks = [
               }
               <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
             </aside>
+            )}
           </div>
         </header>
         <div class="rw-wrap">
@@ -209,6 +256,13 @@ const storeLinks = [
                 ))}
               </section>
             ) : null
+          }
+          {
+            sevendays && (
+              <p class="zd-back">
+                <a href={`/${mod.game}`}>← Back to all {game?.name} mods</a>
+              </p>
+            )
           }
           {
             others.length > 0 && (
