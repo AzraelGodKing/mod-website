@@ -618,6 +618,34 @@ body.rw-site > header nav a[aria-current] {
   object-fit: cover;
 }
 
+/* Drawn 7 Days previews carry their own text, so they are never cropped. */
+.zd-mod .rw-poster {
+  max-width: 56rem;
+}
+
+.zd-mod .rw-poster img {
+  max-height: none;
+}
+
+.rw-title-icon {
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+  margin: 0 0 0.75rem;
+}
+
+.rw-title-icon img {
+  flex: none;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.rw-title-icon h1 {
+  margin: 0;
+}
+
 .rw-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1562,6 +1590,29 @@ body.rw-site > header nav a[aria-current] {
   border: 1px solid var(--ml-line);
   border-radius: var(--ml-radius);
   object-fit: cover;
+}
+
+.zd-name.has-thumb img.is-icon {
+  aspect-ratio: auto;
+  width: 3rem;
+  height: 3rem;
+  justify-self: center;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.zd-thumb-blank {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 4.75rem;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  background: color-mix(in srgb, var(--accent) 22%, var(--ml-field));
+  color: var(--accent);
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .zd-name.has-thumb strong {

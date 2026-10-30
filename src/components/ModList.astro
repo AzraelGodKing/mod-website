@@ -86,8 +86,12 @@ const sortOptions = [
           data-downloads="-1"
           data-text={`${mod.name} ${short} ${category} ${side ? installLabels[side] : ""} ${mod.description}`.toLowerCase()}
         >
-          <a class:list={["zd-name", thumb && "has-thumb"]} role="cell" href={`/${game}/${mod.slug}`}>
-            {thumb && <img src={thumb} alt="" loading="lazy" />}
+          <a class="zd-name has-thumb" role="cell" href={`/${game}/${mod.slug}`}>
+            {thumb ? (
+              <img class:list={[thumb.square && "is-icon"]} src={thumb.src} alt="" loading="lazy" />
+            ) : (
+              <span class="zd-thumb-blank" aria-hidden="true">{mod.name.charAt(0)}</span>
+            )}
             <strong>{mod.name}</strong>
             <span>{short}</span>
           </a>

@@ -29,6 +29,12 @@ export interface ModGuide {
   compatNotes: string[];
 }
 
+export interface ModPreview {
+  src: string;
+  width?: number;
+  height?: number;
+}
+
 export interface ModEntry {
   slug: string;
   name: string;
@@ -38,6 +44,7 @@ export interface ModEntry {
   uploadedAt?: string;
   screenshots: string[];
   images: string[];
+  preview?: ModPreview;
   download: ModDownload;
   links: ModLinks;
   guide?: ModGuide;
@@ -55,6 +62,14 @@ export function findMod(game: string, slug: string): ModEntry | undefined {
 
 export function isNotReady(mod: ModEntry): boolean {
   return NOT_READY.has(`${mod.game}/${mod.slug}`);
+}
+
+// Azrael's preview file is the Homesteader poster, so its pages show no picture.
+// A square picture is a Thunderstore icon; the rest are wide store posters.
+export function previewFor(mod: ModEntry): { src: string; square: boolean } | undefined {
+  if (!mod.preview || mod.slug === "azrael") return undefined;
+  const { src, width, height } = mod.preview;
+  return { src, square: Boolean(width && height && width === height) };
 }
 
 const uploadDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });

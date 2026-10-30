@@ -77,6 +77,38 @@ export function guideFromSiteMod(mod) {
   };
 }
 
+// Steam needs About/Preview.png and Thunderstore an icon.png, so a mod that
+// lists no screenshots still has a picture. A mod with neither gets the one
+// drawn by scripts/make-previews.mjs in previews/.
+const PREVIEW_FILES = ["About/Preview.png", "preview.png", "Preview.png", "thunderstore/icon.png", "icon.png"];
+
+export function findPreview(modDir, mod, previewsDir) {
+  for (const relative of PREVIEW_FILES) {
+    if (existsSync(path.join(modDir, relative))) return { relative, source: path.join(modDir, relative) };
+  }
+  const drawn = path.join(previewsDir, mod.game, `${mod.slug}.jpg`);
+  return existsSync(drawn) ? { relative: `${mod.slug}.jpg`, source: drawn } : null;
+}
+
+// Width and height from a PNG or JPEG header, so pages can tell a square icon
+// from a wide poster without loading the image.
+export function imageSize(buffer) {
+  if (buffer.length >= 24 && buffer.toString("ascii", 12, 16) === "IHDR") {
+    return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+  }
+  if (buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
+  let at = 2;
+  while (at + 9 < buffer.length && buffer[at] === 0xff) {
+    const marker = buffer[at + 1];
+    const length = buffer.readUInt16BE(at + 2);
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+      return { width: buffer.readUInt16BE(at + 7), height: buffer.readUInt16BE(at + 5) };
+    }
+    at += 2 + length;
+  }
+  return null;
+}
+
 export function catalogFingerprint(text) {
   return createHash("sha256").update(text).digest("hex");
 }
@@ -171,6 +203,7 @@ export async function hostedFiles(fetchImpl = globalThis.fetch) {
 
 async function main() {
   const catalogDir = path.join(siteRoot, "public", "catalog");
+  const previewsDir = path.join(siteRoot, "previews");
   rmSync(catalogDir, { recursive: true, force: true });
   mkdirSync(catalogDir, { recursive: true });
 
@@ -182,16 +215,30 @@ async function main() {
       const mod = readCatalogEntry(file);
       if (!mod) continue;
       const modDir = path.dirname(file);
+      const destDir = path.join(catalogDir, mod.game, mod.slug);
       const images = [];
       for (const relative of mod.screenshots ?? []) {
         const source = path.join(modDir, relative);
-        const destDir = path.join(catalogDir, mod.game, mod.slug);
         mkdirSync(destDir, { recursive: true });
         const filename = path.basename(relative);
         cpSync(source, path.join(destDir, filename));
         images.push(`/catalog/${mod.game}/${mod.slug}/${filename}`);
       }
-      mods.push({ ...mod, images });
+      let preview;
+      const firstShot = mod.screenshots?.[0];
+      const found = firstShot ? { relative: firstShot, source: path.join(modDir, firstShot) } : findPreview(modDir, mod, previewsDir);
+      if (found) {
+        let src = images[0];
+        if (!src) {
+          mkdirSync(destDir, { recursive: true });
+          const filename = path.basename(found.relative);
+          cpSync(found.source, path.join(destDir, filename));
+          src = `/catalog/${mod.game}/${mod.slug}/${filename}`;
+        }
+        const size = imageSize(readFileSync(found.source));
+        preview = { src, ...(size ?? {}) };
+      }
+      mods.push({ ...mod, images, ...(preview ? { preview } : {}) });
     }
   }
 
