@@ -22,6 +22,9 @@
   },
   // Store download counts. Wrangler creates the namespace on the first deploy without an id.
   "kv_namespaces": [{ "binding": "STATS" }],
+  // Counts clicks on the site's own Download buttons. Wrangler creates the database on the
+  // first deploy without an id, and the Worker creates its table on first use.
+  "d1_databases": [{ "binding": "DOWNLOADS_DB", "database_name": "azraels-mods-downloads" }],
   "triggers": {
     "crons": ["17 * * * *"]
   },

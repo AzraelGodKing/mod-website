@@ -1,0 +1,250 @@
+---
+import type { ModRow } from "../data/hub-index";
+import { installHints, installLabels } from "../data/sevendays-index";
+import { heroVars } from "../data/themes";
+
+
+interface Props {
+  game: string;
+  gameName: string;
+  rows: ModRow[];
+  categories: string[];
+  // Rows arrive in featured order, which becomes the default sort.
+  featured?: boolean;
+}
+
+const { game, gameName, rows, categories, featured = false } = Astro.props;
+const installs = rows.some((row) => row.installs);
+const defaultSort = featured ? "featured" : "name";
+const sortOptions = [
+  ...(featured ? [["featured", "Featured"]] : []),
+  ["name", "Name A–Z"],
+  ["updated", "Recently updated"],
+  ["downloads", "Most downloaded"],
+  ["category", "Category"],
+];
+---
+
+<div class="zd-wrap" data-default-sort={defaultSort} id="zd-root">
+  <div class="zd-toolbar">
+    <label class="zd-search">
+      <span class="sr-only">Search mods</span>
+      <input id="zd-search" type="search" placeholder="Search mods…  ( / )" autocomplete="off" />
+    </label>
+    <label class="zd-sort">
+      <span>Sort</span>
+      <select id="zd-sort">
+        {sortOptions.map(([value, label]) => <option value={value}>{label}</option>)}
+      </select>
+    </label>
+  </div>
+  <div class="zd-filters">
+    <div class="zd-chips" role="group" aria-label="Category" data-filter="cat">
+      <span class="zd-chips-label">Type</span>
+      {["All", ...categories].map((name) => (
+        <button type="button" class:list={["zd-chip", name === "All" && "is-on"]} data-value={name === "All" ? "" : name} aria-pressed={name === "All" ? "true" : "false"}>
+          {name}
+        </button>
+      ))}
+    </div>
+    {installs && (
+      <div class="zd-chips" role="group" aria-label="Installs on" data-filter="side">
+        <span class="zd-chips-label">Installs on</span>
+        {[["", "Anywhere"], ["server", "Server only"], ["client", "Client only"], ["both", "Server + clients"], ["optional", "Server, client optional"]].map(([value, name]) => (
+          <button type="button" class:list={["zd-chip", value === "" && "is-on"]} data-value={value} aria-pressed={value === "" ? "true" : "false"}>
+            {name}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+  <p class="zd-count" id="zd-count" aria-live="polite">
+    Showing all {rows.length} mods
+  </p>
+  <div class:list={["zd-list", !installs && "no-installs"]} role="table" aria-label={`${gameName} mods`}>
+    <div class="zd-head" role="row">
+      <button type="button" role="columnheader" data-sort="name">Mod</button>
+      <button type="button" role="columnheader" data-sort="category">Type</button>
+      {installs && <span role="columnheader">Installs on</span>}
+      <span role="columnheader">Version</span>
+      <button type="button" role="columnheader" data-sort="updated">Updated</button>
+      <button type="button" role="columnheader" data-sort="downloads">Downloads</button>
+      <span role="columnheader"><span class="sr-only">Download</span></span>
+    </div>
+    <div id="zd-rows">
+      {rows.map(({ mod, category, short, installs: side, thumb, direct, updated }, index) => (
+        <div
+          class="zd-row"
+          role="row"
+          style={heroVars(mod.slug)}
+          data-key={`${mod.game}/${mod.slug}`}
+          data-name={mod.name.toLowerCase()}
+          data-cat={category}
+          data-side={side ?? ""}
+          data-order={index}
+          data-updated={updated?.iso ?? ""}
+          data-downloads="-1"
+          data-text={`${mod.name} ${short} ${category} ${side ? installLabels[side] : ""} ${mod.description}`.toLowerCase()}
+        >
+          <a class:list={["zd-name", thumb && "has-thumb"]} role="cell" href={`/${game}/${mod.slug}`}>
+            {thumb && <img src={thumb} alt="" loading="lazy" />}
+            <strong>{mod.name}</strong>
+            <span>{short}</span>
+          </a>
+          <span class="zd-cat" role="cell">{category}</span>
+          {side && (
+            <span class:list={["zd-side", `is-${side}`]} role="cell" title={installHints[side]}>{installLabels[side]}</span>
+          )}
+          <span class="zd-ver" role="cell">
+            v<span data-latest={direct ? `${mod.game}/${mod.slug}` : undefined} data-latest-field="version">{mod.version}</span>
+          </span>
+          <span class="zd-date" role="cell">
+            <span class="zd-cell-label">Updated </span>
+            {updated ? (
+              <time datetime={updated.iso} data-latest={`${mod.game}/${mod.slug}`} data-latest-field="uploadedAt">{updated.label}</time>
+            ) : (
+              <time data-latest={direct ? `${mod.game}/${mod.slug}` : undefined} data-latest-field="uploadedAt">—</time>
+            )}
+          </span>
+          <span class="zd-dl" role="cell">
+            <span class="zd-cell-label">Downloads </span>
+            <span data-dl-count>—</span>
+          </span>
+          <span class="zd-act" role="cell">
+            {direct ? (
+              <a class="zd-get" href={direct.url} aria-label={`Download ${mod.name}`}>Download</a>
+            ) : (
+              <a class="zd-get is-soon" href="/not-ready">Soon</a>
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+  <p class="zd-empty" id="zd-empty" hidden>
+    No mods match. <button type="button" id="zd-reset">Clear search and filters</button>
+  </p>
+</div>
+<script is:inline>
+  (() => {
+    const root = document.querySelector("#zd-root");
+    const rowsBox = root.querySelector("#zd-rows");
+    const rows = [...rowsBox.querySelectorAll(".zd-row")];
+    const search = root.querySelector("#zd-search");
+    const sort = root.querySelector("#zd-sort");
+    const count = root.querySelector("#zd-count");
+    const empty = root.querySelector("#zd-empty");
+    const heads = [...root.querySelectorAll(".zd-head [data-sort]")];
+    const groups = [...root.querySelectorAll(".zd-chips[data-filter]")];
+    const sorts = [...sort.options].map((option) => option.value);
+    const defaultSort = root.dataset.defaultSort;
+    const state = { q: "", cat: "", side: "", sort: defaultSort };
+
+    const params = new URLSearchParams(location.search);
+    state.q = params.get("q") ?? "";
+    state.cat = params.get("type") ?? "";
+    state.side = params.get("installs") ?? "";
+    if (sorts.includes(params.get("sort"))) state.sort = params.get("sort");
+
+    const byName = (a, b) => a.dataset.name.localeCompare(b.dataset.name);
+    const compare = {
+      featured: (a, b) => Number(a.dataset.order) - Number(b.dataset.order),
+      name: byName,
+      category: (a, b) => a.dataset.cat.localeCompare(b.dataset.cat) || byName(a, b),
+      // Rows with no date or count yet sink to the bottom instead of jumping around.
+      updated: (a, b) => (b.dataset.updated || "").localeCompare(a.dataset.updated || "") || byName(a, b),
+      downloads: (a, b) => Number(b.dataset.downloads) - Number(a.dataset.downloads) || byName(a, b),
+    };
+    const ascending = new Set(["name", "category"]);
+
+    function save() {
+      const next = new URLSearchParams();
+      if (state.q) next.set("q", state.q);
+      if (state.cat) next.set("type", state.cat);
+      if (state.side) next.set("installs", state.side);
+      if (state.sort !== defaultSort) next.set("sort", state.sort);
+      const query = next.toString();
+      history.replaceState(null, "", query ? `?${query}` : location.pathname);
+    }
+
+    function apply() {
+      const words = state.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      let shown = 0;
+      for (const row of [...rows].sort(compare[state.sort])) {
+        const ok =
+          (!state.cat || row.dataset.cat === state.cat) &&
+          (!state.side || row.dataset.side === state.side) &&
+          words.every((word) => row.dataset.text.includes(word));
+        row.hidden = !ok;
+        if (ok) shown += 1;
+        rowsBox.appendChild(row);
+      }
+      count.textContent = shown === rows.length ? `Showing all ${rows.length} mods` : `Showing ${shown} of ${rows.length} mods`;
+      empty.hidden = shown > 0;
+      sort.value = state.sort;
+      for (const head of heads) head.setAttribute("aria-sort", head.dataset.sort === state.sort ? (ascending.has(state.sort) ? "ascending" : "descending") : "none");
+      for (const group of groups) {
+        const value = state[group.dataset.filter];
+        for (const chip of group.querySelectorAll(".zd-chip")) {
+          const on = chip.dataset.value === value;
+          chip.classList.toggle("is-on", on);
+          chip.setAttribute("aria-pressed", String(on));
+        }
+      }
+      save();
+    }
+
+    search.value = state.q;
+    search.addEventListener("input", () => { state.q = search.value; apply(); });
+    sort.addEventListener("change", () => { state.sort = sort.value; apply(); });
+    for (const head of heads) head.addEventListener("click", () => { state.sort = head.dataset.sort; apply(); });
+    for (const group of groups) {
+      group.addEventListener("click", (event) => {
+        const chip = event.target.closest(".zd-chip");
+        if (!chip) return;
+        state[group.dataset.filter] = chip.dataset.value;
+        apply();
+      });
+    }
+    root.querySelector("#zd-reset").addEventListener("click", () => {
+      Object.assign(state, { q: "", cat: "", side: "" });
+      search.value = "";
+      apply();
+      search.focus();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "/" || event.target.closest("input, select, textarea")) return;
+      event.preventDefault();
+      search.focus();
+    });
+
+    // This site's clicks plus Thunderstore and Nexus downloads.
+    const countFor = (stats) => {
+      const parts = [stats?.site?.downloads, stats?.thunderstore?.downloads, stats?.nexus?.downloads].filter((value) => typeof value === "number");
+      return parts.length > 0 ? parts.reduce((sum, value) => sum + value, 0) : undefined;
+    };
+
+    document.addEventListener("stats:loaded", (event) => {
+      const mods = event.detail?.mods ?? {};
+      const format = new Intl.NumberFormat("en-US");
+      for (const row of rows) {
+        const value = countFor(mods[row.dataset.key]);
+        if (typeof value !== "number") continue;
+        row.dataset.downloads = String(value);
+        row.querySelector("[data-dl-count]").textContent = format.format(value);
+      }
+      apply();
+    });
+    document.addEventListener("downloads:loaded", (event) => {
+      const latest = event.detail ?? {};
+      for (const row of rows) {
+        const value = latest[row.dataset.key]?.uploadedAt;
+        const date = value ? new Date(value) : null;
+        if (date && !Number.isNaN(date.getTime())) row.dataset.updated = date.toISOString();
+      }
+      apply();
+    });
+
+    apply();
+  })();
+</script>

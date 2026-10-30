@@ -62,7 +62,11 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
           if (!mod) return null;
           const thunderstore = mod.thunderstore?.downloads ?? null;
           const nexus = mod.nexus?.downloads ?? null;
+          const site = mod.site?.downloads ?? null;
+          const parts = [site, thunderstore, nexus].filter((value) => value !== null);
           return {
+            site,
+            total: parts.length > 0 ? parts.reduce((sum, value) => sum + value, 0) : null,
             steam: mod.steam?.subscriptions ?? null,
             thunderstore,
             nexus,

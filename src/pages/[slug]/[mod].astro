@@ -3,7 +3,9 @@ import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
+import { hubInfo } from "../../data/hub-index";
 import { isNotReady, mods, modsForGame, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { statRows } from "../../data/stats";
 import { commandsFor } from "../../data/sevendays-commands";
 import { indexInfo, installHints, installLabels } from "../../data/sevendays-index";
 import { heroVars, lookFor } from "../../data/themes";
@@ -24,14 +26,16 @@ const game = games.find((entry) => entry.slug === mod.game);
 const look = lookFor(mod.slug);
 // Azrael's preview file is the Homesteader poster, so this page does not show it again.
 const preview = mod.slug === "azrael" ? undefined : mod.images[0];
-// 7 Days to Die pages link back to the full list instead of repeating the other mods.
-const others = mod.game === "7-days-to-die" ? [] : modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
+// Only the plain fallback layout lists the other mods; the game pages link back to the full list.
+const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
 const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
 const latestKey = notReady ? undefined : `${mod.game}/${mod.slug}`;
 const sevendays = mod.game === "7-days-to-die";
-const info = sevendays ? indexInfo(mod) : undefined;
+const sevenInfo = sevendays ? indexInfo(mod) : undefined;
+const info = sevenInfo ?? hubInfo(mod);
+const countRows = statRows(mod.game, true);
 const commands = sevendays ? commandsFor(mod.slug) : undefined;
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
@@ -57,7 +61,7 @@ const storeLinks = [
           <div class="rw-wrap rw-hero-layout">
             <div>
               <p class="rw-kicker">
-                <a href={`/${mod.game}`}>{sevendays ? `← All ${game?.name} mods` : game?.name}</a>
+                <a href={`/${mod.game}`}>← All {game?.name} mods</a>
               </p>
               <h1>{mod.name}</h1>
               <p class="rw-tagline">{look.mark}</p>
@@ -74,62 +78,51 @@ const storeLinks = [
                 <p class="rw-intro">{paragraph}</p>
               ))}
             </div>
-            {info ? (
-              <aside class="rw-stats zd-details" aria-labelledby="mod-details" data-stat-scope="mod" data-stat-key={`${mod.game}/${mod.slug}`}>
-                <h2 class="rw-stat-label" id="mod-details">Details</h2>
-                <p class="zd-details-summary">{info.short}</p>
-                <dl>
-                  <div>
-                    <dt>Type</dt>
-                    <dd>{info.category}</dd>
-                  </div>
+            <aside class="rw-stats zd-details" aria-labelledby="mod-details" data-stat-scope="mod" data-stat-key={`${mod.game}/${mod.slug}`}>
+              <h2 class="rw-stat-label" id="mod-details">Details</h2>
+              <p class="zd-details-summary">{info.short}</p>
+              <dl>
+                <div>
+                  <dt>Type</dt>
+                  <dd>{info.category}</dd>
+                </div>
+                {sevenInfo && (
                   <div>
                     <dt>Installs on</dt>
                     <dd>
-                      <span class:list={["zd-side", `is-${info.installs}`]}>{installLabels[info.installs]}</span>
-                      <small>{installHints[info.installs]}</small>
+                      <span class:list={["zd-side", `is-${sevenInfo.installs}`]}>{installLabels[sevenInfo.installs]}</span>
+                      <small>{installHints[sevenInfo.installs]}</small>
                     </dd>
                   </div>
+                )}
+                <div>
+                  <dt>Version</dt>
+                  <dd>v<span data-latest={latestKey} data-latest-field="version">{mod.version}</span></dd>
+                </div>
+                <div>
+                  <dt>Updated</dt>
+                  <dd>
+                    {updated ? (
+                      <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
+                </div>
+                {countRows.map((row) => (
                   <div>
-                    <dt>Version</dt>
-                    <dd>v<span data-latest={latestKey} data-latest-field="version">{mod.version}</span></dd>
+                    <dt>{row.label}</dt>
+                    <dd data-field={row.field}>—</dd>
                   </div>
+                ))}
+                {direct && (
                   <div>
-                    <dt>Updated</dt>
-                    <dd>
-                      {updated ? (
-                        <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
-                      ) : (
-                        "—"
-                      )}
-                    </dd>
+                    <dt>File</dt>
+                    <dd data-latest={latestKey} data-latest-field="file">{direct.file}</dd>
                   </div>
-                  <div>
-                    <dt>Downloads</dt>
-                    <dd data-field="nexus_full">—</dd>
-                  </div>
-                  {direct && (
-                    <div>
-                      <dt>File</dt>
-                      <dd data-latest={latestKey} data-latest-field="file">{direct.file}</dd>
-                    </div>
-                  )}
-                </dl>
-              </aside>
-            ) : (
-            <aside class="rw-stats">
-              <span class="rw-stat-label">Version</span>
-              <span class="rw-stat-num" data-latest={latestKey} data-latest-field="version">{mod.version}</span>
-              {
-                updated && (
-                  <span class="rw-stat-date">
-                    Updated <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
-                  </span>
-                )
-              }
-              <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
+                )}
+              </dl>
             </aside>
-            )}
           </div>
         </header>
         <div class="rw-wrap">
@@ -297,41 +290,9 @@ const storeLinks = [
               </section>
             ) : null
           }
-          {
-            sevendays && (
-              <p class="zd-back">
-                <a href={`/${mod.game}`}>← Back to all {game?.name} mods</a>
-              </p>
-            )
-          }
-          {
-            others.length > 0 && (
-              <nav class="rw-more" aria-label={`Other ${game?.name ?? "game"} mods`}>
-                <h2>Other {game?.name} mods</h2>
-                <div class="rw-grid">
-                  {others.map((entry) => {
-                    const entryLook = lookFor(entry.slug);
-                    const entryPreview = entry.slug === "azrael" ? undefined : entry.images[0];
-                    return (
-                      <a class="rw-card" style={heroVars(entry.slug)} href={`/${entry.game}/${entry.slug}`}>
-                        <span class="rw-media">
-                          {entryPreview ? <img src={entryPreview} alt="" /> : <span class="rw-plate">{entryLook.mark}</span>}
-                        </span>
-                        <span class="rw-copy">
-                          <h2>{entry.name}</h2>
-                          <p>{entry.description}</p>
-                          <span class="rw-badges">
-                            <span>Version {entry.version}</span>
-                            <span>{entryLook.mark}</span>
-                          </span>
-                        </span>
-                      </a>
-                    );
-                  })}
-                </div>
-              </nav>
-            )
-          }
+          <p class="zd-back">
+            <a href={`/${mod.game}`}>← Back to all {game?.name} mods</a>
+          </p>
           <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
         </div>
         <script is:inline>
