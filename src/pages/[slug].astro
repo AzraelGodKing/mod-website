@@ -3,7 +3,7 @@ import Base from "../layouts/Base.astro";
 import ModList from "../components/ModList.astro";
 import StoreCounts from "../components/StoreCounts.astro";
 import { games } from "../data/games";
-import { modsForGame, r2Download, uploadedOn } from "../data/mods";
+import { modsForGame, previewFor, r2Download, uploadedOn } from "../data/mods";
 import { featuredOrder, hubIndex, hubInfo, type ModRow } from "../data/hub-index";
 import { indexInfo, sevendaysCategories } from "../data/sevendays-index";
 import { heroVars, lookFor } from "../data/themes";
@@ -26,13 +26,11 @@ const rows: ModRow[] = sevendays
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((mod) => {
         const info = indexInfo(mod);
-        return { mod, category: info.category, short: info.short, installs: info.installs, direct: r2Download(mod), updated: uploadedOn(mod) };
+        return { mod, category: info.category, short: info.short, installs: info.installs, thumb: previewFor(mod), direct: r2Download(mod), updated: uploadedOn(mod) };
       })
   : featuredOrder(game.slug, gameMods).map((mod) => {
       const info = hubInfo(mod);
-      // Azrael's preview file is the Homesteader poster, so its row shows no picture.
-      const thumb = rimworld && mod.slug !== "azrael" ? mod.images[0] : undefined;
-      return { mod, category: info.category, short: info.short, thumb, direct: r2Download(mod), updated: uploadedOn(mod) };
+      return { mod, category: info.category, short: info.short, thumb: previewFor(mod), direct: r2Download(mod), updated: uploadedOn(mod) };
     });
 ---
 

@@ -4,7 +4,7 @@ import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { hubInfo } from "../../data/hub-index";
-import { isNotReady, mods, modsForGame, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
 import { statRows } from "../../data/stats";
 import { commandsFor } from "../../data/sevendays-commands";
 import { indexInfo, installHints, installLabels } from "../../data/sevendays-index";
@@ -24,8 +24,10 @@ interface Props {
 const { mod } = Astro.props;
 const game = games.find((entry) => entry.slug === mod.game);
 const look = lookFor(mod.slug);
-// Azrael's preview file is the Homesteader poster, so this page does not show it again.
-const preview = mod.slug === "azrael" ? undefined : mod.images[0];
+const picture = previewFor(mod);
+// A square store icon sits beside the title; a wide poster gets its own row.
+const icon = picture?.square ? picture.src : undefined;
+const preview = picture && !picture.square ? picture.src : undefined;
 // Only the plain fallback layout lists the other mods; the game pages link back to the full list.
 const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
@@ -63,7 +65,14 @@ const storeLinks = [
               <p class="rw-kicker">
                 <a href={`/${mod.game}`}>← All {game?.name} mods</a>
               </p>
-              <h1>{mod.name}</h1>
+              {icon ? (
+                <div class="rw-title-icon">
+                  <img src={icon} alt="" width="96" height="96" />
+                  <h1>{mod.name}</h1>
+                </div>
+              ) : (
+                <h1>{mod.name}</h1>
+              )}
               <p class="rw-tagline">{look.mark}</p>
               {
                 guide?.badges?.length ? (

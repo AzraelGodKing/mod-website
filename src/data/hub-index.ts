@@ -14,7 +14,7 @@ export interface ModRow {
   category: string;
   short: string;
   installs?: Installs;
-  thumb?: string;
+  thumb?: { src: string; square: boolean };
   direct: { file: string; url: string } | null;
   updated: { iso: string; label: string } | null;
 }
