@@ -4,10 +4,12 @@ import { games } from "./data/games";
 import { handleReport } from "./report/handle.mjs";
 import { adminAuthorized, passwordMatches } from "./admin/auth";
 import {
+  activeSessions,
   authenticationOptions,
   clearedSessionCookie,
   createSession,
   deletePasskey,
+  endAllSessions,
   endSession,
   listPasskeys,
   registerPasskey,
@@ -18,8 +20,8 @@ import {
   verifyPasskey,
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
-import { NOT_READY, fetchManifestFiles, latestDownloads } from "./downloads/latest.mjs";
-import { isBot, recordDownload, siteCounts, withSiteCounts } from "./downloads/count.mjs";
+import { NOT_READY, fetchManifestFiles, latestDownloads, releaseStatus } from "./downloads/latest.mjs";
+import { isBot, recordDownload, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
   slug: string;
@@ -261,6 +263,24 @@ const privateAdminRoutes: Record<string, AdminRoute> = {
   "GET /api/admin/stats": async (_request, env) => adminJson(200, await statsWithSite(env, await readStats(env))),
   "POST /api/admin/refresh": async (_request, env) => adminJson(200, await statsWithSite(env, await refreshStats(env, "manual"))),
   "GET /api/admin/passkeys": async (_request, _env, _url, db) => (db ? adminJson(200, { passkeys: await listPasskeys(db) }) : needsDb()),
+  "GET /api/admin/site-downloads": async (_request, _env, _url, db) => (db ? adminJson(200, { rows: await siteDownloadLog(db) }) : needsDb()),
+  "GET /api/admin/releases": async () => {
+    const files = await fetchManifestFiles((input, init) => fetch(input, init));
+    return adminJson(200, { manifest: files !== null, mods: releaseStatus(catalogMods, files) });
+  },
+  "GET /api/admin/overview": async (_request, env, _url, db) =>
+    adminJson(200, {
+      sessions: db ? await activeSessions(db) : null,
+      password: !!env.ADMIN_TOKEN,
+      database: !!db,
+      nexusKey: !!env.NEXUSMODS_API_KEY,
+    }),
+  "POST /api/admin/sessions/clear": async (_request, _env, _url, db) => {
+    if (!db) return needsDb();
+    await endAllSessions(db);
+    console.log(JSON.stringify({ event: "admin", result: "signed-out-everywhere" }));
+    return adminJson(200, { signedIn: false }, { "set-cookie": clearedSessionCookie() });
+  },
   "POST /api/admin/passkey/register-options": async (_request, _env, url, db) => {
     if (!db) return needsDb();
     return adminJson(200, await registrationOptions(db, url));
