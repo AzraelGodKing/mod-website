@@ -33,6 +33,8 @@ export interface ModPreview {
   src: string;
   width?: number;
   height?: number;
+  // A small WebP for the list rows, made by collect-mods.mjs.
+  thumb?: string;
 }
 
 export interface ModEntry {
@@ -66,10 +68,12 @@ export function isNotReady(mod: ModEntry): boolean {
 
 // Azrael's preview file is the Homesteader poster, so its pages show no picture.
 // A square picture is a Thunderstore icon; the rest are wide store posters.
-export function previewFor(mod: ModEntry): { src: string; square: boolean } | undefined {
+export function previewFor(
+  mod: ModEntry,
+): { src: string; thumb: string; square: boolean; width?: number; height?: number } | undefined {
   if (!mod.preview || mod.slug === "azrael") return undefined;
-  const { src, width, height } = mod.preview;
-  return { src, square: Boolean(width && height && width === height) };
+  const { src, width, height, thumb } = mod.preview;
+  return { src, thumb: thumb ?? src, square: Boolean(width && height && width === height), width, height };
 }
 
 const uploadDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });

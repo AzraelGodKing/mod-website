@@ -32,9 +32,18 @@ const rows: ModRow[] = sevendays
       const info = hubInfo(mod);
       return { mod, category: info.category, short: info.short, thumb: previewFor(mod), direct: r2Download(mod), updated: uploadedOn(mod) };
     });
+const blurbs: Record<string, string> = {
+  rimworld: "for colonies that farm, harden, dig, remember, make time for each other, and keep the small comforts",
+  "sun-haven": "that track the museum, sort the chests, bank the tokens, remember the birthdays, and plan the farm",
+  "7-days-to-die": "that hear the horde coming, keep the pack, finish the quest, and tune the spawns, with server and client install notes",
+};
+const stores = [...new Set(gameMods.flatMap((mod) => [mod.links.steam && "Steam", mod.links.thunderstore && "Thunderstore", mod.links.nexus && "Nexus"]).filter(Boolean))];
+const blurb = blurbs[game.slug] ? ` ${blurbs[game.slug]}` : "";
+const alongside = stores.length > 0 ? ` alongside ${stores.join(" and ")}` : "";
+const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct downloads${alongside}.`;
 ---
 
-<Base title={`${game.name} mods`} description={`Mods for ${game.name}.`} game={game.slug}>
+<Base title={`${game.name} mods`} description={description} game={game.slug}>
   {
     hub ? (
       <div class:list={["zd-hub", rimworld && "ml-rimworld", sunhaven && "ml-sunhaven"]}>

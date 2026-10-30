@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api/
+Disallow: /download/
+Disallow: /not-ready
+
+Sitemap: https://azraelsmods.com/sitemap.xml

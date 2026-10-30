@@ -43,7 +43,7 @@ const { game, mod, name, gameName } = Astro.props;
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = form.querySelector("button");
-    const token = turnstile.getResponse(form.dataset.widgetId);
+    const token = window.turnstile?.getResponse(form.dataset.widgetId);
     if (!token) {
       status.textContent = "Finish the check, then submit.";
       return;
@@ -80,13 +80,33 @@ const { game, mod, name, gameName } = Astro.props;
       }
       status.textContent =
         typeof payload.error === "string" ? payload.error : "The report could not be filed. Try again.";
-      turnstile.reset(form.dataset.widgetId);
+      window.turnstile?.reset(form.dataset.widgetId);
     } catch {
       status.textContent = "The report could not be filed. Try again.";
-      turnstile.reset(form.dataset.widgetId);
+      window.turnstile?.reset(form.dataset.widgetId);
     } finally {
       if (form.isConnected) button.disabled = false;
     }
   });
+  // Turnstile loads only when the form comes near the screen or gets focus,
+  // so reading a mod page does not pull in the challenge script.
+  let requested = false;
+  const loadTurnstile = () => {
+    if (requested) return;
+    requested = true;
+    observer?.disconnect();
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onAzraelTurnstile";
+    script.async = true;
+    document.head.append(script);
+  };
+  const observer =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver((entries) => entries.some((entry) => entry.isIntersecting) && loadTurnstile(), {
+          rootMargin: "600px 0px",
+        })
+      : null;
+  if (observer) observer.observe(form);
+  else loadTurnstile();
+  form.addEventListener("focusin", loadTurnstile, { once: true });
 </script>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onAzraelTurnstile" async defer></script>

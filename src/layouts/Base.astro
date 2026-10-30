@@ -1,7 +1,7 @@
 ---
 import "../styles/site.css";
 import { games } from "../data/games";
-import { gameVars } from "../data/themes";
+import { gameVars, themeColor } from "../data/themes";
 
 interface Props {
   title: string;
@@ -9,10 +9,28 @@ interface Props {
   game?: string;
   home?: boolean;
   admin?: boolean;
+  // Pages that should stay out of search results, such as /not-ready.
+  noindex?: boolean;
+  // The picture link previews show (Discord, Reddit, Nexus). A square store
+  // icon gets the small card; a wide poster gets the large one.
+  image?: { src: string; alt: string; square?: boolean };
 }
 
-const { title, description, game, home = false, admin = false } = Astro.props;
+const {
+  title,
+  description,
+  game,
+  home = false,
+  admin = false,
+  noindex = false,
+  // Pages without their own picture share the site card from scripts/make-share-image.mjs.
+  image = { src: "/share.jpg", alt: "Azrael's Mods: mods for RimWorld, Sun Haven, and 7 Days to Die" },
+} = Astro.props;
 const here = Astro.url.pathname.replace(/\/$/, "") || "/";
+const siteName = "Azrael's Mods";
+const fullTitle = title === siteName || title.endsWith(` · ${siteName}`) ? title : `${title} · ${siteName}`;
+const canonical = new URL(here === "/" ? "/" : here, Astro.site);
+const imageUrl = image ? new URL(image.src, Astro.site).href : undefined;
 ---
 
 <html lang="en">
@@ -20,16 +38,35 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    {admin && <meta name="robots" content="noindex, nofollow" />}
-    <title>{title}</title>
+    <meta name="theme-color" content={themeColor(home || admin ? undefined : game)} />
+    {(admin || noindex) && <meta name="robots" content="noindex, nofollow" />}
+    <title>{fullTitle}</title>
+    {!(admin || noindex) && <link rel="canonical" href={canonical.href} />}
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    {image?.src === "/share.jpg" && <meta property="og:image:width" content="1200" />}
+    {image?.src === "/share.jpg" && <meta property="og:image:height" content="630" />}
+    {imageUrl && <meta property="og:image:alt" content={image?.alt} />}
+    <meta name="twitter:card" content={imageUrl && !image?.square ? "summary_large_image" : "summary"} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,560&family=Outfit:wght@400;600;700&family=Red+Hat+Text:wght@400;600;700&display=swap"
+    />
   </head>
   <body
     class:list={[game === "rimworld" && "rw-site", (home || admin) && "entry-site", admin && "admin-site"]}
     style={gameVars(game)}
   >
+    <a class="skip-link" href="#main">Skip to content</a>
     <header>
       <a href="/">Azrael's Mods</a>
       <nav aria-label="Games">
@@ -47,9 +84,22 @@ const here = Astro.url.pathname.replace(/\/$/, "") || "/";
         }
       </nav>
     </header>
-    <main>
+    <main id="main" tabindex="-1">
       <slot />
     </main>
+    {
+      !admin && (
+        <footer class="site-footer">
+          <nav aria-label="Source code">
+            <span>Source on GitHub:</span>
+            {games.map((entry) => (
+              <a href={entry.repo}>{entry.name}</a>
+            ))}
+          </nav>
+          <p>Found a bug? Use “Report a problem” at the bottom of any mod page.</p>
+        </footer>
+      )
+    }
     <script is:inline>
       (() => {
         const lists = document.querySelectorAll("[data-stat-key]");

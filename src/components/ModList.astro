@@ -88,7 +88,15 @@ const sortOptions = [
         >
           <a class="zd-name has-thumb" role="cell" href={`/${game}/${mod.slug}`}>
             {thumb ? (
-              <img class:list={[thumb.square && "is-icon"]} src={thumb.src} alt="" loading="lazy" />
+              <img
+                class:list={[thumb.square && "is-icon"]}
+                src={thumb.thumb}
+                alt=""
+                width={thumb.square ? 48 : 80}
+                height={thumb.square ? 48 : 50}
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <span class="zd-thumb-blank" aria-hidden="true">{mod.name.charAt(0)}</span>
             )}
