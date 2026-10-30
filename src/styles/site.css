@@ -1475,6 +1475,96 @@ body.rw-site > header nav a[aria-current] {
   display: none;
 }
 
+.zd-details h2 {
+  margin: 0 0 0.5rem;
+}
+
+.zd-details-summary {
+  margin: 0 0 0.85rem;
+  color: var(--hero-ink);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.zd-details dl {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.zd-details dl > div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--hero-ink) 10%, transparent);
+}
+
+.zd-details dl > div:last-child {
+  border-bottom: 0;
+}
+
+.zd-details dt {
+  color: var(--hero-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding-top: 0.15rem;
+}
+
+.zd-details dd {
+  margin: 0;
+  color: var(--hero-ink);
+  overflow-wrap: anywhere;
+}
+
+.zd-details dd small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--hero-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.zd-details .zd-side {
+  display: inline-block;
+}
+
+/* The list's pill colors are tuned for its dark page; mixing in the hero ink
+   keeps them readable on the light mod themes too. */
+.zd-details .zd-side.is-server {
+  color: color-mix(in srgb, #8fb7e0 50%, var(--hero-ink));
+}
+
+.zd-details .zd-side.is-client {
+  color: color-mix(in srgb, #9ccf7c 50%, var(--hero-ink));
+}
+
+.zd-details .zd-side.is-both {
+  color: color-mix(in srgb, #e8b85a 50%, var(--hero-ink));
+}
+
+.zd-details .zd-side.is-optional {
+  color: color-mix(in srgb, #c9a4e8 50%, var(--hero-ink));
+}
+
+.zd-back {
+  margin: 2.5rem 0 0;
+}
+
+.zd-back a,
+.zd-back a:visited {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.zd-back a:hover {
+  text-decoration: underline;
+}
+
 .zd-get {
   display: inline-block;
   padding: 0.4rem 0.75rem;
