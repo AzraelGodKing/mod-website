@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Mod page Details are tighter: version and update date share a row, game version and required mods share a row, and the file size sits under the file name. The SHA-256 is folded behind a "Verify file" toggle, since most players never need it. The changelog shows the current version and folds every older version into one "Older versions" row, with smaller text.
+
 - Mod pages have a "What's new" section with up to eight recent versions, the current one open and older ones folded. The build reads the notes from the mod repos: a `changelog` list in `mod.json` or a `CHANGELOG.md` beside it (any game), RimWorld's `site/src/data/changelogs/<slug>.md`, Sun Haven's root `CHANGELOG.md` and `docs/versions.json` (shared release notes are split by mod), and the **Changelog** list or inline `**1.2.0:**` notes under each mod in the 7d2d_mods README. Versions newer than the released one are left out. `scripts/release-notes.mjs` holds the readers.
 - The home page lists the six most recent releases, each linking to that mod's changelog, and has one search box over every game's mods (name, type, description; arrow keys and Enter, `/` to focus).
 - RSS feeds: `/feed.xml` for every game and `/<game>/feed.xml` for one, linked from each page's head. `/releases.json` lists the version each mod is on.
