@@ -9,6 +9,9 @@ function fakeD1() {
   const db = {
     rows,
     statements,
+    async batch(list) {
+      return Promise.all(list.map((statement) => statement.run()));
+    },
     prepare(sql) {
       let args = [];
       const statement = {
@@ -18,7 +21,7 @@ function fakeD1() {
         },
         async run() {
           statements.push(sql);
-          if (sql.startsWith("INSERT")) {
+          if (sql.startsWith("INSERT INTO site_downloads (")) {
             const [key, version, at] = args;
             const id = `${key}@${version}`;
             const row = rows.get(id) ?? { key, version, count: 0 };
@@ -47,8 +50,8 @@ test("clicks are counted per mod and version, and summed per mod", async () => {
   await recordDownload(db, "7-days-to-die/spawn-tuner", "1.1.0");
   assert.equal(db.rows.get("sun-haven/the-vault@4.3.1").count, 2);
   assert.deepEqual(await siteCounts(db), { "sun-haven/the-vault": 3, "7-days-to-die/spawn-tuner": 1 });
-  // The table is created once per database, not on every click.
-  assert.equal(db.statements.filter((sql) => sql.startsWith("CREATE TABLE")).length, 1);
+  // The three tables are created once per database, not on every click.
+  assert.equal(db.statements.filter((sql) => sql.startsWith("CREATE TABLE")).length, 3);
 });
 
 test("link previews and crawlers are not downloads", () => {
@@ -89,4 +92,25 @@ test("site counts join the store snapshot", () => {
   assert.equal(offline.mods["sun-haven/the-vault"].site, null);
   assert.equal(offline.games["sun-haven"].site, null);
   assert.equal(offline.games["sun-haven"].total, 1700);
+});
+
+test("history gives daily clicks and the daily gain in store totals", async () => {
+  const { historySeries } = await import("../src/downloads/count.mjs");
+  const days = ["2026-10-29", "2026-10-30", "2026-10-31"];
+  const series = historySeries(
+    days,
+    [
+      { key: "sun-haven/the-vault", day: "2026-10-30", count: 3 },
+      { key: "sun-haven/the-vault", day: "2026-10-31", count: 1 },
+    ],
+    [
+      { key: "sun-haven/the-vault", day: "2026-10-28", thunderstore: 100, nexus: 50, steam: null },
+      { key: "sun-haven/the-vault", day: "2026-10-29", thunderstore: 110, nexus: 52, steam: null },
+      // No Nexus reading that day: the gain is Thunderstore's only.
+      { key: "sun-haven/the-vault", day: "2026-10-31", thunderstore: 115, nexus: null, steam: null },
+    ],
+  );
+  assert.deepEqual(series.days, days);
+  assert.deepEqual(series.mods["sun-haven/the-vault"].site, [0, 3, 1]);
+  assert.deepEqual(series.mods["sun-haven/the-vault"].store, [12, null, 5]);
 });

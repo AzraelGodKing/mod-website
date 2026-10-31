@@ -76,3 +76,21 @@ test("release status compares downloads.json with the build", async () => {
   });
   assert.equal(releaseStatus([strata], null)[0].state, "unknown");
 });
+
+test("the latest download carries the zip's checksum and size", async () => {
+  const { formatBytes, latestDownloads: latest } = await import("../src/downloads/latest.mjs");
+  const sha = "a".repeat(64);
+  const result = latest(
+    [{ game: "7-days-to-die", slug: "spawn-tuner", version: "1.1.0", sha256: sha, bytes: 48213 }],
+    { "7-days-to-die/spawn-tuner": { version: "1.1.0", sha256: "b".repeat(64), bytes: 1 } },
+  );
+  assert.equal(result["7-days-to-die/spawn-tuner"].sha256, sha);
+  assert.equal(result["7-days-to-die/spawn-tuner"].size, "47 KB");
+  const newer = latest([{ game: "7-days-to-die", slug: "spawn-tuner", version: "1.1.0", sha256: sha }], {
+    "7-days-to-die/spawn-tuner": { version: "1.2.0" },
+  });
+  // A newer zip with no recorded checksum must not show the old one.
+  assert.equal(newer["7-days-to-die/spawn-tuner"].sha256, undefined);
+  assert.equal(formatBytes(1536000), "1.5 MB");
+  assert.equal(formatBytes(0), "");
+});

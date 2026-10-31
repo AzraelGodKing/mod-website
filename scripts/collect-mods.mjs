@@ -3,6 +3,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, write
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { compareVersions } from "../src/downloads/latest.mjs";
+import { releaseNotesReader } from "./release-notes.mjs";
 
 export { compareVersions };
 
@@ -185,7 +186,10 @@ export function applyHostedVersions(mods, files) {
     const hosted = files?.[`${mod.game}/${mod.slug}`];
     if (!hosted?.version) return mod;
     const uploadedAt = hosted.uploadedAt ? { uploadedAt: String(hosted.uploadedAt) } : {};
-    return { ...mod, version: String(hosted.version), ...uploadedAt };
+    // The zip's checksum and size are shown beside the download button.
+    const sha256 = typeof hosted.sha256 === "string" && /^[0-9a-f]{64}$/i.test(hosted.sha256) ? { sha256: hosted.sha256.toLowerCase() } : {};
+    const bytes = Number.isFinite(Number(hosted.bytes)) && Number(hosted.bytes) > 0 ? { bytes: Number(hosted.bytes) } : {};
+    return { ...mod, version: String(hosted.version), ...uploadedAt, ...sha256, ...bytes };
   });
 }
 
@@ -205,7 +209,21 @@ export async function confirmNewerUploads(mods, files, fetchImpl = globalThis.fe
       console.log(`${key} ${mod.version} is in the bucket; downloads.json has ${recorded ?? "nothing"}`);
       const modified = Date.parse(response.headers?.get?.("last-modified") ?? "");
       const uploadedAt = Number.isNaN(modified) ? undefined : new Date(modified).toISOString();
-      confirmed[key] = { ...files?.[key], version: String(mod.version), file, uploadedAt };
+      // The recorded checksum and size belong to the older zip.
+      const { sha256: _oldSha, bytes: _oldBytes, ...rest } = files?.[key] ?? {};
+      const length = Number(response.headers?.get?.("content-length"));
+      const sum = await fetchImpl(`${url}.sha256`)
+        .then((res) => (res?.ok ? res.text() : ""))
+        .catch(() => "");
+      const sha256 = String(sum).trim().split(/\s+/)[0];
+      confirmed[key] = {
+        ...rest,
+        version: String(mod.version),
+        file,
+        uploadedAt,
+        ...(/^[0-9a-f]{64}$/i.test(sha256) ? { sha256 } : {}),
+        ...(length > 0 ? { bytes: length } : {}),
+      };
     }),
   );
   return confirmed;
@@ -233,6 +251,7 @@ async function main() {
   for (const root of roots) {
     const files = [];
     walk(root, files);
+    const entries = [];
     for (const file of files) {
       const mod = readCatalogEntry(file);
       if (!mod) continue;
@@ -263,8 +282,9 @@ async function main() {
         const thumb = (await writeThumb(found.source, thumbFile, square)) ? `/catalog/${mod.game}/${mod.slug}/thumb.webp` : undefined;
         preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}) };
       }
-      mods.push({ ...mod, images, ...(preview ? { preview } : {}) });
+      entries.push({ mod: { ...mod, images, ...(preview ? { preview } : {}) }, dir: modDir });
     }
+    if (entries.length) mods.push(...releaseNotesReader(root, entries[0].mod.game)(entries));
   }
 
   if (mods.length === 0) {

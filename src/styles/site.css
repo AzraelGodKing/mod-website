@@ -3361,3 +3361,362 @@ body.entry-site main {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* ---- Mod page: file facts and changelog ---- */
+.zd-details dl > div[hidden] {
+  display: none;
+}
+
+.zd-hash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zd-hash code {
+  font-size: 0.82rem;
+}
+
+.zd-copy {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--hero-ink);
+  font: 600 0.72rem "Red Hat Text", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.zd-copy:hover,
+.zd-copy:focus-visible {
+  border-color: var(--accent);
+}
+
+.zd-change {
+  padding: 0.85rem 0;
+}
+
+.zd-change:first-of-type {
+  padding-top: 0;
+}
+
+.zd-change + .zd-change {
+  border-top: 1px solid color-mix(in srgb, var(--hero-ink) 12%, transparent);
+}
+
+.zd-change h3,
+.zd-change summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+}
+
+.zd-change summary {
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.zd-change summary::-webkit-details-marker {
+  display: none;
+}
+
+.zd-change summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+
+.zd-change[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.zd-change summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.zd-change[open] summary {
+  margin-bottom: 0.55rem;
+}
+
+.zd-change-version {
+  font-weight: 700;
+}
+
+.zd-change time {
+  color: var(--hero-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.zd-change code {
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Home: search every game and recent releases ---- */
+.entry-search {
+  position: relative;
+  max-width: 34rem;
+  margin-top: 1.5rem;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+.entry-search input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #3d3229;
+  border-radius: 2px;
+  background: rgba(15, 12, 10, 0.85);
+  color: #f4ece1;
+  font: 1rem "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+.entry-search input:focus-visible {
+  outline: 2px solid #c9a15b;
+  outline-offset: 2px;
+}
+
+.entry-search-results {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  left: 0;
+  max-height: 24rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid #3d3229;
+  background: #181310;
+  list-style: none;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.entry-search-results a,
+.entry-search-results a:visited {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #2d251f;
+  color: #f4ece1;
+  text-decoration: none;
+}
+
+.entry-search-results li:last-child a {
+  border-bottom: 0;
+}
+
+.entry-search-results a:hover,
+.entry-search-results a[aria-current="true"] {
+  background: #241d18;
+}
+
+.entry-search-meta {
+  color: #c9a15b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.entry-search-short,
+.entry-search-empty {
+  color: #a89882;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.entry-search-empty {
+  padding: 0.75rem 0.9rem;
+}
+
+.entry-recent {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 0.5rem;
+  font-family: "Red Hat Text", "Segoe UI", sans-serif;
+}
+
+.entry-recent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.entry-recent h2 {
+  margin: 0;
+  color: #f4ece1;
+  font-family: "Cormorant Garamond", Palatino, serif;
+  font-size: 1.9rem;
+  font-weight: 600;
+}
+
+.entry-feed,
+.entry-feed:visited {
+  color: #c9a15b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.entry-recent ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry-recent li a,
+.entry-recent li a:visited {
+  display: flex;
+  gap: 0.8rem;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0.8rem;
+  border: 1px solid #2d251f;
+  background: rgba(24, 19, 16, 0.72);
+  color: #f4ece1;
+  text-decoration: none;
+}
+
+.entry-recent li a:hover {
+  border-color: #5a4a3a;
+  background: #221c18;
+}
+
+.entry-recent img,
+.entry-recent-tile {
+  flex: 0 0 60px;
+  width: 60px;
+  height: 38px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.entry-recent-tile {
+  display: grid;
+  place-items: center;
+  background: #2d251f;
+  color: #c9a15b;
+  font-weight: 700;
+}
+
+.entry-recent-text {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.entry-recent-meta {
+  color: #c9a15b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entry-recent-note {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #a89882;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* ---- Admin: History ---- */
+.adm-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--adm-muted);
+  font-size: 0.85rem;
+}
+
+.adm-select select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--adm-line);
+  border-radius: 2px;
+  background: var(--adm-field);
+  color: var(--adm-ink);
+  font: inherit;
+}
+
+.adm-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.adm-chart {
+  margin: 0;
+}
+
+.adm-chart figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.adm-chart-total {
+  margin: 0;
+  color: var(--adm-soft);
+  font-size: 0.85rem;
+}
+
+.adm-chart-plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.adm-chart .adm-grid {
+  stroke: var(--adm-line-soft);
+  stroke-width: 1;
+}
+
+.adm-chart .adm-axis {
+  stroke: var(--adm-line);
+  stroke-width: 1;
+}
+
+.adm-chart .adm-tick {
+  fill: var(--adm-muted);
+  font-size: 11px;
+}
+
+.adm-chart .adm-hit {
+  fill: transparent;
+}
+
+.adm-chart .adm-bar-fill {
+  fill: var(--adm-gold);
+}
+
+.adm-chart .adm-bar:hover .adm-hit {
+  fill: rgba(201, 161, 91, 0.08);
+}
+
+.adm-chart .adm-bar:hover .adm-bar-fill {
+  fill: var(--adm-gold-2);
+}
+
+.adm-history-table summary {
+  color: var(--adm-soft);
+  cursor: pointer;
+}

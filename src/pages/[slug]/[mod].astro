@@ -4,7 +4,8 @@ import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { hubInfo } from "../../data/hub-index";
-import { isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { fileFacts, gameVersionLabel, isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { renderInline } from "../../../scripts/release-notes.mjs";
 import { statRows } from "../../data/stats";
 import { commandsFor } from "../../data/sevendays-commands";
 import { indexInfo, installHints, installLabels } from "../../data/sevendays-index";
@@ -42,6 +43,11 @@ const commands = sevendays ? commandsFor(mod.slug) : undefined;
 const guide = mod.guide;
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
 const sections = guide?.sections ?? [];
+const facts = fileFacts(mod);
+const worksOn = gameVersionLabel(mod);
+const changelog = mod.changelog ?? [];
+const changeDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
+const changeLabel = (date?: string) => (date && !Number.isNaN(Date.parse(date)) ? changeDate.format(new Date(date)) : "");
 const storeLinks = [
   ["Steam", mod.links.steam],
   ["Thunderstore", mod.links.thunderstore],
@@ -129,10 +135,39 @@ const storeLinks = [
                     <dd data-field={row.field}>—</dd>
                   </div>
                 ))}
+                {worksOn && (
+                  <div>
+                    <dt>Works on</dt>
+                    <dd>{worksOn}</dd>
+                  </div>
+                )}
+                {mod.requires?.length ? (
+                  <div>
+                    <dt>Requires</dt>
+                    <dd>{mod.requires.join(", ")}</dd>
+                  </div>
+                ) : null}
                 {direct && (
                   <div>
                     <dt>File</dt>
                     <dd data-latest={latestKey} data-latest-field="file">{direct.file}</dd>
+                  </div>
+                )}
+                {direct && (
+                  <div hidden={facts.size ? undefined : true} data-fact="size">
+                    <dt>Size</dt>
+                    <dd data-latest={latestKey} data-latest-field="size">{facts.size ?? ""}</dd>
+                  </div>
+                )}
+                {direct && (
+                  <div hidden={facts.sha256 ? undefined : true} data-fact="sha256">
+                    <dt>SHA-256</dt>
+                    <dd class="zd-hash">
+                      <code data-latest={latestKey} data-latest-field="sha256" data-value={facts.sha256} title={facts.sha256}>
+                        {facts.sha256 ? `${facts.sha256.slice(0, 16)}…` : ""}
+                      </code>
+                      <button type="button" class="zd-copy" data-copy-hash>Copy</button>
+                    </dd>
                   </div>
                 )}
               </dl>
@@ -256,6 +291,40 @@ const storeLinks = [
             )
           }
           {
+            changelog.length > 0 && (
+              <section class="rw-section zd-changelog" id="changelog" aria-labelledby="changelog-title">
+                <h2 id="changelog-title">What's new</h2>
+                {changelog.map((entry, index) => {
+                  const body = (
+                    <ul class="rw-notes">
+                      {entry.notes.map((note) => (
+                        <li set:html={renderInline(note)} />
+                      ))}
+                    </ul>
+                  );
+                  const title = (
+                    <>
+                      <span class="zd-change-version">v{entry.version}</span>
+                      {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
+                      {index === 0 && entry.version === mod.version && <span class="rw-feature-tag">Current</span>}
+                    </>
+                  );
+                  return index === 0 ? (
+                    <article class="zd-change">
+                      <h3>{title}</h3>
+                      {body}
+                    </article>
+                  ) : (
+                    <details class="zd-change">
+                      <summary>{title}</summary>
+                      {body}
+                    </details>
+                  );
+                })}
+              </section>
+            )
+          }
+          {
             guide?.notes?.length ? (
               <section class="rw-section">
                 <h2>Good to know</h2>
@@ -330,6 +399,21 @@ const storeLinks = [
           </p>
           <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
         </div>
+        <script is:inline>
+          for (const button of document.querySelectorAll("[data-copy-hash]")) {
+            button.addEventListener("click", async () => {
+              const hash = button.parentElement?.querySelector("code")?.dataset.value;
+              if (!hash) return;
+              try {
+                await navigator.clipboard.writeText(hash);
+                button.textContent = "Copied";
+              } catch {
+                button.textContent = "Copy failed";
+              }
+              setTimeout(() => (button.textContent = "Copy"), 2000);
+            });
+          }
+        </script>
         <script is:inline>
           const root = document.querySelector("[data-feature-tabs]");
           if (root) {

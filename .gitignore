@@ -41,3 +41,6 @@ kats/.wrangler/
 
 # jetbrains setting folder
 .idea/
+
+# Saved by scripts/ci-deploy.sh for the Discord announcement.
+.releases-before.json

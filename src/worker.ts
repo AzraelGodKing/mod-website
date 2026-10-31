@@ -21,7 +21,7 @@ import {
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, fetchManifestFiles, latestDownloads, releaseStatus } from "./downloads/latest.mjs";
-import { isBot, recordDownload, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
+import { downloadHistory, isBot, recordDownload, recordStoreDay, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
   slug: string;
@@ -104,6 +104,10 @@ async function refreshStats(env: SiteEnv, source: RefreshSource): Promise<Stored
     warnings,
   };
   await env.STATS.put(STATS_KEY, JSON.stringify(stored));
+  if (env.DOWNLOADS_DB) {
+    // The History tab charts the day-to-day change in these totals.
+    await recordStoreDay(env.DOWNLOADS_DB, next.mods).catch((error) => console.warn(`[stats] daily totals not saved: ${error}`));
+  }
   console.log(JSON.stringify({ event: "stats", result: "refreshed", source, warnings: warnings.length }));
   return stored;
 }
@@ -263,6 +267,9 @@ const privateAdminRoutes: Record<string, AdminRoute> = {
   "GET /api/admin/stats": async (_request, env) => adminJson(200, await statsWithSite(env, await readStats(env))),
   "POST /api/admin/refresh": async (_request, env) => adminJson(200, await statsWithSite(env, await refreshStats(env, "manual"))),
   "GET /api/admin/passkeys": async (_request, _env, _url, db) => (db ? adminJson(200, { passkeys: await listPasskeys(db) }) : needsDb()),
+  // The route's url is ADMIN_ORIGIN when set, so the query is read from the request itself.
+  "GET /api/admin/history": async (request, _env, _url, db) =>
+    db ? adminJson(200, await downloadHistory(db, Number(new URL(request.url).searchParams.get("days") ?? 30))) : needsDb(),
   "GET /api/admin/site-downloads": async (_request, _env, _url, db) => (db ? adminJson(200, { rows: await siteDownloadLog(db) }) : needsDb()),
   "GET /api/admin/releases": async () => {
     const files = await fetchManifestFiles((input, init) => fetch(input, init));

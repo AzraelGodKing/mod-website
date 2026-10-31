@@ -31,6 +31,7 @@ const siteName = "Azrael's Mods";
 const fullTitle = title === siteName || title.endsWith(` · ${siteName}`) ? title : `${title} · ${siteName}`;
 const canonical = new URL(here === "/" ? "/" : here, Astro.site);
 const imageUrl = image ? new URL(image.src, Astro.site).href : undefined;
+const gameName = games.find((entry) => entry.slug === game)?.name;
 ---
 
 <html lang="en">
@@ -55,6 +56,8 @@ const imageUrl = image ? new URL(image.src, Astro.site).href : undefined;
     {image?.src === "/share.jpg" && <meta property="og:image:height" content="630" />}
     {imageUrl && <meta property="og:image:alt" content={image?.alt} />}
     <meta name="twitter:card" content={imageUrl && !image?.square ? "summary_large_image" : "summary"} />
+    {!admin && <link rel="alternate" type="application/rss+xml" title="Azrael's Mods: new releases" href="/feed.xml" />}
+    {!admin && gameName && <link rel="alternate" type="application/rss+xml" title={`Azrael's Mods: ${gameName} releases`} href={`/${game}/feed.xml`} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -161,15 +164,23 @@ const imageUrl = image ? new URL(image.src, Astro.site).href : undefined;
             for (const cell of cells) {
               const entry = latest[cell.dataset.latest];
               const value = entry?.[cell.dataset.latestField];
+              // A newer zip with no recorded checksum or size: the build's would be wrong.
+              if (!value && entry) cell.closest("[data-fact]")?.setAttribute("hidden", "");
               if (!value) continue;
               if (cell.dataset.latestField === "uploadedAt") {
                 const date = new Date(value);
                 if (Number.isNaN(date.getTime())) continue;
                 cell.setAttribute("datetime", date.toISOString());
                 cell.textContent = day.format(date);
+              } else if (cell.dataset.latestField === "sha256") {
+                cell.dataset.value = value;
+                cell.title = value;
+                cell.textContent = `${value.slice(0, 16)}…`;
               } else {
                 cell.textContent = value;
               }
+              // A size or checksum the build did not have yet.
+              cell.closest("[data-fact]")?.removeAttribute("hidden");
             }
           })
           .catch(() => {});

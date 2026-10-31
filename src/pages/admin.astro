@@ -30,6 +30,7 @@ const tabs = [
   ["downloads", "Downloads"],
   ["releases", "Releases"],
   ["activity", "Activity"],
+  ["history", "History"],
   ["signin", "Sign-in"],
 ];
 
@@ -292,6 +293,71 @@ const links = [
         </div>
       </section>
 
+      <section class="adm-panel" role="tabpanel" id="panel-history" aria-labelledby="tab-history" data-panel="history" hidden>
+        <div class="adm-toolbar">
+          <label class="adm-select">
+            <span>Show</span>
+            <select id="adm-history-scope">
+              <option value="">All mods</option>
+              {
+                games.map((game) => (
+                  <optgroup label={game.name}>
+                    <option value={`game:${game.slug}`}>All {game.name} mods</option>
+                    {modsForGame(game.slug).map((mod) => (
+                      <option value={`${mod.game}/${mod.slug}`}>{mod.name}</option>
+                    ))}
+                  </optgroup>
+                ))
+              }
+            </select>
+          </label>
+          <div class="adm-chips" role="group" aria-label="Time range">
+            {[7, 30, 90].map((days) => (
+              <button type="button" class:list={["adm-chip", days === 30 && "is-on"]} data-history-days={days} aria-pressed={days === 30 ? "true" : "false"}>
+                {days} days
+              </button>
+            ))}
+          </div>
+        </div>
+        <p class="adm-muted">
+          Daily counts, in UTC days. Site clicks are this site's Download buttons. Store downloads are the daily gain on
+          Thunderstore and Nexus, read by the hourly refresh. History starts on the day this tab went live.
+        </p>
+        <div class="adm-charts">
+          <figure class="adm-card adm-chart" data-chart="site">
+            <figcaption>
+              <h2>Site clicks per day</h2>
+              <p class="adm-chart-total" data-chart-total>—</p>
+            </figcaption>
+            <div class="adm-chart-plot" data-chart-plot></div>
+          </figure>
+          <figure class="adm-card adm-chart" data-chart="store">
+            <figcaption>
+              <h2>Store downloads per day</h2>
+              <p class="adm-chart-total" data-chart-total>—</p>
+            </figcaption>
+            <div class="adm-chart-plot" data-chart-plot></div>
+          </figure>
+        </div>
+        <details class="adm-history-table">
+          <summary>Show as a table</summary>
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="is-left">Day</th>
+                  <th scope="col" class="is-num">Site clicks</th>
+                  <th scope="col" class="is-num">Store downloads</th>
+                </tr>
+              </thead>
+              <tbody id="adm-history-rows">
+                <tr><td colspan="3" class="adm-muted">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
       <section class="adm-panel" role="tabpanel" id="panel-signin" aria-labelledby="tab-signin" data-panel="signin" hidden>
         <div class="adm-split">
           <section class="adm-card">
@@ -396,6 +462,7 @@ const links = [
         loaded.add(id);
         if (id === "releases") loadReleases();
         if (id === "activity") loadActivity();
+        if (id === "history") loadHistory();
       }
       for (const button of tabButtons) button.addEventListener("click", () => showTab(button.dataset.tab));
       for (const card of document.querySelectorAll("[data-jump-game]")) {
@@ -666,6 +733,142 @@ const links = [
           if (error.status === 401) return showLogin(error.message);
           emptyRow(tbody, 5, error.message);
         }
+      }
+
+      // ---- History ----
+      let historyData = null;
+      let historyDays = 30;
+      const historyScope = $("#adm-history-scope");
+      const shortDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      const dayLabel = (day) => shortDay.format(new Date(`${day}T00:00:00Z`));
+      const svgEl = (tag, attrs = {}) => {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, String(value));
+        return el;
+      };
+      function historyKeys() {
+        const scope = historyScope.value;
+        const keys = Object.keys(historyData?.mods ?? {});
+        if (!scope) return keys;
+        if (scope.startsWith("game:")) return keys.filter((key) => key.startsWith(`${scope.slice(5)}/`));
+        return keys.filter((key) => key === scope);
+      }
+      // One value per day; a store day with no reading for any selected mod stays null.
+      function seriesFor(field) {
+        const keys = historyKeys();
+        return historyData.days.map((_day, at) => {
+          let total = null;
+          for (const key of keys) {
+            const value = historyData.mods[key][field][at];
+            if (typeof value === "number") total = (total ?? 0) + value;
+          }
+          return field === "site" ? (total ?? 0) : total;
+        });
+      }
+      // Four whole-number gridline steps: 1, 2 or 5 times a power of ten.
+      function niceMax(value) {
+        const raw = Math.max(1, value / 4);
+        const mag = 10 ** Math.floor(Math.log10(raw));
+        const step = [1, 2, 5, 10].map((mult) => mult * mag).find((candidate) => candidate >= raw);
+        return Math.max(4, Math.ceil(step) * 4);
+      }
+      function drawChart(figure, values) {
+        const plot = figure.querySelector("[data-chart-plot]");
+        const known = values.filter((value) => typeof value === "number");
+        const sum = known.reduce((total, value) => total + value, 0);
+        figure.querySelector("[data-chart-total]").textContent = known.length
+          ? `${format(sum)} in ${historyData.days.length} days`
+          : "No readings yet";
+        const width = 640;
+        const height = 220;
+        const pad = { top: 12, right: 8, bottom: 26, left: 40 };
+        const innerW = width - pad.left - pad.right;
+        const innerH = height - pad.top - pad.bottom;
+        const max = niceMax(Math.max(0, ...known));
+        const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `${figure.querySelector("h2").textContent}: ${format(sum)} total` });
+        for (let tick = 0; tick <= 4; tick += 1) {
+          const value = (max / 4) * tick;
+          const y = pad.top + innerH - (value / max) * innerH;
+          svg.append(svgEl("line", { x1: pad.left, x2: width - pad.right, y1: y, y2: y, class: tick === 0 ? "adm-axis" : "adm-grid" }));
+          const label = svgEl("text", { x: pad.left - 6, y: y + 4, "text-anchor": "end", class: "adm-tick" });
+          label.textContent = format(Math.round(value));
+          svg.append(label);
+        }
+        const slot = innerW / values.length;
+        const barW = Math.max(2, Math.min(18, slot - 2));
+        const labelEvery = Math.ceil(values.length / 6);
+        values.forEach((value, at) => {
+          const x = pad.left + at * slot + (slot - barW) / 2;
+          const group = svgEl("g", { class: "adm-bar" });
+          // A full-height hit area makes small bars easy to hover.
+          group.append(svgEl("rect", { x: pad.left + at * slot, y: pad.top, width: slot, height: innerH, class: "adm-hit" }));
+          if (typeof value === "number" && value > 0) {
+            const h = Math.max(1, (value / max) * innerH);
+            const r = Math.min(4, barW / 2, h);
+            const top = pad.top + innerH - h;
+            // Rounded top, square base on the axis.
+            group.append(
+              svgEl("path", {
+                d: `M${x},${pad.top + innerH}V${top + r}Q${x},${top} ${x + r},${top}H${x + barW - r}Q${x + barW},${top} ${x + barW},${top + r}V${pad.top + innerH}Z`,
+                class: "adm-bar-fill",
+              }),
+            );
+          }
+          const tip = svgEl("title");
+          tip.textContent = `${dayLabel(historyData.days[at])}: ${typeof value === "number" ? format(value) : "no reading"}`;
+          group.append(tip);
+          svg.append(group);
+          if (at % labelEvery === 0 || at === values.length - 1) {
+            const label = svgEl("text", { x: pad.left + at * slot + slot / 2, y: height - 8, "text-anchor": "middle", class: "adm-tick" });
+            label.textContent = dayLabel(historyData.days[at]);
+            svg.append(label);
+          }
+        });
+        plot.replaceChildren(svg);
+      }
+      function renderHistory() {
+        if (!historyData) return;
+        const site = seriesFor("site");
+        const store = seriesFor("store");
+        drawChart($('[data-chart="site"]'), site);
+        drawChart($('[data-chart="store"]'), store);
+        const tbody = $("#adm-history-rows");
+        tbody.replaceChildren(
+          ...historyData.days
+            .map((day, at) => {
+              const row = document.createElement("tr");
+              const th = document.createElement("th");
+              th.scope = "row";
+              th.className = "is-left";
+              th.textContent = dayLabel(day);
+              row.append(th, cell(format(site[at]), "is-num"), cell(typeof store[at] === "number" ? format(store[at]) : "—", "is-num"));
+              return row;
+            })
+            .reverse(),
+        );
+      }
+      async function loadHistory() {
+        try {
+          historyData = await call(`/api/admin/history?days=${historyDays}`);
+          renderHistory();
+        } catch (error) {
+          loaded.delete("history");
+          if (error.status === 401) return showLogin(error.message);
+          emptyRow($("#adm-history-rows"), 3, error.message);
+          for (const plot of document.querySelectorAll("[data-chart-plot]")) plot.textContent = error.message;
+        }
+      }
+      historyScope.addEventListener("change", renderHistory);
+      for (const button of document.querySelectorAll("[data-history-days]")) {
+        button.addEventListener("click", () => {
+          historyDays = Number(button.dataset.historyDays);
+          for (const other of document.querySelectorAll("[data-history-days]")) {
+            const on = other === button;
+            other.classList.toggle("is-on", on);
+            other.setAttribute("aria-pressed", String(on));
+          }
+          loadHistory();
+        });
       }
 
       // ---- Health ----
