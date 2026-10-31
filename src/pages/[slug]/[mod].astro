@@ -117,15 +117,12 @@ const storeLinks = [
                 )}
                 <div>
                   <dt>Version</dt>
-                  <dd>v<span data-latest={latestKey} data-latest-field="version">{mod.version}</span></dd>
-                </div>
-                <div>
-                  <dt>Updated</dt>
                   <dd>
-                    {updated ? (
-                      <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
-                    ) : (
-                      "—"
+                    v<span data-latest={latestKey} data-latest-field="version">{mod.version}</span>
+                    {updated && (
+                      <span class="zd-dim">
+                        {" "}· <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
+                      </span>
                     )}
                   </dd>
                 </div>
@@ -135,38 +132,35 @@ const storeLinks = [
                     <dd data-field={row.field}>—</dd>
                   </div>
                 ))}
-                {worksOn && (
+                {(worksOn || mod.requires?.length) && (
                   <div>
-                    <dt>Works on</dt>
-                    <dd>{worksOn}</dd>
+                    <dt>{worksOn ? "Works on" : "Needs"}</dt>
+                    <dd>
+                      {worksOn ?? mod.requires?.join(", ")}
+                      {worksOn && mod.requires?.length ? <small>Needs {mod.requires.join(", ")}</small> : null}
+                    </dd>
                   </div>
                 )}
-                {mod.requires?.length ? (
-                  <div>
-                    <dt>Requires</dt>
-                    <dd>{mod.requires.join(", ")}</dd>
-                  </div>
-                ) : null}
                 {direct && (
                   <div>
                     <dt>File</dt>
-                    <dd data-latest={latestKey} data-latest-field="file">{direct.file}</dd>
-                  </div>
-                )}
-                {direct && (
-                  <div hidden={facts.size ? undefined : true} data-fact="size">
-                    <dt>Size</dt>
-                    <dd data-latest={latestKey} data-latest-field="size">{facts.size ?? ""}</dd>
-                  </div>
-                )}
-                {direct && (
-                  <div hidden={facts.sha256 ? undefined : true} data-fact="sha256">
-                    <dt>SHA-256</dt>
-                    <dd class="zd-hash">
-                      <code data-latest={latestKey} data-latest-field="sha256" data-value={facts.sha256} title={facts.sha256}>
-                        {facts.sha256 ? `${facts.sha256.slice(0, 16)}…` : ""}
-                      </code>
-                      <button type="button" class="zd-copy" data-copy-hash>Copy</button>
+                    <dd>
+                      <span data-latest={latestKey} data-latest-field="file">{direct.file}</span>
+                      <span class="zd-file-meta">
+                        <span class="zd-dim" hidden={facts.size ? undefined : true} data-fact="size">
+                          <span data-latest={latestKey} data-latest-field="size">{facts.size ?? ""}</span>
+                        </span>
+                        <details class="zd-verify" hidden={facts.sha256 ? undefined : true} data-fact="sha256">
+                          <summary>Verify file</summary>
+                          <span class="zd-hash">
+                            <span class="zd-dim">SHA-256</span>
+                            <code data-latest={latestKey} data-latest-field="sha256" data-value={facts.sha256} title={facts.sha256}>
+                              {facts.sha256 ? `${facts.sha256.slice(0, 16)}…` : ""}
+                            </code>
+                            <button type="button" class="zd-copy" data-copy-hash>Copy</button>
+                          </span>
+                        </details>
+                      </span>
                     </dd>
                   </div>
                 )}
@@ -294,33 +288,42 @@ const storeLinks = [
             changelog.length > 0 && (
               <section class="rw-section zd-changelog" id="changelog" aria-labelledby="changelog-title">
                 <h2 id="changelog-title">What's new</h2>
-                {changelog.map((entry, index) => {
-                  const body = (
+                {changelog.slice(0, 1).map((entry) => (
+                  <article class="zd-change">
+                    <h3>
+                      <span class="zd-change-version">v{entry.version}</span>
+                      {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
+                      {entry.version === mod.version && <span class="rw-feature-tag">Current</span>}
+                    </h3>
                     <ul class="rw-notes">
                       {entry.notes.map((note) => (
                         <li set:html={renderInline(note)} />
                       ))}
                     </ul>
-                  );
-                  const title = (
-                    <>
-                      <span class="zd-change-version">v{entry.version}</span>
-                      {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
-                      {index === 0 && entry.version === mod.version && <span class="rw-feature-tag">Current</span>}
-                    </>
-                  );
-                  return index === 0 ? (
-                    <article class="zd-change">
-                      <h3>{title}</h3>
-                      {body}
-                    </article>
-                  ) : (
-                    <details class="zd-change">
-                      <summary>{title}</summary>
-                      {body}
+                  </article>
+                ))}
+                {
+                  changelog.length > 1 && (
+                    <details class="zd-older">
+                      <summary>
+                        Older versions <span class="zd-dim">({changelog.slice(1).map((entry) => `v${entry.version}`).join(", ")})</span>
+                      </summary>
+                      {changelog.slice(1).map((entry) => (
+                        <article class="zd-change">
+                          <h3>
+                            <span class="zd-change-version">v{entry.version}</span>
+                            {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
+                          </h3>
+                          <ul class="rw-notes">
+                            {entry.notes.map((note) => (
+                              <li set:html={renderInline(note)} />
+                            ))}
+                          </ul>
+                        </article>
+                      ))}
                     </details>
-                  );
-                })}
+                  )
+                }
               </section>
             )
           }
@@ -402,7 +405,7 @@ const storeLinks = [
         <script is:inline>
           for (const button of document.querySelectorAll("[data-copy-hash]")) {
             button.addEventListener("click", async () => {
-              const hash = button.parentElement?.querySelector("code")?.dataset.value;
+              const hash = button.closest(".zd-hash")?.querySelector("code")?.dataset.value;
               if (!hash) return;
               try {
                 await navigator.clipboard.writeText(hash);

@@ -3362,29 +3362,78 @@ body.entry-site main {
   font-size: 0.9rem;
 }
 
-/* ---- Mod page: file facts and changelog ---- */
-.zd-details dl > div[hidden] {
-  display: none;
+/* ---- Mod page: compact Details, file check, and changelog ---- */
+.zd-details dl > div {
+  grid-template-columns: 6.25rem 1fr;
+  gap: 0.6rem;
+  padding: 0.32rem 0;
+}
+
+.zd-details dt {
+  padding-top: 0.2rem;
+}
+
+.zd-details dd small {
+  margin-top: 0.15rem;
+}
+
+.zd-details-summary {
+  margin-bottom: 0.6rem;
+}
+
+.zd-dim {
+  color: var(--hero-muted);
+}
+
+.zd-details [hidden] {
+  display: none !important;
+}
+
+.zd-file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.1rem;
+  font-size: 0.82rem;
+}
+
+.zd-verify summary {
+  color: var(--hero-muted);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.zd-verify summary:hover,
+.zd-verify[open] summary {
+  color: var(--hero-ink);
+}
+
+.zd-verify summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .zd-hash {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
 }
 
 .zd-hash code {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .zd-copy {
-  padding: 0.15rem 0.5rem;
+  padding: 0.1rem 0.45rem;
   border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
   border-radius: 3px;
   background: transparent;
   color: var(--hero-ink);
-  font: 600 0.72rem "Red Hat Text", "Segoe UI", sans-serif;
+  font: 600 0.7rem "Red Hat Text", "Segoe UI", sans-serif;
   cursor: pointer;
 }
 
@@ -3393,55 +3442,26 @@ body.entry-site main {
   border-color: var(--accent);
 }
 
-.zd-change {
-  padding: 0.85rem 0;
+.zd-changelog .rw-notes {
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
-.zd-change:first-of-type {
-  padding-top: 0;
+.zd-changelog .rw-notes li + li {
+  margin-top: 0.25rem;
 }
 
 .zd-change + .zd-change {
-  border-top: 1px solid color-mix(in srgb, var(--hero-ink) 12%, transparent);
+  margin-top: 0.75rem;
 }
 
-.zd-change h3,
-.zd-change summary {
+.zd-change h3 {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.6rem;
-  margin: 0 0 0.55rem;
-  font-size: 1rem;
-}
-
-.zd-change summary {
-  margin: 0;
-  cursor: pointer;
-  list-style: none;
-}
-
-.zd-change summary::-webkit-details-marker {
-  display: none;
-}
-
-.zd-change summary::before {
-  content: "▸";
-  color: var(--accent);
-  transition: transform 0.15s ease;
-}
-
-.zd-change[open] summary::before {
-  transform: rotate(90deg);
-}
-
-.zd-change summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.zd-change[open] summary {
-  margin-bottom: 0.55rem;
+  gap: 0.5rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
 }
 
 .zd-change-version {
@@ -3450,13 +3470,34 @@ body.entry-site main {
 
 .zd-change time {
   color: var(--hero-muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 400;
 }
 
 .zd-change code {
   font-size: 0.88em;
   overflow-wrap: anywhere;
+}
+
+.zd-older {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid color-mix(in srgb, var(--hero-ink) 12%, transparent);
+}
+
+.zd-older summary {
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.zd-older summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.zd-older[open] summary {
+  margin-bottom: 0.75rem;
 }
 
 /* ---- Home: search every game and recent releases ---- */
