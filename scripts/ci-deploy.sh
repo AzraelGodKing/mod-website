@@ -28,7 +28,12 @@ bash scripts/fetch-catalog-repos.sh
 export RIMWORLD_MODS="$PWD/.catalog-sources/rimworld"
 export SUNHAVEN_MODS="$PWD/.catalog-sources/sunhaven"
 export SEVENDAYS_MODS="$PWD/.catalog-sources/sevendays"
+# The live releases list before this deploy, so new versions can be announced after it.
+curl -fsS -H 'Cache-Control: no-cache' https://azraelsmods.com/releases.json -o .releases-before.json || rm -f .releases-before.json
 npm run deploy
+if [[ -n "${DISCORD_WEBHOOK_URL:-}" ]]; then
+  node scripts/announce-releases.mjs "$( [[ -f .releases-before.json ]] && echo .releases-before.json )" dist/releases.json || true
+fi
 put_secret TURNSTILE_SECRET "$TURNSTILE_SECRET"
 put_secret LINEAR_API_KEY "$LINEAR_API_KEY"
 put_secret TURNSTILE_HOSTNAMES "$TURNSTILE_HOSTNAMES"

@@ -1,5 +1,5 @@
 import catalog from "./catalog.json";
-import { NOT_READY, zipFor } from "../downloads/latest.mjs";
+import { NOT_READY, formatBytes, zipFor } from "../downloads/latest.mjs";
 
 export interface ModLinks {
   steam: string | null;
@@ -37,6 +37,13 @@ export interface ModPreview {
   thumb?: string;
 }
 
+export interface ModChange {
+  version: string;
+  date?: string;
+  // One line of Markdown each; render with renderInline().
+  notes: string[];
+}
+
 export interface ModEntry {
   slug: string;
   name: string;
@@ -50,6 +57,11 @@ export interface ModEntry {
   download: ModDownload;
   links: ModLinks;
   guide?: ModGuide;
+  changelog?: ModChange[];
+  gameVersions?: string[];
+  requires?: string[];
+  sha256?: string;
+  bytes?: number;
 }
 
 export const mods = catalog.mods as ModEntry[];
@@ -92,4 +104,38 @@ export function r2Download(mod: ModEntry): { file: string; url: string } | null 
   if (isNotReady(mod)) return null;
   const { file } = zipFor(mod.game, mod.slug, mod.version);
   return { file, url: `/download/${mod.game}/${mod.slug}` };
+}
+
+// The zip's SHA-256 and size, from downloads.json, when the build's version is the hosted one.
+export function fileFacts(mod: ModEntry): { sha256?: string; size?: string } {
+  if (isNotReady(mod)) return {};
+  return {
+    ...(mod.sha256 ? { sha256: mod.sha256 } : {}),
+    ...(mod.bytes ? { size: formatBytes(mod.bytes) } : {}),
+  };
+}
+
+const gameVersionPrefix: Record<string, string> = {
+  rimworld: "RimWorld",
+  "7-days-to-die": "7 Days",
+  "sun-haven": "Sun Haven",
+};
+
+// "RimWorld 1.6 · 1.7" or "7 Days V3.4".
+export function gameVersionLabel(mod: ModEntry): string | null {
+  if (!mod.gameVersions?.length) return null;
+  return `${gameVersionPrefix[mod.game] ?? ""} ${mod.gameVersions.join(" · ")}`.trim();
+}
+
+// Newest release first, by upload date. Mods with no upload date are left out.
+export function recentlyUpdated(limit = 6, list: ModEntry[] = mods): ModEntry[] {
+  return list
+    .filter((mod) => !isNotReady(mod) && mod.uploadedAt && !Number.isNaN(Date.parse(mod.uploadedAt)))
+    .sort((a, b) => Date.parse(b.uploadedAt as string) - Date.parse(a.uploadedAt as string))
+    .slice(0, limit);
+}
+
+// The notes for the version the site is serving, if the changelog has them.
+export function notesFor(mod: ModEntry): ModChange | undefined {
+  return mod.changelog?.find((entry) => entry.version === mod.version);
 }

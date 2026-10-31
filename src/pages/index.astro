@@ -2,7 +2,10 @@
 import Base from "../layouts/Base.astro";
 import StoreCounts from "../components/StoreCounts.astro";
 import { games } from "../data/games";
-import { modsForGame } from "../data/mods";
+import { hubInfo } from "../data/hub-index";
+import { mods as allMods, modsForGame, notesFor, previewFor, recentlyUpdated, uploadedOn } from "../data/mods";
+import { indexInfo } from "../data/sevendays-index";
+import { plainText } from "../../scripts/release-notes.mjs";
 
 const rooms: Record<string, { title: string; line: string }> = {
   rimworld: {
@@ -20,6 +23,34 @@ const rooms: Record<string, { title: string; line: string }> = {
 };
 
 const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0);
+const gameName = (slug: string) => games.find((game) => game.slug === slug)?.name ?? slug;
+const infoFor = (mod: (typeof allMods)[number]) => (mod.game === "7-days-to-die" ? indexInfo(mod) : hubInfo(mod));
+
+// Every mod, for the search box. Small enough to ship with the page.
+const searchIndex = allMods.map((mod) => {
+  const info = infoFor(mod);
+  return {
+    n: mod.name,
+    g: gameName(mod.game),
+    u: `/${mod.game}/${mod.slug}`,
+    c: info.category,
+    s: info.short,
+    // Words the visitor might type that are not in the name: the slug and the description.
+    k: `${mod.slug} ${mod.description}`.toLowerCase(),
+  };
+});
+
+const recent = recentlyUpdated(6).map((mod) => {
+  const notes = notesFor(mod);
+  const first = notes?.notes[0];
+  return {
+    mod,
+    game: gameName(mod.game),
+    updated: uploadedOn(mod),
+    thumb: previewFor(mod)?.thumb,
+    note: first ? plainText(first) : infoFor(mod).short,
+  };
+});
 ---
 
 <Base
@@ -36,6 +67,19 @@ const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0
           Mods for three games. Downloads sit alongside Steam, Thunderstore, and Nexus.
         </p>
         <p class="entry-total"><span>{total}</span> mods across three catalogs</p>
+        <div class="entry-search" id="entry-search">
+          <label for="entry-search-input" class="sr-only">Search all mods</label>
+          <input
+            id="entry-search-input"
+            type="search"
+            placeholder="Search every game's mods…  ( / )"
+            autocomplete="off"
+            aria-controls="entry-search-results"
+            aria-describedby="entry-search-count"
+          />
+          <p class="sr-only" id="entry-search-count" role="status" aria-live="polite"></p>
+          <ul class="entry-search-results" id="entry-search-results" hidden></ul>
+        </div>
       </div>
       <nav class="entry-ledger" aria-label="Catalogs">
         {
@@ -49,6 +93,33 @@ const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0
       </nav>
     </section>
     <div class="entry-rule" aria-hidden="true"></div>
+    {
+      recent.length > 0 && (
+        <section class="entry-recent" aria-labelledby="entry-recent-title">
+          <div class="entry-recent-head">
+            <h2 id="entry-recent-title">Recently updated</h2>
+            <a href="/feed.xml" class="entry-feed">RSS feed</a>
+          </div>
+          <ol>
+            {recent.map((entry) => (
+              <li>
+                <a href={`/${entry.mod.game}/${entry.mod.slug}#changelog`}>
+                  {entry.thumb ? <img src={entry.thumb} alt="" width="60" height="38" loading="lazy" decoding="async" /> : <span class="entry-recent-tile" aria-hidden="true">{entry.mod.name.charAt(0)}</span>}
+                  <span class="entry-recent-text">
+                    <span class="entry-recent-meta">
+                      {entry.game} · v{entry.mod.version}
+                      {entry.updated && <> · <time datetime={entry.updated.iso}>{entry.updated.label}</time></>}
+                    </span>
+                    <strong>{entry.mod.name}</strong>
+                    <span class="entry-recent-note">{entry.note}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
     <div class="entry-doors">
       {
         games.map((game) => {
@@ -87,4 +158,100 @@ const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0
     </div>
     <p class="entry-close">Each catalog opens the mod page, the download, and the workshop links.</p>
   </div>
+  <script is:inline type="application/json" id="entry-search-index" set:html={JSON.stringify(searchIndex).replace(/</g, "\\u003c")} />
+  <script is:inline>
+    (() => {
+      const input = document.getElementById("entry-search-input");
+      const list = document.getElementById("entry-search-results");
+      const count = document.getElementById("entry-search-count");
+      const data = JSON.parse(document.getElementById("entry-search-index")?.textContent || "[]");
+      if (!input || !list) return;
+      const score = (mod, words) => {
+        let total = 0;
+        const name = mod.n.toLowerCase();
+        for (const word of words) {
+          if (name.startsWith(word)) total += 6;
+          else if (name.includes(word)) total += 4;
+          else if (mod.c.toLowerCase().includes(word) || mod.g.toLowerCase().includes(word)) total += 2;
+          else if (mod.k.includes(word)) total += 1;
+          else return 0;
+        }
+        return total;
+      };
+      let active = -1;
+      const items = () => [...list.querySelectorAll("a")];
+      const highlight = (index) => {
+        const links = items();
+        active = links.length ? (index + links.length) % links.length : -1;
+        links.forEach((link, at) => link.setAttribute("aria-current", at === active ? "true" : "false"));
+        links[active]?.scrollIntoView({ block: "nearest" });
+      };
+      const render = () => {
+        const words = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        active = -1;
+        if (words.length === 0) {
+          list.hidden = true;
+          list.replaceChildren();
+          count.textContent = "";
+          return;
+        }
+        const hits = data
+          .map((mod) => ({ mod, score: score(mod, words) }))
+          .filter((hit) => hit.score > 0)
+          .sort((a, b) => b.score - a.score || a.mod.n.localeCompare(b.mod.n))
+          .slice(0, 8);
+        list.hidden = false;
+        count.textContent = hits.length ? `${hits.length} mods found` : "No mods found";
+        if (hits.length === 0) {
+          const empty = document.createElement("li");
+          empty.className = "entry-search-empty";
+          empty.textContent = "No mods match. Try another word.";
+          list.replaceChildren(empty);
+          return;
+        }
+        list.replaceChildren(
+          ...hits.map(({ mod }) => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = mod.u;
+            const meta = document.createElement("span");
+            meta.className = "entry-search-meta";
+            meta.textContent = `${mod.g} · ${mod.c}`;
+            const name = document.createElement("strong");
+            name.textContent = mod.n;
+            const short = document.createElement("span");
+            short.className = "entry-search-short";
+            short.textContent = mod.s;
+            a.append(meta, name, short);
+            li.append(a);
+            return li;
+          }),
+        );
+      };
+      input.addEventListener("input", render);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          highlight(active + 1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          highlight(active - 1);
+        } else if (event.key === "Enter") {
+          const link = items()[active] ?? items()[0];
+          if (link) {
+            event.preventDefault();
+            location.href = link.href;
+          }
+        } else if (event.key === "Escape") {
+          input.value = "";
+          render();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "/" || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+        event.preventDefault();
+        input.focus();
+      });
+    })();
+  </script>
 </Base>

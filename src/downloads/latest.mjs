@@ -16,6 +16,21 @@ export function compareVersions(a, b) {
   return 0;
 }
 
+// "1.4 MB": the size shown beside a download button.
+export function formatBytes(bytes) {
+  const value = Number(bytes);
+  if (!(value > 0)) return "";
+  if (value < 1024) return `${value} B`;
+  const units = ["KB", "MB", "GB"];
+  let size = value / 1024;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+  return `${size >= 10 ? Math.round(size) : size.toFixed(1)} ${units[unit]}`;
+}
+
 export function zipFor(game, slug, version) {
   const file = `${slug}-${version}.zip`;
   return { file, url: `${DOWNLOAD_ORIGIN}/${game}/${slug}/${version}/${file}` };
@@ -25,8 +40,8 @@ export function zipFor(game, slug, version) {
  * The newest download for each mod: the version baked into the catalog at build
  * time, or a newer one that downloads.json recorded since.
  *
- * @param {{ game: string; slug: string; version: string; uploadedAt?: string }[]} mods
- * @param {Record<string, { version?: string; uploadedAt?: string }> | null} files
+ * @param {{ game: string; slug: string; version: string; uploadedAt?: string; sha256?: string; bytes?: number }[]} mods
+ * @param {Record<string, { version?: string; uploadedAt?: string; sha256?: string; bytes?: number }> | null} files
  */
 export function latestDownloads(mods, files) {
   const latest = {};
@@ -36,11 +51,16 @@ export function latestDownloads(mods, files) {
     const hosted = files?.[key];
     const newer = hosted?.version && compareVersions(hosted.version, mod.version) > 0;
     const version = String(newer ? hosted.version : mod.version);
-    const uploadedAt = newer ? hosted.uploadedAt : mod.uploadedAt;
+    const source = newer ? hosted : mod;
+    const uploadedAt = source.uploadedAt;
+    const sha256 = typeof source.sha256 === "string" && /^[0-9a-f]{64}$/i.test(source.sha256) ? source.sha256.toLowerCase() : null;
+    const bytes = Number(source.bytes) > 0 ? Number(source.bytes) : null;
     latest[key] = {
       version,
       ...zipFor(mod.game, mod.slug, version),
       ...(uploadedAt ? { uploadedAt: String(uploadedAt) } : {}),
+      ...(sha256 ? { sha256 } : {}),
+      ...(bytes ? { bytes, size: formatBytes(bytes) } : {}),
     };
   }
   return latest;

@@ -17,14 +17,33 @@ export function isBot(userAgent) {
   return !userAgent || BOTS.test(userAgent);
 }
 
+// Clicks per mod per UTC day, for the admin History tab.
+const DAILY_SCHEMA = `CREATE TABLE IF NOT EXISTS site_downloads_daily (
+  key TEXT NOT NULL,
+  day TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (key, day)
+)`;
+
+// The store totals (Thunderstore, Nexus, Steam) as they stood at the end of each UTC day.
+// The History tab charts the day-to-day gain.
+const STORE_SCHEMA = `CREATE TABLE IF NOT EXISTS store_daily (
+  key TEXT NOT NULL,
+  day TEXT NOT NULL,
+  thunderstore INTEGER,
+  nexus INTEGER,
+  steam INTEGER,
+  PRIMARY KEY (key, day)
+)`;
+
 /** @type {WeakMap<object, Promise<unknown>>} */
 const ready = new WeakMap();
 
-// The table is created on first use, so a deploy needs no migration step.
+// The tables are created on first use, so a deploy needs no migration step.
 function ensureTable(db) {
   let promise = ready.get(db);
   if (!promise) {
-    promise = db.prepare(SCHEMA).run();
+    promise = db.batch([db.prepare(SCHEMA), db.prepare(DAILY_SCHEMA), db.prepare(STORE_SCHEMA)]);
     promise.catch(() => ready.delete(db));
     ready.set(db, promise);
   }
@@ -46,6 +65,101 @@ export async function recordDownload(db, key, version, now = new Date()) {
     )
     .bind(key, version, now.toISOString())
     .run();
+  await db
+    .prepare(
+      `INSERT INTO site_downloads_daily (key, day, count) VALUES (?1, ?2, 1)
+       ON CONFLICT (key, day) DO UPDATE SET count = count + 1`,
+    )
+    .bind(key, utcDay(now))
+    .run();
+}
+
+/** @param {Date} date */
+export function utcDay(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Saves today's store totals for every mod. The hourly refresh calls this, so the
+ * row for a day ends up holding that day's last reading.
+ *
+ * @param {D1Database} db
+ * @param {Record<string, any>} mods  the snapshot's mods map
+ * @param {Date} [now]
+ */
+export async function recordStoreDay(db, mods, now = new Date()) {
+  await ensureTable(db);
+  const day = utcDay(now);
+  const num = (value) => (typeof value === "number" && Number.isFinite(value) ? value : null);
+  const statements = Object.entries(mods ?? {}).map(([key, stats]) =>
+    db
+      .prepare(
+        `INSERT INTO store_daily (key, day, thunderstore, nexus, steam) VALUES (?1, ?2, ?3, ?4, ?5)
+         ON CONFLICT (key, day) DO UPDATE SET
+           thunderstore = COALESCE(excluded.thunderstore, thunderstore),
+           nexus = COALESCE(excluded.nexus, nexus),
+           steam = COALESCE(excluded.steam, steam)`,
+      )
+      .bind(key, day, num(stats?.thunderstore?.downloads), num(stats?.nexus?.downloads), num(stats?.steam?.subscriptions)),
+  );
+  if (statements.length) await db.batch(statements);
+}
+
+/**
+ * Daily site clicks and daily store gains for the last `days` days, per mod.
+ * A store gain needs the day before, so the query reads one extra day. A day with
+ * no reading for a store has no gain (null), not zero.
+ *
+ * @param {D1Database} db
+ * @param {number} days
+ * @param {Date} [now]
+ */
+export async function downloadHistory(db, days, now = new Date()) {
+  await ensureTable(db);
+  const span = Math.min(Math.max(Math.trunc(days) || 30, 7), 365);
+  const dayList = [];
+  for (let back = span - 1; back >= 0; back -= 1) dayList.push(utcDay(new Date(now.getTime() - back * 86400000)));
+  const first = dayList[0];
+  const before = utcDay(new Date(Date.parse(`${first}T00:00:00Z`) - 86400000));
+  const [clicks, stores] = await Promise.all([
+    db.prepare("SELECT key, day, count FROM site_downloads_daily WHERE day >= ?1").bind(first).all(),
+    db.prepare("SELECT key, day, thunderstore, nexus, steam FROM store_daily WHERE day >= ?1 ORDER BY day").bind(before).all(),
+  ]);
+  return historySeries(dayList, clicks.results ?? [], stores.results ?? []);
+}
+
+/**
+ * @param {string[]} dayList
+ * @param {{ key: string, day: string, count: number }[]} clickRows
+ * @param {{ key: string, day: string, thunderstore: number | null, nexus: number | null, steam: number | null }[]} storeRows
+ */
+export function historySeries(dayList, clickRows, storeRows) {
+  const index = new Map(dayList.map((day, at) => [day, at]));
+  /** @type {Record<string, { site: number[], store: (number | null)[] }>} */
+  const mods = {};
+  const entry = (key) => (mods[key] ??= { site: dayList.map(() => 0), store: dayList.map(() => null) });
+  for (const row of clickRows) {
+    const at = index.get(String(row.day));
+    if (at !== undefined) entry(String(row.key)).site[at] += Number(row.count ?? 0);
+  }
+  /** @type {Map<string, Record<string, number | null>>} */
+  const last = new Map();
+  for (const row of storeRows) {
+    const key = String(row.key);
+    const previous = last.get(key);
+    const at = index.get(String(row.day));
+    if (previous && at !== undefined) {
+      let gain = null;
+      for (const store of ["thunderstore", "nexus"]) {
+        const now = row[store];
+        const then = previous[store];
+        if (typeof now === "number" && typeof then === "number") gain = (gain ?? 0) + Math.max(0, now - then);
+      }
+      entry(key).store[at] = gain;
+    }
+    last.set(key, { thunderstore: row.thunderstore ?? previous?.thunderstore ?? null, nexus: row.nexus ?? previous?.nexus ?? null });
+  }
+  return { days: dayList, mods };
 }
 
 /**
