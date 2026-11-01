@@ -252,6 +252,20 @@ export async function attachOlderDownloads(mods, fetchImpl = globalThis.fetch) {
   );
 }
 
+// The shipped config file of the 7 Days mods listed in sevendays-configs.json, for the
+// config builder on their pages. Installed at Mods/<folder>/<file>.
+export function attachConfig(mod, modDir, configs) {
+  const entry = configs?.[mod.slug];
+  if (mod.game !== "7-days-to-die" || !entry) return mod;
+  const file = path.join(modDir, entry.file);
+  if (!existsSync(file)) {
+    console.warn(`${mod.slug}: ${entry.file} is missing, so its page has no config builder`);
+    return mod;
+  }
+  const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+  return { ...mod, config: { ...entry, name: path.basename(entry.file), folder: path.basename(modDir), text } };
+}
+
 export async function hostedFiles(fetchImpl = globalThis.fetch) {
   const response = await fetchImpl(manifestUrl);
   if (!response.ok) {
@@ -265,6 +279,7 @@ export async function hostedFiles(fetchImpl = globalThis.fetch) {
 }
 
 async function main() {
+  const sevendaysConfigs = JSON.parse(readFileSync(path.join(siteRoot, "src", "data", "sevendays-configs.json"), "utf8"));
   const catalogDir = path.join(siteRoot, "public", "catalog");
   const previewsDir = path.join(siteRoot, "previews");
   rmSync(catalogDir, { recursive: true, force: true });
@@ -305,7 +320,7 @@ async function main() {
         const thumb = (await writeThumb(found.source, thumbFile, square)) ? `/catalog/${mod.game}/${mod.slug}/thumb.webp` : undefined;
         preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}) };
       }
-      entries.push({ mod: { ...mod, images, ...(preview ? { preview } : {}) }, dir: modDir });
+      entries.push({ mod: attachConfig({ ...mod, images, ...(preview ? { preview } : {}) }, modDir, sevendaysConfigs), dir: modDir });
     }
     if (entries.length) mods.push(...releaseNotesReader(root, entries[0].mod.game)(entries));
   }

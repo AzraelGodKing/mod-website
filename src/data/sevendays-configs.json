@@ -1,0 +1,36 @@
+{
+  "spawn-tuner": {
+    "file": "mod/spawns.txt",
+    "kind": "settings",
+    "defaultable": true,
+    "intro": "Unticked settings stay at the world's own value. Percent: 100% is vanilla, 200% is double, 0% turns it off.",
+    "after": "Put it in the mod folder, then type  spawns reload  and  spawns refresh  in the server console.",
+    "options": {
+      "*Respawn": ["default", "veryslow", "slow", "normal", "fast", "veryfast"]
+    },
+    "hints": {
+      "*Density": "none, default, or a number (the game's range is 1 to 5)",
+      "Ramp.NightDensity": "e.g. +1 every 7 days max 8"
+    }
+  },
+  "blood-moon-sound": {
+    "file": "mod/settings.txt",
+    "kind": "settings",
+    "intro": "Your own sound files still go in the mod folder next to this file.",
+    "after": "Put it in the mod folder, then type  bmsound reload  or restart the game.",
+    "options": {
+      "PlayAt": ["horde", "warning", "both"]
+    },
+    "hints": {}
+  },
+  "remove-any-entity": {
+    "file": "mod/entities.txt",
+    "kind": "entities",
+    "intro": "Pick what stops spawning, what stops only in some biomes, and what gets swapped for something else. A name covers all its versions (feral, radiated, charged, infernal).",
+    "after": "Put it in the mod folder on the server, then type  rae reload  in the server console.",
+    "options": {},
+    "hints": {
+      "Replacement": "Spawned instead when removals leave a spawn spot with nothing at all"
+    }
+  }
+}
