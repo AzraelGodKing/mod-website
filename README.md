@@ -15,4 +15,6 @@ The report form is served by the Worker, so use `npm run dev:worker` to try it. 
 
 New mod versions are posted to Discord after each deploy when the deploy agent has `DISCORD_WEBHOOK_URL` set (in `.buildkite/deploy.env`). Create the webhook in Discord under the channel's Settings → Integrations → Webhooks.
 
+Known issues on mod pages come from Linear: open issues with the mod's label in Todo or In Progress. Set a read-access Linear key as the `LINEAR_READ_KEY` Worker secret (`npx wrangler secret put LINEAR_READ_KEY`); without it the Worker tries `LINEAR_API_KEY`, which only works if that key can read.
+
 Mod pages show changelogs read from the mod repos at build time; `scripts/release-notes.mjs` lists where each game's notes come from.

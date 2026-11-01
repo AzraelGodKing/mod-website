@@ -62,6 +62,8 @@ export interface ModEntry {
   requires?: string[];
   sha256?: string;
   bytes?: number;
+  // Older changelog versions whose zip is still hosted, found at build time.
+  olderDownloads?: string[];
 }
 
 export const mods = catalog.mods as ModEntry[];
@@ -104,6 +106,12 @@ export function r2Download(mod: ModEntry): { file: string; url: string } | null 
   if (isNotReady(mod)) return null;
   const { file } = zipFor(mod.game, mod.slug, mod.version);
   return { file, url: `/download/${mod.game}/${mod.slug}` };
+}
+
+// A pinned older version. The Worker checks the zip exists before redirecting.
+export function versionDownload(mod: ModEntry, version: string): string | null {
+  if (isNotReady(mod) || !mod.olderDownloads?.includes(version)) return null;
+  return `/download/${mod.game}/${mod.slug}/${version}`;
 }
 
 // The zip's SHA-256 and size, from downloads.json, when the build's version is the hosted one.

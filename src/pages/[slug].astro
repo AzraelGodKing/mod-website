@@ -84,6 +84,7 @@ const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct d
           rows={rows}
           categories={sevendays ? sevendaysCategories : (hubIndex[game.slug]?.categories ?? [])}
           featured={!sevendays}
+          bundle={sevendays}
         />
       </div>
     ) : (

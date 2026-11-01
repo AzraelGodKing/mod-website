@@ -94,3 +94,14 @@ test("the latest download carries the zip's checksum and size", async () => {
   assert.equal(formatBytes(1536000), "1.5 MB");
   assert.equal(formatBytes(0), "");
 });
+
+test("a download path can pin an older version", async () => {
+  const { parseDownloadPath } = await import("../src/downloads/latest.mjs");
+  assert.deepEqual(parseDownloadPath("/download/rimworld/strata"), { key: "rimworld/strata", version: null });
+  assert.deepEqual(parseDownloadPath("/download/rimworld/strata/"), { key: "rimworld/strata", version: null });
+  assert.deepEqual(parseDownloadPath("/download/rimworld/strata/3.7.0/"), { key: "rimworld/strata", version: "3.7.0" });
+  assert.equal(parseDownloadPath("/download/rimworld/strata/latest"), null);
+  assert.equal(parseDownloadPath("/download/rimworld"), null);
+  assert.equal(parseDownloadPath("/download/rimworld/strata/1.0/extra"), null);
+  assert.equal(parseDownloadPath("/download/../strata/1.0"), null);
+});

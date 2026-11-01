@@ -128,3 +128,29 @@ test("a mod.json that is not a catalog entry is skipped", () => {
   assert.equal(parseCatalogEntry('<?xml version="1.0"?><xml><Name value="AzraelBait"/></xml>'), null);
   assert.equal(parseCatalogEntry('{"name":"no slug"}'), null);
 });
+
+test("older changelog versions are linked only when their zip is hosted", async () => {
+  const { attachOlderDownloads } = await import("../scripts/collect-mods.mjs");
+  const hosted = new Set(["strata-3.7.0.zip"]);
+  const fetchImpl = async (url) => ({ ok: hosted.has(url.split("/").pop()) });
+  const [mod, notReady] = await attachOlderDownloads(
+    [
+      { game: "rimworld", slug: "strata", version: "3.8.0", changelog: [{ version: "3.8.0" }, { version: "3.7.0" }, { version: "3.6.0" }] },
+      { game: "rimworld", slug: "azrael", version: "1.2.0", changelog: [{ version: "1.1.0" }] },
+    ],
+    fetchImpl,
+  );
+  assert.deepEqual(mod.olderDownloads, ["3.7.0"]);
+  assert.equal(notReady.olderDownloads, undefined);
+});
+
+test("a failed bucket check leaves the older links off", async () => {
+  const { attachOlderDownloads } = await import("../scripts/collect-mods.mjs");
+  const [mod] = await attachOlderDownloads(
+    [{ game: "rimworld", slug: "strata", version: "3.8.0", changelog: [{ version: "3.7.0" }] }],
+    async () => {
+      throw new Error("offline");
+    },
+  );
+  assert.equal(mod.olderDownloads, undefined);
+});

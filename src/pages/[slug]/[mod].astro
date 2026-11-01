@@ -4,7 +4,7 @@ import ReportForm from "../../components/ReportForm.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { hubInfo } from "../../data/hub-index";
-import { fileFacts, gameVersionLabel, isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, type ModEntry } from "../../data/mods";
+import { fileFacts, gameVersionLabel, isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, versionDownload, type ModEntry } from "../../data/mods";
 import { renderInline } from "../../../scripts/release-notes.mjs";
 import { statRows } from "../../data/stats";
 import { commandsFor } from "../../data/sevendays-commands";
@@ -313,6 +313,11 @@ const storeLinks = [
                           <h3>
                             <span class="zd-change-version">v{entry.version}</span>
                             {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
+                            {versionDownload(mod, entry.version) && (
+                              <a class="zd-old-dl" href={versionDownload(mod, entry.version)} rel="nofollow">
+                                Download v{entry.version}
+                              </a>
+                            )}
                           </h3>
                           <ul class="rw-notes">
                             {entry.notes.map((note) => (
