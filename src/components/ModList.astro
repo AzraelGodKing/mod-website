@@ -11,9 +11,11 @@ interface Props {
   categories: string[];
   // Rows arrive in featured order, which becomes the default sort.
   featured?: boolean;
+  // 7 Days: tick mods and download one zip for the server and one for players.
+  bundle?: boolean;
 }
 
-const { game, gameName, rows, categories, featured = false } = Astro.props;
+const { game, gameName, rows, categories, featured = false, bundle = false } = Astro.props;
 const installs = rows.some((row) => row.installs);
 const defaultSort = featured ? "featured" : "name";
 const sortOptions = [
@@ -61,7 +63,10 @@ const sortOptions = [
   <p class="zd-count" id="zd-count" aria-live="polite">
     Showing all {rows.length} mods
   </p>
-  <div class:list={["zd-list", !installs && "no-installs"]} role="table" aria-label={`${gameName} mods`}>
+  {bundle && (
+    <p class="zd-bundle-hint">Running a server? Tick the mods you want, then get one zip for the server and one for players.</p>
+  )}
+  <div class:list={["zd-list", !installs && "no-installs", bundle && "has-bundle"]} role="table" aria-label={`${gameName} mods`}>
     <div class="zd-head" role="row">
       <button type="button" role="columnheader" data-sort="name">Mod</button>
       <button type="button" role="columnheader" data-sort="category">Type</button>
@@ -123,6 +128,12 @@ const sortOptions = [
             <span data-dl-count>—</span>
           </span>
           <span class="zd-act" role="cell">
+            {bundle && direct && (
+              <label class="zd-pick" title="Add to bundle">
+                <input type="checkbox" data-pick={mod.slug} />
+                <span class="sr-only">Add {mod.name} to the bundle</span>
+              </label>
+            )}
             {direct ? (
               <a class="zd-get" href={direct.url} aria-label={`Download ${mod.name}`}>Download</a>
             ) : (
@@ -136,7 +147,49 @@ const sortOptions = [
   <p class="zd-empty" id="zd-empty" hidden>
     No mods match. <button type="button" id="zd-reset">Clear search and filters</button>
   </p>
+  {bundle && (
+    <div class="zd-bundle" id="zd-bundle" data-game={game} hidden>
+      <p id="zd-bundle-count" aria-live="polite"></p>
+      <div class="zd-bundle-actions">
+        <a class="zd-get" id="zd-bundle-server" rel="nofollow">Server zip</a>
+        <a class="zd-get" id="zd-bundle-players" rel="nofollow">Player zip</a>
+        <button type="button" id="zd-bundle-clear">Clear</button>
+      </div>
+    </div>
+  )}
 </div>
+{
+  bundle && (
+    <script is:inline>
+      (() => {
+        const bar = document.querySelector("#zd-bundle");
+        if (!bar) return;
+        const boxes = [...document.querySelectorAll("[data-pick]")];
+        const label = bar.querySelector("#zd-bundle-count");
+        const links = { server: bar.querySelector("#zd-bundle-server"), players: bar.querySelector("#zd-bundle-players") };
+        // Same split as the Worker: client-only mods skip the server zip, server-only mods skip the player zip.
+        const needs = { server: (side) => side !== "client", players: (side) => side !== "server" };
+        const update = () => {
+          const picked = boxes.filter((box) => box.checked);
+          bar.hidden = picked.length === 0;
+          label.textContent = `${picked.length} ${picked.length === 1 ? "mod" : "mods"} picked`;
+          for (const [side, link] of Object.entries(links)) {
+            const slugs = picked.filter((box) => needs[side](box.closest(".zd-row")?.dataset.side ?? "")).map((box) => box.dataset.pick);
+            link.hidden = slugs.length === 0;
+            link.href = `/download/${bar.dataset.game}/bundle?side=${side}&mods=${slugs.join(",")}`;
+            link.textContent = `${side === "server" ? "Server" : "Player"} zip (${slugs.length})`;
+          }
+        };
+        for (const box of boxes) box.addEventListener("change", update);
+        bar.querySelector("#zd-bundle-clear").addEventListener("click", () => {
+          for (const box of boxes) box.checked = false;
+          update();
+        });
+        update();
+      })();
+    </script>
+  )
+}
 <script is:inline>
   (() => {
     const root = document.querySelector("#zd-root");

@@ -31,6 +31,20 @@ export function formatBytes(bytes) {
   return `${size >= 10 ? Math.round(size) : size.toFixed(1)} ${units[unit]}`;
 }
 
+/**
+ * "/download/rimworld/strata/3.7.0/" is mod "rimworld/strata" pinned to 3.7.0.
+ * Without a version segment, version is null and the newest zip is served.
+ * @param {string} pathname
+ * @returns {{ key: string; version: string | null } | null}
+ */
+export function parseDownloadPath(pathname) {
+  const parts = pathname.replace(/^\/download\//, "").replace(/\/+$/, "").split("/");
+  if (parts.length < 2 || parts.length > 3 || parts.some((part) => !/^[a-z0-9][a-z0-9-]*$|^\d+(\.\d+){0,3}$/i.test(part))) return null;
+  const key = `${parts[0]}/${parts[1]}`;
+  if (parts.length === 2) return { key, version: null };
+  return /^\d+(\.\d+){0,3}$/.test(parts[2]) ? { key, version: parts[2] } : null;
+}
+
 export function zipFor(game, slug, version) {
   const file = `${slug}-${version}.zip`;
   return { file, url: `${DOWNLOAD_ORIGIN}/${game}/${slug}/${version}/${file}` };

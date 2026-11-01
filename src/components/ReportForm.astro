@@ -13,6 +13,11 @@ const { game, mod, name, gameName } = Astro.props;
 
 <section class="report">
   <h2>Report a problem</h2>
+  <div class="known-issues" id="known-issues" hidden>
+    <h3>Known issues</h3>
+    <p class="known-note">Already on the list. No need to report these again.</p>
+    <ul></ul>
+  </div>
   <p>This report is for {name} on {gameName}.</p>
   <form id="report-form" data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
     <label>
@@ -30,6 +35,32 @@ const { game, mod, name, gameName } = Astro.props;
 </section>
 
 <script is:inline>
+  // Open issues for this mod, from Linear through the Worker. Hidden when there are none.
+  (async () => {
+    const box = document.querySelector("#known-issues");
+    const source = document.querySelector("#report-form");
+    if (!box || !source) return;
+    try {
+      const response = await fetch(`/api/issues?mod=${encodeURIComponent(`${source.dataset.game}/${source.dataset.mod}`)}`);
+      if (!response.ok) return;
+      const { issues } = await response.json();
+      if (!Array.isArray(issues) || issues.length === 0) return;
+      const list = box.querySelector("ul");
+      for (const issue of issues) {
+        const item = document.createElement("li");
+        const title = document.createElement("span");
+        title.textContent = issue.title;
+        const status = document.createElement("span");
+        status.className = issue.started ? "known-status known-started" : "known-status";
+        status.textContent = issue.status;
+        item.append(title, status);
+        list.append(item);
+      }
+      box.hidden = false;
+    } catch {
+      // The form still works without the list.
+    }
+  })();
   const form = document.querySelector("#report-form");
   const status = document.querySelector("#report-status");
   window.onAzraelTurnstile = () => {

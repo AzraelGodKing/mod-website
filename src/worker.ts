@@ -2,6 +2,7 @@ import catalogFile from "./data/catalog.json";
 import labels from "./data/report-labels.json";
 import { games } from "./data/games";
 import { handleReport } from "./report/handle.mjs";
+import { handleIssues } from "./report/issues.mjs";
 import { adminAuthorized, passwordMatches } from "./admin/auth";
 import {
   activeSessions,
@@ -20,7 +21,10 @@ import {
   verifyPasskey,
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
-import { NOT_READY, fetchManifestFiles, latestDownloads, releaseStatus } from "./downloads/latest.mjs";
+import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
+import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
+import { indexInfo, installLabels } from "./data/sevendays-index";
+import type { ModEntry } from "./data/mods";
 import { downloadHistory, isBot, recordDownload, recordStoreDay, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
@@ -38,7 +42,8 @@ interface CatalogMod {
 // Without it, downloads still redirect and /admin accepts only the password as a Bearer token.
 // ADMIN_ORIGIN is for local testing only: wrangler dev rewrites request URLs to the production
 // host, so set it to http://localhost:8787 in .dev.vars to register passkeys locally.
-type SiteEnv = Env & { NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; ADMIN_ORIGIN?: string; DOWNLOADS_DB?: D1Database };
+// LINEAR_READ_KEY lists the open issues on mod pages; it falls back to LINEAR_API_KEY.
+type SiteEnv = Env & { LINEAR_READ_KEY?: string; LINEAR_API_KEY?: string; NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; ADMIN_ORIGIN?: string; DOWNLOADS_DB?: D1Database };
 
 type RefreshSource = "scheduled" | "manual" | "first-request";
 
@@ -164,20 +169,115 @@ async function handleDownloads(request: Request): Promise<Response> {
   });
 }
 
+// An older zip is checked with a HEAD first, so a version that was never hosted
+// gets a page that says so instead of the bucket's bare 404.
+async function olderZip(game: string, slug: string, version: string): Promise<string | null> {
+  const { url } = zipFor(game, slug, version);
+  const response = await fetch(url, { method: "HEAD", cf: { cacheTtl: 3600, cacheEverything: true } }).catch(() => null);
+  return response?.ok ? url : null;
+}
+
+function missingVersion(request: Request, key: string, version: string): Response {
+  const page = `/${key}/`;
+  const body = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Version not hosted</title>
+<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem;line-height:1.5">
+<h1>v${version} is not hosted</h1><p>This site only keeps the zips it uploaded itself. <a href="${page}">Go back to the mod page</a> for the newest version.</p></body>`;
+  return new Response(request.method === "HEAD" ? null : body, {
+    status: 404,
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
+  });
+}
+
+const SEVENDAYS = "7-days-to-die";
+const sevendaysMods = catalogMods.filter((mod) => mod.game === SEVENDAYS);
+const sevendaysSlugs = new Set(sevendaysMods.map((mod) => mod.slug));
+const BUNDLE_MAX_BYTES = 60_000_000;
+
+// /download/7-days-to-die/bundle?side=server&mods=a,b,c: one zip with every picked
+// mod that side needs, plus a README that says where it goes.
+async function handleBundle(request: Request, env: SiteEnv, ctx: ExecutionContext, url: URL): Promise<Response> {
+  if (request.method !== "GET") return new Response("Method not allowed", { status: 405, headers: { allow: "GET" } });
+  const side = url.searchParams.get("side") === "players" ? "players" : "server";
+  const picked = pickedSlugs(url.searchParams.get("mods"), sevendaysSlugs);
+  if (picked.length === 0) return new Response("Pick at least one mod.", { status: 400 });
+  const latest = await currentDownloads();
+  const rows = picked.map((slug) => {
+    const mod = sevendaysMods.find((entry) => entry.slug === slug) as unknown as ModEntry;
+    return { mod, installs: indexInfo(mod).installs, latest: latest[`${SEVENDAYS}/${slug}`] };
+  });
+  const included = rows.filter((row) => row.latest && belongsOn(row.installs, side));
+  const leftOut = rows.filter((row) => !included.includes(row)).map((row) => row.mod.name);
+  if (included.length === 0) {
+    return new Response(`None of the picked mods go on the ${side === "server" ? "server" : "players' games"}.`, { status: 400 });
+  }
+  const zips: Uint8Array[] = [];
+  let total = 0;
+  for (const row of included) {
+    const response = await fetch(row.latest!.url, { cf: { cacheTtl: 3600, cacheEverything: true } });
+    if (!response.ok) {
+      console.warn(`[bundle] ${row.latest!.url} answered ${response.status}`);
+      return new Response(`${row.mod.name} could not be fetched. Try again in a minute.`, { status: 502 });
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    total += bytes.length;
+    if (total > BUNDLE_MAX_BYTES) return new Response("That bundle is too large. Pick fewer mods.", { status: 413 });
+    zips.push(bytes);
+  }
+  const readme = bundleReadme(
+    side,
+    included.map((row) => ({ name: row.mod.name, version: row.latest!.version, installs: installLabels[row.installs] })),
+    leftOut,
+  );
+  let body: Uint8Array;
+  try {
+    body = mergeZips(zips, [{ name: "README-azraels-mods.txt", text: readme }]);
+  } catch (error) {
+    console.warn(`[bundle] merge failed: ${error}`);
+    return new Response("The bundle could not be built. Download the mods one at a time for now.", { status: 500 });
+  }
+  const db = env.DOWNLOADS_DB;
+  if (db && !isBot(request.headers.get("user-agent"))) {
+    ctx.waitUntil(
+      Promise.all(included.map((row) => recordDownload(db, `${SEVENDAYS}/${row.mod.slug}`, row.latest!.version))).catch((error) =>
+        console.warn(`[downloads] bundle count failed: ${error}`),
+      ),
+    );
+  }
+  return new Response(body, {
+    headers: {
+      "content-type": "application/zip",
+      "content-disposition": `attachment; filename="azraels-7d2d-${side}-bundle.zip"`,
+      "content-length": String(body.length),
+      "cache-control": "no-store",
+    },
+  });
+}
+
 async function handleDownloadRedirect(request: Request, env: SiteEnv, ctx: ExecutionContext, pathname: string): Promise<Response> {
-  const key = pathname.replace(/^\/download\//, "").replace(/\/+$/, "");
+  const parsed = parseDownloadPath(pathname);
+  if (!parsed) return new Response("Not found", { status: 404 });
+  const { key, version: pinned } = parsed;
   if (NOT_READY.has(key)) return Response.redirect(new URL("/not-ready", request.url).href, 302);
   const latest = (await currentDownloads())[key];
   if (!latest) return new Response("Not found", { status: 404 });
+  let location = latest.url;
+  let version = latest.version;
+  if (pinned && compareVersions(pinned, latest.version) !== 0) {
+    const [game, slug] = key.split("/");
+    const older = compareVersions(pinned, latest.version) < 0 ? await olderZip(game, slug, pinned) : null;
+    if (!older) return missingVersion(request, key, pinned);
+    location = older;
+    version = pinned;
+  }
   const db = env.DOWNLOADS_DB;
   if (db && request.method === "GET" && !isBot(request.headers.get("user-agent"))) {
     // The redirect does not wait for the write.
-    ctx.waitUntil(recordDownload(db, key, latest.version).catch((error) => console.warn(`[downloads] count failed for ${key}: ${error}`)));
+    ctx.waitUntil(recordDownload(db, key, version).catch((error) => console.warn(`[downloads] count failed for ${key}: ${error}`)));
   }
   // no-store: a cached redirect would skip the Worker and the click would not be counted.
   return new Response(null, {
     status: 302,
-    headers: { location: latest.url, "cache-control": "no-store" },
+    headers: { location, "cache-control": "no-store" },
   });
 }
 
@@ -345,11 +445,17 @@ export default {
     if (url.pathname === "/api/report") {
       return handleReport(request, env, catalog);
     }
+    if (url.pathname === "/api/issues") {
+      return handleIssues(request, env, catalog.mods);
+    }
     if (url.pathname === "/api/stats") {
       return handleStats(request, env);
     }
     if (url.pathname === "/api/downloads") {
       return handleDownloads(request);
+    }
+    if (/^\/download\/7-days-to-die\/bundle\/?$/.test(url.pathname)) {
+      return handleBundle(request, env, ctx, url);
     }
     if (url.pathname.startsWith("/download/")) {
       return handleDownloadRedirect(request, env, ctx, url.pathname);

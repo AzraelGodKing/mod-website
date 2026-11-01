@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { compareVersions } from "../src/downloads/latest.mjs";
+import { NOT_READY, compareVersions } from "../src/downloads/latest.mjs";
 import { releaseNotesReader } from "./release-notes.mjs";
 
 export { compareVersions };
@@ -229,6 +229,29 @@ export async function confirmNewerUploads(mods, files, fetchImpl = globalThis.fe
   return confirmed;
 }
 
+// Changelog versions older than the current one whose zip is still in the bucket.
+// Their changelog entries get a Download link. A failed check just leaves the link off.
+export async function attachOlderDownloads(mods, fetchImpl = globalThis.fetch) {
+  return Promise.all(
+    mods.map(async (mod) => {
+      if (NOT_READY.has(`${mod.game}/${mod.slug}`)) return mod;
+      const older = [...new Set((mod.changelog ?? []).map((entry) => String(entry.version)))].filter(
+        (version) => /^\d+(\.\d+){0,3}$/.test(version) && compareVersions(version, mod.version) < 0,
+      );
+      if (older.length === 0) return mod;
+      const found = await Promise.all(
+        older.map(async (version) => {
+          const url = new URL(`${mod.game}/${mod.slug}/${version}/${mod.slug}-${version}.zip`, manifestUrl).href;
+          const response = await fetchImpl(url, { method: "HEAD" }).catch(() => null);
+          return response?.ok ? version : null;
+        }),
+      );
+      const olderDownloads = found.filter(Boolean);
+      return olderDownloads.length ? { ...mod, olderDownloads } : mod;
+    }),
+  );
+}
+
 export async function hostedFiles(fetchImpl = globalThis.fetch) {
   const response = await fetchImpl(manifestUrl);
   if (!response.ok) {
@@ -299,7 +322,7 @@ async function main() {
   };
   const guided = attachGuides(mods, guides).map(normalizeRimworldBadges);
   const files = await confirmNewerUploads(guided, await hostedFiles());
-  const hosted = applyHostedVersions(guided, files);
+  const hosted = await attachOlderDownloads(applyHostedVersions(guided, files));
   for (const mod of hosted) {
     const previous = mods.find((entry) => entry.game === mod.game && entry.slug === mod.slug);
     if (previous && previous.version !== mod.version) {
