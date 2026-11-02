@@ -90,6 +90,11 @@ const known: Record<string, IndexInfo> = {
     installs: "client",
     short: "Shows your vehicle speed on the HUD in MPH or KM/H.",
   },
+  "stained-glass": {
+    category: "Crafting",
+    installs: "server",
+    short: "Craft the church window glass, and upgrade it to bulletproof instead of wood.",
+  },
   "storage-backpack": {
     category: "Gameplay",
     installs: "optional",

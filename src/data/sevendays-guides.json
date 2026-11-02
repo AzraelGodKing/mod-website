@@ -177,6 +177,50 @@
     "avoid": [],
     "compatNotes": []
   },
+  "stained-glass": {
+    "overview": [
+      "The stained glass panels from churches and other POIs get their own Stained Glass entry at the forge. In vanilla they are hidden as two of the eleven Glass Block shapes.",
+      "Hitting one with a hammer no longer turns it into a wood plug. It upgrades to Bulletproof Stained Glass, which keeps the look."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "craft",
+        "label": "Crafting",
+        "features": [
+          {
+            "title": "At the forge",
+            "body": "Pick the plate or the centered plate from the shape menu (hold Reload), like other variant blocks. Same cost as the vanilla Glass Block: 12 glass, 5 lead, 5 clay. With the forge-without-smelting sandbox option it is 3 crushed sand, 5 scrap lead, 1 clay."
+          },
+          {
+            "title": "Bulletproof plates",
+            "body": "The bulletproof stained plates are also in the forge's Bulletproof Glass Block shape menu, so you can craft them directly."
+          }
+        ]
+      },
+      {
+        "id": "upgrade",
+        "label": "Upgrading",
+        "features": [
+          {
+            "title": "Hammer upgrade",
+            "body": "Stained glass upgrades to Bulletproof Stained Glass for one Bulletproof Glass Block. It has the vanilla bulletproof glass HP and material and is repaired the same way."
+          },
+          {
+            "title": "Other glass",
+            "body": "Only the stained panels change. Plain business and industrial glass still upgrade to wood as in vanilla."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only (XML). Players install nothing and can leave EasyAntiCheat on.",
+      "Change the costs in Config/recipes.xml and the upgrade item in Config/blocks.xml."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
   "storage-backpack": {
     "overview": [
       "A craftable Storage Backpack that you set down and fill like a 48-slot chest. Break it up close and it goes back into your inventory. Place any Storage Backpack again and everything is back inside.",
