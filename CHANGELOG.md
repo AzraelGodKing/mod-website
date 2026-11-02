@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Craftable Stained Glass is on the 7 Days to Die list (Crafting, Server only) with a preview image and a guide. It has no Linear label yet, so its reports carry the game and website labels. Its page appears once the mod is on 7d2d_mods `main`.
+- Storage Backpack is on the 7 Days to Die list (Gameplay, Server, client optional) with a preview image, a guide, its `sbp` console commands, and a Works with note for Drone Loot Filter. It has no Linear label yet, so its reports carry the game and website labels. Its page appears once the mod is on 7d2d_mods `main`.
 - Every mod has its own RSS feed, `/<game>/<mod>/feed.xml`, with one item per changelog version. Mod pages link it beside "What's new" and in the page head.
 - 7 Days config builder: the Spawn Tuner, Blood Moon Sound and Remove Any Entity pages have a form that writes `spawns.txt`, `settings.txt` or `entities.txt` to download. The build reads the shipped file from the 7d2d_mods repo (`src/data/sevendays-configs.json` lists which file and its choices), so new settings show up on their own; every comment in the file is kept and only the chosen lines change. Remove Any Entity rows can be removed, removed in some biomes, or swapped for another creature.
 - RimWorld mod list checker at `/rimworld/check`: paste or open `ModsConfig.xml` (or one package id per line) to check Azrael's mods for missing requirements, mods they don't work with, and load order. The rules come from each mod's About.xml (`modDependencies`, `incompatibleWith`, `loadAfter`, `loadBefore`), read at build time into `loadRules`. It runs in the browser; nothing is sent.

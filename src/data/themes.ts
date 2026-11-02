@@ -232,6 +232,22 @@ const looks: Record<string, ModLook> = {
     accent: "#c4a574",
     accentInk: "#1a140c",
   },
+  "stained-glass": {
+    mark: "Church glass, kept",
+    wash: "#1a1424",
+    heroInk: "#f4eefa",
+    heroMuted: "#c8bcd8",
+    accent: "#9b7fd4",
+    accentInk: "#120c1c",
+  },
+  "storage-backpack": {
+    mark: "Pack it, carry it, unpack it",
+    wash: "#1f1a14",
+    heroInk: "#f5efe4",
+    heroMuted: "#cdbfa6",
+    accent: "#b98a52",
+    accentInk: "#1a120a",
+  },
   "quest-disconnect-fix": {
     mark: "Logouts finish",
     wash: "#1a1e18",
