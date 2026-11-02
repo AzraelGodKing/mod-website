@@ -1,6 +1,6 @@
 ---
 import type { ModConfig } from "../data/mods";
-import { BIOMES, optionsFor, parseEntities, parseSettings } from "../data/config-builder.mjs";
+import { BIOMES, optionsFor, parseEntities, parsePlaceholders, parseReminders, parseSettings, settingSections } from "../data/config-builder.mjs";
 
 interface Props {
   config: ModConfig;
@@ -8,17 +8,51 @@ interface Props {
 }
 
 const { config, name } = Astro.props;
+const id = config.id || "config";
 const hintFor = (key: string) => {
   const hints = config.hints ?? {};
   if (hints[key]) return hints[key];
   const pattern = Object.keys(hints).find((entry) => entry.startsWith("*") && key.endsWith(entry.slice(1)));
   return pattern ? hints[pattern] : "";
 };
-const settings = parseSettings(config.text).map((field) => ({
-  ...field,
-  options: optionsFor(config.options ?? {}, field.key, field.value),
-  hint: hintFor(field.key),
-}));
+const sectionOf = config.sections ? settingSections(config.text) : new Map<number, string>();
+const parsed = config.kind === "webhook" ? [] : parseSettings(config.text);
+const webhookField = config.webhook ? parsed.find((field) => field.key === config.webhook && !field.commented) : undefined;
+const webhookValue = config.kind === "webhook" ? "" : (webhookField?.value ?? "");
+const settings = parsed
+  .filter((field) => field.key !== config.webhook && field.key !== config.reminders)
+  .map((field) => ({
+    ...field,
+    section: sectionOf.get(field.line) ?? "",
+    options: optionsFor(config.options ?? {}, field.key, field.value),
+    hint: hintFor(field.key),
+  }));
+// Settings in file order, one block per "---- NAME ----" header (a single block without sections).
+// The reminder list sits where the file's first reminder line is.
+type Setting = (typeof settings)[number];
+const blocks: { title: string; fields: Setting[]; reminders: boolean }[] = [];
+const blockFor = (title: string) => {
+  const last = blocks[blocks.length - 1];
+  if (last && last.title === title) return last;
+  const block = { title, fields: [] as Setting[], reminders: false };
+  blocks.push(block);
+  return block;
+};
+const byLine = new Map(settings.map((field) => [field.line, field]));
+let reminderPlaced = false;
+for (const field of parsed) {
+  const section = sectionOf.get(field.line) ?? "";
+  const setting = byLine.get(field.line);
+  if (setting) blockFor(section).fields.push(setting);
+  else if (field.key === config.reminders && !field.commented && !reminderPlaced) {
+    blockFor(section).reminders = true;
+    reminderPlaced = true;
+  }
+}
+if (config.reminders && !reminderPlaced) blockFor("Reminders").reminders = true;
+if (!blocks.length) blocks.push({ title: "", fields: [], reminders: false });
+const reminders = config.reminders ? parseReminders(config.text, config.reminders) : [];
+const placeholders = config.placeholders ? parsePlaceholders(config.text) : [];
 // Long comment blocks fold behind their first sentence, so the grid stays readable.
 const helpFor = (field: { hint: string; help: string[] }) => {
   const text = (field.hint || field.help.join(" ")).replace(/-{3,}[^-]*-{3,}/g, "").replace(/\s+/g, " ").trim();
@@ -29,32 +63,74 @@ const helpFor = (field: { hint: string; help: string[] }) => {
 };
 const entities = config.kind === "entities" ? parseEntities(config.text) : [];
 const groups = [...new Set(entities.map((entry) => entry.group))];
-const label = (key: string) => key.replace(/^Ramp\./, "Ramp: ").replace(/([a-z])([A-Z])/g, "$1 $2");
+const label = (key: string) => key.replace(/^Ramp\./, "Ramp: ").replace(/^Msg(?=[A-Z])/, "Message: ").replace(/([a-z])([A-Z])/g, "$1 $2");
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const summary =
-  config.kind === "entities"
-    ? `${entities.length} creatures to remove, swap, or limit by biome${settings.length ? `, plus ${settings.length} setting${settings.length === 1 ? "" : "s"}` : ""}.`
-    : `${settings.length} setting${settings.length === 1 ? "" : "s"}, each with a short explanation.`;
+  config.summary ??
+  (config.kind === "entities"
+    ? `${entities.length} creatures to remove, swap, or limit by biome${settings.length ? `, plus ${count(settings.length, "setting")}` : ""}.`
+    : `${count(settings.length, "setting")}, each with a short explanation.`);
+const heading = config.title ? `${config.title}: build your ${config.name}` : `Build your ${config.name}`;
+const lead = config.summary ? "" : `Pick your settings and download a ready ${config.name}, no file editing. `;
+const openLabel = id === "config" ? "Open config builder" : `Open ${config.name} builder`;
 const creature = (entry: { name: string; note: string }) =>
   entry.note.split(":")[0].replace(/^./, (c) => c.toUpperCase()) || entry.name.replace(/^(zombie|animal)/, "").replace(/([a-z])([A-Z])/g, "$1 $2");
 ---
 
-<section class="rw-section zd-config" id="config" aria-labelledby="config-title" data-config-builder>
+<section class="rw-section zd-config" id={id} aria-labelledby={`${id}-title`} data-config-builder data-hash={id}>
   <div class="zd-config-card">
     <div class="zd-config-card-text">
-      <h2 id="config-title">Build your {config.name}</h2>
-      <p class="zd-config-summary">
-        Pick your settings and download a ready {config.name}, no file editing. {summary}
-      </p>
+      <h2 id={`${id}-title`}>{heading}</h2>
+      <p class="zd-config-summary">{lead}{summary}</p>
     </div>
-    <button type="button" class="zd-config-open" data-open-config aria-haspopup="dialog">Open config builder</button>
+    <button type="button" class="zd-config-open" data-open-config aria-haspopup="dialog">{openLabel}</button>
   </div>
-  <dialog class="zd-config-dialog" aria-labelledby="config-dialog-title">
+  <dialog class="zd-config-dialog" aria-labelledby={`${id}-dialog-title`}>
     <div class="zd-config-dialog-head">
-      <h2 id="config-dialog-title">Build your {config.name}</h2>
-      <button type="button" class="zd-config-close" data-close-config aria-label="Close config builder">&times;</button>
+      <h2 id={`${id}-dialog-title`}>Build your {config.name}</h2>
+      <button type="button" class="zd-config-close" data-close-config aria-label={`Close ${config.name} builder`}>&times;</button>
     </div>
-  <form class="zd-config-form" data-kind={config.kind} data-file={config.name} onsubmit="return false">
+  <form class="zd-config-form" data-kind={config.kind} data-file={config.name} data-webhook-key={config.webhook} data-reminders-key={config.reminders} onsubmit="return false">
     {config.intro && <p class="rw-intro zd-config-intro">{config.intro}</p>}
+    {
+      config.webhook && (
+        <div class="zd-webhook">
+          <label class="zd-setting-label" for={`${id}-webhook`}>Discord webhook URL</label>
+          <input
+            type="url"
+            id={`${id}-webhook`}
+            data-webhook
+            value={webhookValue}
+            placeholder="https://discord.com/api/webhooks/…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby={`${id}-webhook-help ${id}-webhook-check`}
+          />
+          <p class="zd-setting-help" id={`${id}-webhook-help`}>
+            In Discord: channel settings &gt; Integrations &gt; Webhooks &gt; New Webhook &gt; Copy Webhook URL. Keep it private: anyone
+            with it can post in that channel. The file is made right here in your browser, so the URL is never sent anywhere.
+          </p>
+          <p class="zd-webhook-check" id={`${id}-webhook-check`} data-webhook-check aria-live="polite"></p>
+        </div>
+      )
+    }
+    {
+      placeholders.length > 0 && (
+        <details class="zd-placeholders">
+          <summary>Placeholders you can use in messages</summary>
+          <dl>
+            {placeholders.map((entry) => (
+              <div>
+                <dt>
+                  <code>{entry.name}</code>
+                </dt>
+                <dd>{entry.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )
+    }
     {
       config.kind === "entities" &&
         groups.map((group) => (
@@ -86,45 +162,79 @@ const creature = (entry: { name: string; note: string }) =>
           </fieldset>
         ))
     }
-    <div class="zd-config-fields">
-      {settings.map((field) => (
-        <div class="zd-setting" data-key={field.key}>
-          <label class="zd-setting-label">
-            {config.defaultable && (
-              <input type="checkbox" data-set checked={!field.commented} aria-label={`Set ${field.key}`} />
-            )}
-            <span>{label(field.key)}</span>
-          </label>
-          {field.options ? (
-            <select data-value aria-label={field.key} disabled={config.defaultable && field.commented}>
-              {field.options.map((option) => (
-                <option value={option} selected={option === field.value}>{option}</option>
+    {config.kind !== "webhook" && blocks.map((block) => (
+      <div class="zd-config-block">
+        {block.title && <h3 class="zd-config-section">{block.title}</h3>}
+        {block.reminders && (
+          <div class="zd-reminders" data-reminders>
+            <p class="zd-setting-help">
+              Posted before each blood moon. Days before: 0 is blood moon day, 1 the day before. Hour: in-game, 0 to 23 (the horde
+              comes at 22:00 on a normal server). Leave a message empty for the mod's standard wording.
+            </p>
+            <div class="zd-reminder-head" aria-hidden="true">
+              <span>Days before</span>
+              <span>Hour</span>
+              <span>Message</span>
+            </div>
+            <div data-reminder-rows>
+              {reminders.map((reminder) => (
+                <div class="zd-reminder" data-reminder>
+                  <input type="number" min="0" max="365" data-days value={reminder.days} aria-label="Days before the blood moon" />
+                  <input type="number" min="0" max="23" data-hour value={reminder.hour} aria-label="In-game hour" />
+                  <input type="text" data-message value={reminder.message} aria-label="Message" spellcheck="false" />
+                  <button type="button" class="zd-reminder-remove" data-remove-reminder aria-label="Remove this reminder">&times;</button>
+                </div>
               ))}
-            </select>
-          ) : (
-            <input type="text" data-value value={field.value} aria-label={field.key} spellcheck="false" disabled={config.defaultable && field.commented} />
-          )}
-          {(() => {
-            const help = helpFor(field);
-            if (!help.short) return null;
-            return help.rest ? (
-              <details class="zd-setting-help">
-                <summary>{help.short} <span class="zd-more">More</span></summary>
-                {help.rest}
-              </details>
-            ) : (
-              <p class="zd-setting-help">{help.short}</p>
-            );
-          })()}
-        </div>
-      ))}
-    </div>
+            </div>
+            <p class="zd-setting-help" data-no-reminders hidden={reminders.length > 0}>No reminders: none are posted.</p>
+            <button type="button" class="zd-reminder-add" data-add-reminder>Add reminder</button>
+          </div>
+        )}
+        {block.fields.length > 0 && (
+          <div class="zd-config-fields">
+            {block.fields.map((field) => (
+              <div class:list={["zd-setting", { "zd-setting-wide": field.value.length > 40 }]} data-key={field.key}>
+                <label class="zd-setting-label">
+                  {config.defaultable && (
+                    <input type="checkbox" data-set checked={!field.commented} aria-label={`Set ${field.key}`} />
+                  )}
+                  <span>{label(field.key)}</span>
+                </label>
+                {field.options ? (
+                  <select data-value aria-label={field.key} disabled={config.defaultable && field.commented}>
+                    {field.options.map((option) => (
+                      <option value={option} selected={option === field.value}>{option}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input type="text" data-value value={field.value} aria-label={field.key} spellcheck="false" disabled={config.defaultable && field.commented} />
+                )}
+                {(() => {
+                  const help = helpFor(field);
+                  if (!help.short) return null;
+                  return help.rest ? (
+                    <details class="zd-setting-help">
+                      <summary>{help.short} <span class="zd-more">More</span></summary>
+                      {help.rest}
+                    </details>
+                  ) : (
+                    <p class="zd-setting-help">{help.short}</p>
+                  );
+                })()}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
     <p class="zd-config-where">
       Goes in <code>Mods/{config.folder}/{config.name}</code>. {config.after}
     </p>
     <div class="zd-config-actions">
       <button type="button" data-download-config>Download {config.name}</button>
+      <button type="button" class="zd-config-reset" data-copy-config>Copy text</button>
       <button type="button" class="zd-config-reset" data-reset-config>Reset</button>
+      <span class="zd-config-status" data-config-status aria-live="polite"></span>
     </div>
   </form>
   </dialog>
@@ -137,11 +247,23 @@ const creature = (entry: { name: string; note: string }) =>
       </template>
     )
   }
+  {
+    config.reminders && (
+      <template data-reminder-template>
+        <div class="zd-reminder" data-reminder>
+          <input type="number" min="0" max="365" data-days value="0" aria-label="Days before the blood moon" />
+          <input type="number" min="0" max="23" data-hour value="20" aria-label="In-game hour" />
+          <input type="text" data-message value="" aria-label="Message" spellcheck="false" placeholder="Empty: the mod's standard wording" />
+          <button type="button" class="zd-reminder-remove" data-remove-reminder aria-label="Remove this reminder">&times;</button>
+        </div>
+      </template>
+    )
+  }
   <script type="application/json" data-config-template set:html={JSON.stringify(config.text).replace(/</g, "\\u003c")} />
 </section>
 
 <script>
-  import { renderEntities, renderSettings } from "../data/config-builder.mjs";
+  import { checkWebhook, renderEntities, renderReminders, renderSettings, renderWebhookFile } from "../data/config-builder.mjs";
 
   for (const root of document.querySelectorAll<HTMLElement>("[data-config-builder]")) {
     const form = root.querySelector<HTMLFormElement>("form")!;
@@ -149,6 +271,7 @@ const creature = (entry: { name: string; note: string }) =>
     const initial = form.innerHTML;
     const dialog = root.querySelector<HTMLDialogElement>("dialog")!;
     const opener = root.querySelector<HTMLButtonElement>("[data-open-config]")!;
+    const status = () => form.querySelector<HTMLElement>("[data-config-status]")!;
 
     opener.addEventListener("click", () => dialog.showModal());
     root.querySelector("[data-close-config]")!.addEventListener("click", () => dialog.close());
@@ -160,7 +283,7 @@ const creature = (entry: { name: string; note: string }) =>
       if (!inside) dialog.close();
     });
     dialog.addEventListener("close", () => opener.focus());
-    if (location.hash === "#config") dialog.showModal();
+    if (location.hash === `#${root.dataset.hash}`) dialog.showModal();
 
     // The swap list is the same for every creature, so the page ships it once and each row copies it on first use.
     const swapOptions = root.querySelector<HTMLTemplateElement>("[data-swap-options]");
@@ -169,6 +292,37 @@ const creature = (entry: { name: string; note: string }) =>
       for (const option of swapOptions.content.querySelectorAll("option")) {
         if (option.value !== row.dataset.entity) target.append(option.cloneNode(true));
       }
+    };
+
+    const reminderTemplate = root.querySelector<HTMLTemplateElement>("[data-reminder-template]");
+    const syncReminders = () => {
+      const none = form.querySelector<HTMLElement>("[data-no-reminders]");
+      if (none) none.hidden = form.querySelectorAll("[data-reminder]").length > 0;
+    };
+
+    // The webhook check runs as the URL is typed; a bad URL stops the download, an empty one only warns.
+    const checkUrl = (strict: boolean) => {
+      const input = form.querySelector<HTMLInputElement>("[data-webhook]");
+      const note = form.querySelector<HTMLElement>("[data-webhook-check]");
+      if (!input || !note) return true;
+      // A file that is only the URL is no use without one.
+      const needed = form.dataset.kind === "webhook";
+      const state = checkWebhook(input.value);
+      input.setAttribute("aria-invalid", String(state === "bad"));
+      note.dataset.state = state;
+      note.textContent =
+        state === "bad"
+          ? "That doesn't look like a webhook URL. It starts with https://discord.com/api/webhooks/ followed by two parts."
+          : state === "empty" && strict && needed
+            ? "Paste your webhook URL first."
+            : state === "empty" && strict
+            ? "No webhook yet: the file still works, but nothing is posted to Discord until you add one."
+            : state === "ok"
+              ? "Looks like a Discord webhook."
+              : "";
+      const blocked = state === "bad" || (state === "empty" && needed);
+      if (blocked && strict) input.focus();
+      return !blocked;
     };
 
     const wire = () => {
@@ -189,21 +343,51 @@ const creature = (entry: { name: string; note: string }) =>
         const value = row.querySelector<HTMLInputElement | HTMLSelectElement>("[data-value]")!;
         set?.addEventListener("change", () => (value.disabled = !set.checked));
       }
+      form.querySelector("[data-webhook]")?.addEventListener("input", () => checkUrl(false));
       form.querySelector("[data-download-config]")!.addEventListener("click", download);
+      form.querySelector("[data-copy-config]")!.addEventListener("click", copy);
       form.querySelector("[data-reset-config]")!.addEventListener("click", () => {
         form.innerHTML = initial;
         wire();
       });
+      checkUrl(false);
+      syncReminders();
     };
 
+    // Reminder rows come and go, so their buttons are handled on the form (which survives a reset).
+    form.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest("button");
+      if (!button) return;
+      if (button.matches("[data-remove-reminder]")) {
+        button.closest("[data-reminder]")?.remove();
+        syncReminders();
+      } else if (button.matches("[data-add-reminder]") && reminderTemplate) {
+        const rows = form.querySelector("[data-reminder-rows]")!;
+        rows.append(reminderTemplate.content.cloneNode(true));
+        rows.querySelector<HTMLInputElement>("[data-reminder]:last-child [data-days]")?.focus();
+        syncReminders();
+      }
+    });
+
     function build(): string {
+      const webhook = form.querySelector<HTMLInputElement>("[data-webhook]")?.value.trim() ?? "";
+      if (form.dataset.kind === "webhook") return renderWebhookFile(template, webhook);
       const values: Record<string, string | null> = {};
       for (const row of form.querySelectorAll<HTMLElement>(".zd-setting")) {
         const set = row.querySelector<HTMLInputElement>("[data-set]");
         const value = row.querySelector<HTMLInputElement | HTMLSelectElement>("[data-value]")!;
         values[row.dataset.key!] = set && !set.checked ? null : value.value;
       }
+      if (form.dataset.webhookKey) values[form.dataset.webhookKey] = webhook;
       let text = renderSettings(template, values);
+      if (form.dataset.remindersKey) {
+        const reminders = [...form.querySelectorAll<HTMLElement>("[data-reminder]")].map((row) => ({
+          days: row.querySelector<HTMLInputElement>("[data-days]")!.value,
+          hour: row.querySelector<HTMLInputElement>("[data-hour]")!.value,
+          message: row.querySelector<HTMLInputElement>("[data-message]")!.value,
+        }));
+        text = renderReminders(text, reminders, form.dataset.remindersKey);
+      }
       if (form.dataset.kind === "entities") {
         const choices: Record<string, any> = {};
         for (const row of form.querySelectorAll<HTMLElement>(".zd-entity")) {
@@ -220,6 +404,7 @@ const creature = (entry: { name: string; note: string }) =>
     }
 
     function download() {
+      if (!checkUrl(true)) return;
       const blob = new Blob([build()], { type: "text/plain;charset=utf-8" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -228,6 +413,16 @@ const creature = (entry: { name: string; note: string }) =>
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    async function copy() {
+      if (!checkUrl(true)) return;
+      try {
+        await navigator.clipboard.writeText(build());
+        status().textContent = "Copied. Paste it into a new file named " + (form.dataset.file ?? "config.txt") + ".";
+      } catch {
+        status().textContent = "Your browser blocked copying, so use Download instead.";
+      }
     }
 
     wire();

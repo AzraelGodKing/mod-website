@@ -116,3 +116,126 @@ export function optionsFor(options, key, value) {
   if (/^(on|off)$/i.test(value)) return ["on", "off"];
   return null;
 }
+
+/**
+ * The "---- NAME ----" header each setting sits under ("" before the first one), in a
+ * readable case: "REMINDERS before the blood moon" becomes "Reminders before the blood moon".
+ * @param {string} text
+ * @returns {Map<number, string>} line of each setting -> its section
+ */
+export function settingSections(text) {
+  const out = new Map();
+  let section = "";
+  const settings = new Set(parseSettings(text).map((field) => field.line));
+  lines(text).forEach((raw, index) => {
+    const header = raw.trim().match(SECTION);
+    if (header) section = readableSection(header[1]);
+    else if (settings.has(index)) out.set(index, section);
+  });
+  return out;
+}
+
+/** @param {string} title */
+function readableSection(title) {
+  const words = title.split(/\s+/).map((word) => (/^[^a-z]*[A-Z]{2,}[^a-z]*$/.test(word) ? word.toLowerCase() : word));
+  return words.join(" ").replace(/^[a-z]/, (c) => c.toUpperCase());
+}
+
+/**
+ * The "{name}  what it means" list in a file's header, for the placeholder help.
+ * Two can share a line ("{players} names...   {count} how many"); deeper indented lines continue the one above.
+ * @param {string} text
+ * @returns {{ name: string; text: string }[]}
+ */
+export function parsePlaceholders(text) {
+  const out = [];
+  let last = -2;
+  // Only the comment block at the top of the file: later comments mention placeholders in passing.
+  const header = lines(text);
+  const end = header.findIndex((raw) => raw.trim() && !raw.trim().startsWith("#"));
+  header.slice(0, end < 0 ? header.length : end).forEach((raw, index) => {
+    const line = raw.trimEnd();
+    const entry = line.match(/^#\s{2,4}(\{\w+\}|\\n)\s+(\S.*)$/);
+    if (entry) {
+      for (const part of `${entry[1]} ${entry[2]}`.split(/\s{3,}(?=\{\w+\})/)) {
+        const [, name, rest] = part.match(/^(\S+)\s+(.*)$/) ?? [];
+        if (name) out.push({ name, text: rest.trim() });
+      }
+      last = index;
+      return;
+    }
+    const more = line.match(/^#\s{6,}(\S.*)$/);
+    if (more && last === index - 1 && out.length) {
+      out[out.length - 1].text += ` ${more[1].trim()}`;
+      last = index;
+    }
+  });
+  return out;
+}
+
+/**
+ * Blood Moon Sound reminders: "Reminder = <days before> <hour> | <message>" lines.
+ * Commented example lines are left alone.
+ * @param {string} text
+ * @param {string} key
+ * @returns {{ days: string; hour: string; message: string }[]}
+ */
+export function parseReminders(text, key = "Reminder") {
+  return parseSettings(text)
+    .filter((field) => field.key === key && !field.commented && !/^none$/i.test(field.value))
+    .map((field) => {
+      const bar = field.value.indexOf("|");
+      const when = (bar >= 0 ? field.value.slice(0, bar) : field.value).trim().split(/\s+/);
+      return { days: when[0] ?? "", hour: when[1] ?? "", message: bar >= 0 ? field.value.slice(bar + 1).trim() : "" };
+    });
+}
+
+/**
+ * Writes the reminder list where the file's first reminder was, one line each.
+ * No reminders at all writes "Reminder=none" (an empty list would bring back the mod's two standard ones).
+ * @param {string} text Usually renderSettings' output.
+ * @param {{ days: string | number; hour: string | number; message: string }[]} reminders
+ * @param {string} key
+ */
+export function renderReminders(text, reminders, key = "Reminder") {
+  const own = parseSettings(text).filter((field) => field.key === key && !field.commented);
+  const clean = (value) => String(value ?? "").replace(/[\r\n]+/g, " ").trim();
+  const written = reminders
+    .map((reminder) => ({ days: clean(reminder.days), hour: clean(reminder.hour), message: clean(reminder.message) }))
+    .filter((reminder) => /^\d+$/.test(reminder.days) && /^\d+$/.test(reminder.hour))
+    .map((reminder) => `${key} = ${reminder.days} ${reminder.hour}${reminder.message ? ` | ${reminder.message}` : ""}`);
+  const block = written.length ? written : [`${key}=none`];
+  const source = lines(text);
+  if (!own.length) return [...source, ...block].join("\r\n");
+  const drop = new Set(own.map((field) => field.line));
+  const out = [];
+  source.forEach((raw, index) => {
+    if (index === own[0].line) out.push(...block);
+    else if (!drop.has(index)) out.push(raw);
+  });
+  return out.join("\r\n");
+}
+
+/**
+ * The check the 7 Days mods make before posting: https and an /api/webhooks/ path.
+ * The stricter pattern catches a pasted channel link or a cut-off URL before the file is made.
+ * @param {string} url
+ * @returns {"empty" | "ok" | "bad"}
+ */
+export function checkWebhook(url) {
+  const value = String(url ?? "").trim();
+  if (!value) return "empty";
+  return /^https:\/\/(?:[a-z0-9-]+\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d+\/[\w-]+\/?(?:\?[\w=&-]*)?$/i.test(value) ? "ok" : "bad";
+}
+
+/**
+ * A file that is only a webhook URL (Bait's webhook.txt): the shipped comments, minus the
+ * "https://discord.com/api/webhooks/..." placeholder, then the URL.
+ * @param {string} text
+ * @param {string} url
+ */
+export function renderWebhookFile(text, url) {
+  const kept = lines(text).filter((raw) => !/^#\s*https:\/\/\S*\/api\/webhooks\/\.\.\.\s*$/.test(raw.trim()));
+  while (kept.length && !kept[kept.length - 1].trim()) kept.pop();
+  return [...kept, String(url ?? "").trim(), ""].join("\r\n");
+}

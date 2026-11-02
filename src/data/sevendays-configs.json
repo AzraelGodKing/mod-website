@@ -6,23 +6,67 @@
     "intro": "Unticked settings stay at the world's own value. Percent: 100% is vanilla, 200% is double, 0% turns it off.",
     "after": "Put it in the mod folder, then type  spawns reload  and  spawns refresh  in the server console.",
     "options": {
-      "*Respawn": ["default", "veryslow", "slow", "normal", "fast", "veryfast"]
+      "*Respawn": [
+        "default",
+        "veryslow",
+        "slow",
+        "normal",
+        "fast",
+        "veryfast"
+      ]
     },
     "hints": {
       "*Density": "none, default, or a number (the game's range is 1 to 5)",
       "Ramp.NightDensity": "e.g. +1 every 7 days max 8"
     }
   },
-  "blood-moon-sound": {
-    "file": "mod/settings.txt",
-    "kind": "settings",
-    "intro": "Your own sound files still go in the mod folder next to this file.",
-    "after": "Put it in the mod folder, then type  bmsound reload  or restart the game.",
-    "options": {
-      "PlayAt": ["horde", "warning", "both"]
+  "blood-moon-sound": [
+    {
+      "file": "mod/settings.txt",
+      "kind": "settings",
+      "intro": "Your own sound files still go in the mod folder next to this file.",
+      "after": "Put it in the mod folder, then type  bmsound reload  or restart the game.",
+      "options": {
+        "PlayAt": [
+          "horde",
+          "warning",
+          "both"
+        ]
+      },
+      "hints": {}
     },
-    "hints": {}
-  },
+    {
+      "id": "discord",
+      "file": "mod/discord.example.txt",
+      "output": "discord.txt",
+      "kind": "settings",
+      "title": "Discord posts",
+      "summary": "Paste your Discord webhook, pick which blood moon posts you want and how they read, and download a ready discord.txt for your server.",
+      "webhook": "Webhook",
+      "reminders": "Reminder",
+      "sections": true,
+      "placeholders": true,
+      "intro": "Server only: players don't need this file. Every message can use the placeholders below, and the first line of a message is its headline. \\n starts a new line.",
+      "after": "Put it in the mod folder on the server (never in a zip you give players), then type  bmdiscord reload  and  bmdiscord test  in the server console.",
+      "options": {
+        "LeaderboardDay": [
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday"
+        ]
+      },
+      "hints": {
+        "*Hour": "In-game hour, 0 to 23",
+        "LeaderboardHour": "Hour on the server PC's own clock, 0 to 23",
+        "*EveryHours": "In-game hours between posts, 0 to 24 (0 = off)",
+        "InGameChatFor": "Comma separated: reminder, countdown, start, update, end, death, laststanding, leaderboard, schedule, serverstart, serverstop, join, leave, or all"
+      }
+    }
+  ],
   "remove-any-entity": {
     "file": "mod/entities.txt",
     "kind": "entities",
@@ -32,5 +76,18 @@
     "hints": {
       "Replacement": "Spawned instead when removals leave a spawn spot with nothing at all"
     }
-  }
+  },
+  "zombie-and-animal-bait": [
+    {
+      "id": "webhook",
+      "file": "mod/webhook.example.txt",
+      "output": "webhook.txt",
+      "kind": "webhook",
+      "title": "Discord posts",
+      "summary": "Paste your Discord webhook and download a ready webhook.txt, so rare tames, level milestones and evolutions are posted to your channel.",
+      "webhook": "Webhook",
+      "intro": "Server only. Already running Blood Moon Sound with a discord.txt? Bait uses that webhook when it has no webhook.txt, so you can skip this.",
+      "after": "Put it in the mod folder on the server (never in a zip you give players), then restart the server."
+    }
+  ]
 }
