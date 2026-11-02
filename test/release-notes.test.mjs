@@ -10,6 +10,7 @@ import {
   renderInline,
   thunderstoreRequires,
   trimLog,
+  publicNote,
 } from "../scripts/release-notes.mjs";
 
 test("versioned markdown reads bullets under each version heading", () => {
@@ -110,6 +111,17 @@ test("a changelog is newest first, one entry per version, and skips unreleased v
   );
   assert.deepEqual(log.map((entry) => entry.version), ["1.10.0", "1.9.0"]);
   assert.deepEqual(log[1].notes, ["a"]);
+});
+
+test("public notes drop internal lines and tracker ids", () => {
+  assert.equal(publicNote("**Internal:** Removed dead code."), undefined);
+  assert.equal(publicNote("**CI zip** — no longer builds the zip."), undefined);
+  assert.equal(publicNote("**Chronicle tab** (AZR-84) — world history."), "**Chronicle tab** — world history.");
+  assert.equal(publicNote("**Fixed (AZR-346):** Survives early."), "**Fixed:** Survives early.");
+  assert.equal(publicNote("**Storm tick** (`storm-v1`, AZR-229) — runs on tick."), "**Storm tick** (`storm-v1`) — runs on tick.");
+  assert.equal(publicNote("Plain note ... stays as written."), "Plain note ... stays as written.");
+  const log = trimLog([{ version: "1.0.0", notes: ["**Internal:** only"] }, { version: "0.9.0", notes: ["kept"] }], "1.0.0");
+  assert.deepEqual(log.map((entry) => entry.version), ["0.9.0"]);
 });
 
 test("RimWorld About.xml gives game versions and required mods", () => {

@@ -11,7 +11,7 @@ interface Props {
 const { game, mod, name, gameName } = Astro.props;
 ---
 
-<section class="report">
+<section class="report" id="report">
   <h2>Report a problem</h2>
   <div class="known-issues" id="known-issues" hidden>
     <h3>Known issues</h3>
@@ -19,7 +19,8 @@ const { game, mod, name, gameName } = Astro.props;
     <ul></ul>
   </div>
   <p>This report is for {name} on {gameName}.</p>
-  <form id="report-form" data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
+  <button type="button" class="report-open" aria-controls="report-form" aria-expanded="false">Write a report</button>
+  <form id="report-form" hidden data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
     <label>
       Summary
       <input name="summary" required minlength="8" maxlength="120" autocomplete="off" />
@@ -119,25 +120,25 @@ const { game, mod, name, gameName } = Astro.props;
       if (form.isConnected) button.disabled = false;
     }
   });
-  // Turnstile loads only when the form comes near the screen or gets focus,
+  // The form stays folded until someone asks for it, and Turnstile loads only then,
   // so reading a mod page does not pull in the challenge script.
   let requested = false;
   const loadTurnstile = () => {
     if (requested) return;
     requested = true;
-    observer?.disconnect();
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onAzraelTurnstile";
     script.async = true;
     document.head.append(script);
   };
-  const observer =
-    "IntersectionObserver" in window
-      ? new IntersectionObserver((entries) => entries.some((entry) => entry.isIntersecting) && loadTurnstile(), {
-          rootMargin: "600px 0px",
-        })
-      : null;
-  if (observer) observer.observe(form);
-  else loadTurnstile();
-  form.addEventListener("focusin", loadTurnstile, { once: true });
+  const opener = document.querySelector(".report-open");
+  const openForm = (focus) => {
+    form.hidden = false;
+    opener.hidden = true;
+    opener.setAttribute("aria-expanded", "true");
+    loadTurnstile();
+    if (focus) form.querySelector("input")?.focus();
+  };
+  opener.addEventListener("click", () => openForm(true));
+  if (location.hash === "#report") openForm(false);
 </script>

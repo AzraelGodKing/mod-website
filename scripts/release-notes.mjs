@@ -261,13 +261,41 @@ export function thunderstoreRequires(manifest) {
     .filter(Boolean);
 }
 
+// Notes written for the dev log, not for players: build, CI and code-housekeeping lines.
+const INTERNAL_NOTE = /^\W*(internal|ci|ci zip|dev tools|refactor|chore)\b[^a-z0-9]*[:\u2014-]/i;
+const TICKET = /AZR-\d+(?:[\u2013-]\d+)?/;
+
+/**
+ * Cleans one changelog note for the public page: drops internal lines and strips
+ * tracker ids such as "(AZR-123)". Returns undefined for a note to leave out.
+ *
+ * @param {string} note
+ */
+export function publicNote(note) {
+  const text = String(note);
+  if (INTERNAL_NOTE.test(text)) return undefined;
+  if (!TICKET.test(text)) return text;
+  const cleaned = text
+    .replace(new RegExp(`\\s*\\(${TICKET.source}\\)`, "g"), "")
+    .replace(new RegExp(`${TICKET.source},\\s*`, "g"), "")
+    .replace(new RegExp(`,\\s*${TICKET.source}`, "g"), "")
+    .replace(new RegExp(`\\s*${TICKET.source}`, "g"), "")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s+([,.:;)])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cleaned || undefined;
+}
+
 // Newest first, one entry per version, nothing newer than the version the site serves
 // (a changelog can already hold notes for an unreleased version).
 export function trimLog(entries, current) {
   if (!entries?.length) return undefined;
   const seen = new Set();
   const list = entries
-    .filter((entry) => entry?.version && Array.isArray(entry.notes) && entry.notes.length > 0)
+    .filter((entry) => entry?.version && Array.isArray(entry.notes))
+    .map((entry) => ({ ...entry, notes: entry.notes.map(publicNote).filter(Boolean) }))
+    .filter((entry) => entry.notes.length > 0)
     .filter((entry) => !current || compareVersions(entry.version, current) <= 0)
     .filter((entry) => (seen.has(entry.version) ? false : seen.add(entry.version)))
     .sort((a, b) => compareVersions(b.version, a.version));

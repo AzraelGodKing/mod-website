@@ -1,6 +1,6 @@
 # Setup status
 
-Updated 2026-10-02.
+Updated 2026-10-02. Mod counts and the report form line refreshed 2026-11-02; the rest has not been rechecked since October.
 
 ## Done
 
@@ -11,10 +11,10 @@ Updated 2026-10-02.
 - Personal Codebase repos are private only. This site source cannot be made public in Codebase.
 - Buildkite's Origin app does not build a GitHub mirror. This pipeline connects to GitHub `AzraelGodKing/mod-website` instead.
 - Confirmed mod repos: `AzraelGodKing/rimworld_mods`, `AzraelGodKing/SunhavenMod`, and `AzraelGodKing/7d2d_mods`. Every mod in those repos is in scope.
-- `mod.json` is written for 9 RimWorld mods, 14 Sun Haven mods, and 8 7 Days to Die mods. Local site build lists them. Pages link to `downloads.azraelsmods.com`. When `downloads.json` records a newer zip, the page uses that version. Azrael and Living World link Download to `/not-ready` instead.
+- `mod.json` is written for 9 RimWorld mods, 14 Sun Haven mods, and 18 7 Days to Die mods. Local site build lists them. Pages link to `downloads.azraelsmods.com`. When `downloads.json` records a newer zip, the page uses that version. Azrael and Living World link Download to `/not-ready` instead.
 - R2 bucket `azraels-mods` is in ENAM. Public downloads are at `https://downloads.azraelsmods.com`, laid out as `<game>/<mod>/<version>/<mod>-<version>.zip` plus a `.sha256` file. The r2.dev address remains for testing.
 - Cloudflare emails the account billing address when spend reaches $1. That alert does not stop uploads or downloads. R2 has no hard monthly cap; usage past the free tier is billed.
-- Each mod page has a report form. The Worker checks Turnstile, trims the text, strips HTML, and creates a Linear issue with that mod's label and the `website` label. The Turnstile widget allows `localhost`, `127.0.0.1`, `azraelsmods.com`, `www.azraelsmods.com`, and `azraels-mods-website.azraelgodking95.workers.dev`. The form is deployed.
+- Each mod page has a report form, folded behind a "Write a report" button (or open it with `#report` on the URL). The Worker checks Turnstile, trims the text, strips HTML, and creates a Linear issue with that mod's label and the `website` label. The Turnstile widget allows `localhost`, `127.0.0.1`, `azraelsmods.com`, `www.azraelsmods.com`, and `azraels-mods-website.azraelgodking95.workers.dev`. The form is deployed.
 
 ## In progress
 

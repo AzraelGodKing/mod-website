@@ -73,13 +73,7 @@ const creature = (entry: { name: string; note: string }) =>
                     <option value="biomes">Removed in some biomes</option>
                     <option value="swap">Swapped for…</option>
                   </select>
-                  <select data-target hidden aria-label={`Spawn instead of ${entry.name}`}>
-                    {entities
-                      .filter((other) => other.name !== entry.name)
-                      .map((other) => (
-                        <option value={other.name}>{creature(other)}</option>
-                      ))}
-                  </select>
+                  <select data-target hidden aria-label={`Spawn instead of ${entry.name}`} />
                   <span class="zd-biomes" data-biomes hidden>
                     {BIOMES.map((biome) => (
                       <label>
@@ -134,6 +128,15 @@ const creature = (entry: { name: string; note: string }) =>
     </div>
   </form>
   </dialog>
+  {
+    config.kind === "entities" && (
+      <template data-swap-options>
+        {entities.map((other) => (
+          <option value={other.name}>{creature(other)}</option>
+        ))}
+      </template>
+    )
+  }
   <script type="application/json" data-config-template set:html={JSON.stringify(config.text).replace(/</g, "\\u003c")} />
 </section>
 
@@ -159,11 +162,22 @@ const creature = (entry: { name: string; note: string }) =>
     dialog.addEventListener("close", () => opener.focus());
     if (location.hash === "#config") dialog.showModal();
 
+    // The swap list is the same for every creature, so the page ships it once and each row copies it on first use.
+    const swapOptions = root.querySelector<HTMLTemplateElement>("[data-swap-options]");
+    const fillTargets = (row: HTMLElement, target: HTMLSelectElement) => {
+      if (!swapOptions || target.options.length) return;
+      for (const option of swapOptions.content.querySelectorAll("option")) {
+        if (option.value !== row.dataset.entity) target.append(option.cloneNode(true));
+      }
+    };
+
     const wire = () => {
       for (const row of form.querySelectorAll<HTMLElement>(".zd-entity")) {
         const action = row.querySelector<HTMLSelectElement>("[data-action]")!;
+        const target = row.querySelector<HTMLSelectElement>("[data-target]")!;
         const sync = () => {
-          row.querySelector<HTMLElement>("[data-target]")!.hidden = action.value !== "swap";
+          if (action.value === "swap") fillTargets(row, target);
+          target.hidden = action.value !== "swap";
           row.querySelector<HTMLElement>("[data-biomes]")!.hidden = action.value !== "biomes";
           row.dataset.state = action.value;
         };

@@ -4,11 +4,11 @@ import { statRows } from "../data/stats";
 interface Props {
   game: string;
   mod?: string;
-  variant: "room" | "hero" | "card" | "page";
+  variant: "room" | "hero";
 }
 
 const { game, mod, variant } = Astro.props;
-const rows = statRows(game, variant === "hero" || variant === "page");
+const rows = statRows(game, variant === "hero");
 ---
 
 <dl

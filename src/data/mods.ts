@@ -35,6 +35,8 @@ export interface ModPreview {
   height?: number;
   // A small WebP for the list rows, made by collect-mods.mjs.
   thumb?: string;
+  // A WebP copy of a wide poster for the mod page, made by collect-mods.mjs.
+  poster?: string;
 }
 
 export interface ModChange {
@@ -109,10 +111,10 @@ export function isNotReady(mod: ModEntry): boolean {
 // A square picture is a Thunderstore icon; the rest are wide store posters.
 export function previewFor(
   mod: ModEntry,
-): { src: string; thumb: string; square: boolean; width?: number; height?: number } | undefined {
+): { src: string; thumb: string; poster: string; square: boolean; width?: number; height?: number } | undefined {
   if (!mod.preview || mod.slug === "azrael") return undefined;
-  const { src, width, height, thumb } = mod.preview;
-  return { src, thumb: thumb ?? src, square: Boolean(width && height && width === height), width, height };
+  const { src, width, height, thumb, poster } = mod.preview;
+  return { src, thumb: thumb ?? src, poster: poster ?? src, square: Boolean(width && height && width === height), width, height };
 }
 
 const uploadDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
