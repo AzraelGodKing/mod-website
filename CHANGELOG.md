@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Craftable Stained Glass is on the 7 Days to Die list (Crafting, Server only) with a preview image and a guide. It has no Linear label yet, so its reports carry the game and website labels. Its page appears once the mod is on 7d2d_mods `main`.
 - Storage Backpack is on the 7 Days to Die list (Gameplay, Server, client optional) with a preview image, a guide, its `sbp` console commands, and a Works with note for Drone Loot Filter. It has no Linear label yet, so its reports carry the game and website labels. Its page appears once the mod is on 7d2d_mods `main`.
 - Older versions can be downloaded. On a mod page, each older changelog version whose zip is still in the bucket gets a "Download v1.2.0" link to `/download/<game>/<mod>/<version>`. The build checks each zip with a HEAD request, and the Worker checks again before redirecting; a version that was never hosted gets a short "not hosted" page. Pinned downloads are counted under their own version.
 - "Report a problem" lists the mod's known issues: open Linear issues with that mod's label in a Todo or In Progress state, from `GET /api/issues?mod=<game>/<slug>` (edge-cached for 10 minutes). Backlog is left out, so a new report is not public until it is moved. A mod without its own label shows none. The Worker uses the `LINEAR_READ_KEY` secret, or `LINEAR_API_KEY` when that is not set; the key needs Read access.
