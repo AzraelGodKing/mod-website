@@ -22,7 +22,7 @@ import {
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
-import { fetchLatestRelease, parseToolPath, releasesPage } from "./downloads/tools.mjs";
+import { fetchLatestRelease, parseToolPath, releasesPage, toolCounts } from "./downloads/tools.mjs";
 import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
 import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
@@ -134,16 +134,18 @@ async function readSiteCounts(env: SiteEnv): Promise<Record<string, number> | nu
   }
 }
 
-async function statsWithSite(env: SiteEnv, snapshot: StoredSnapshot): Promise<StoredSnapshot> {
-  return withSiteCounts(snapshot, statsRoster, await readSiteCounts(env));
+async function statsWithSite(env: SiteEnv, snapshot: StoredSnapshot): Promise<StoredSnapshot & { tools: ReturnType<typeof toolCounts> }> {
+  const counts = await readSiteCounts(env);
+  // Desktop tools have only this site's clicks; they stay out of the game totals.
+  return { ...withSiteCounts(snapshot, statsRoster, counts), tools: toolCounts(counts) };
 }
 
 async function handleStats(request: Request, env: SiteEnv): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
   }
-  const { lastFetched, mods, games: gameStats } = await statsWithSite(env, await readStats(env));
-  const body = JSON.stringify({ lastFetched, mods, games: gameStats });
+  const { lastFetched, mods, games: gameStats, tools } = await statsWithSite(env, await readStats(env));
+  const body = JSON.stringify({ lastFetched, mods, games: gameStats, tools });
   return new Response(request.method === "HEAD" ? null : body, {
     headers: {
       "content-type": "application/json; charset=utf-8",

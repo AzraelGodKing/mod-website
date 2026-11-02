@@ -30,6 +30,24 @@ export const VARIANTS = {
 
 export const RELEASE_TTL_SECONDS = 600;
 
+// Added to a tool's click count before it is shown, e.g. to drop Azrael's own test click.
+export const COUNT_OFFSETS = { "survivors-toolkit": -1 };
+
+/**
+ * Each tool's download count for /api/stats, from the site's click totals.
+ * @param {Record<string, number> | null} counts  siteCounts(), keyed "tools/<slug>"
+ * @returns {Record<string, { downloads: number }> | null}
+ */
+export function toolCounts(counts) {
+  if (!counts) return null;
+  const tools = {};
+  for (const tool of TOOLS) {
+    const key = `tools/${tool.slug}`;
+    tools[key] = { downloads: Math.max(0, (counts[key] ?? 0) + (COUNT_OFFSETS[tool.slug] ?? 0)) };
+  }
+  return tools;
+}
+
 export function toolsForGame(game) {
   return TOOLS.filter((tool) => tool.game === game);
 }
