@@ -12,17 +12,20 @@ import {
   deletePasskey,
   endAllSessions,
   endSession,
+  endSessionById,
   listPasskeys,
+  listSessions,
   registerPasskey,
   registrationOptions,
   sessionCookie,
+  sessionId,
   sessionToken,
   sessionValid,
   verifyPasskey,
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
-import { fetchLatestRelease, parseToolPath, releasesPage, toolCounts } from "./downloads/tools.mjs";
+import { TOOLS, fetchLatestRelease, parseToolPath, releasesPage, toolCounts } from "./downloads/tools.mjs";
 import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
 import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
@@ -367,8 +370,9 @@ async function signedIn(request: Request, env: SiteEnv): Promise<boolean> {
   return !!token && !!env.DOWNLOADS_DB && (await sessionValid(env.DOWNLOADS_DB, token));
 }
 
-async function startSession(db: D1Database, method: "password" | "passkey"): Promise<Response> {
-  const token = await createSession(db, method);
+async function startSession(request: Request, db: D1Database, method: "password" | "passkey", label?: string): Promise<Response> {
+  const country = (request as Request & { cf?: { country?: string } }).cf?.country ?? null;
+  const token = await createSession(db, method, { label, userAgent: request.headers.get("user-agent"), country });
   console.log(JSON.stringify({ event: "admin", result: "signed-in", method }));
   return adminJson(200, { signedIn: true }, { "set-cookie": sessionCookie(token) });
 }
@@ -394,7 +398,7 @@ const publicAdminRoutes: Record<string, AdminRoute> = {
       console.log(JSON.stringify({ event: "admin", result: "denied", method: "password" }));
       return adminJson(401, { error: "The password was not accepted." });
     }
-    return startSession(db, "password");
+    return startSession(request, db, "password");
   },
   "POST /api/admin/passkey/login-options": async (_request, _env, url, db) => {
     if (!db) return needsDb();
@@ -403,17 +407,17 @@ const publicAdminRoutes: Record<string, AdminRoute> = {
   "POST /api/admin/passkey/login": async (request, _env, url, db) => {
     if (!db) return needsDb();
     const body = await readJson<{ response?: Parameters<typeof verifyPasskey>[2] }>(request);
-    let verified = false;
+    let passkey: string | null = null;
     try {
-      verified = !!body?.response && (await verifyPasskey(db, url, body.response));
+      passkey = body?.response ? await verifyPasskey(db, url, body.response) : null;
     } catch (error) {
       console.log(JSON.stringify({ event: "admin", result: "passkey-error", error: String(error) }));
     }
-    if (!verified) {
+    if (passkey === null) {
       console.log(JSON.stringify({ event: "admin", result: "denied", method: "passkey" }));
       return adminJson(401, { error: "That passkey was not accepted." });
     }
-    return startSession(db, "passkey");
+    return startSession(request, db, "passkey", passkey);
   },
   "POST /api/admin/logout": async (request, _env, _url, db) => {
     const token = sessionToken(request);
@@ -435,13 +439,22 @@ const privateAdminRoutes: Record<string, AdminRoute> = {
     const files = await fetchManifestFiles((input, init) => fetch(input, init));
     return adminJson(200, { manifest: files !== null, mods: releaseStatus(catalogMods, files) });
   },
-  "GET /api/admin/overview": async (_request, env, _url, db) =>
-    adminJson(200, {
-      sessions: db ? await activeSessions(db) : null,
+  "GET /api/admin/overview": async (_request, env, _url, db) => {
+    const [sessions, tools] = await Promise.all([
+      db ? activeSessions(db) : null,
+      // Same edge-cached GitHub read the tool download buttons use.
+      Promise.all(TOOLS.map(async (tool) => ({ slug: tool.slug, release: await fetchLatestRelease(tool, (input, init) => fetch(input, init)) }))),
+    ]);
+    return adminJson(200, {
+      sessions,
       password: !!env.ADMIN_TOKEN,
       database: !!db,
       nexusKey: !!env.NEXUSMODS_API_KEY,
-    }),
+      tools,
+    });
+  },
+  "GET /api/admin/sessions": async (request, _env, _url, db) =>
+    db ? adminJson(200, { sessions: await listSessions(db, sessionToken(request)) }) : needsDb(),
   "POST /api/admin/sessions/clear": async (_request, _env, _url, db) => {
     if (!db) return needsDb();
     await endAllSessions(db);
@@ -482,8 +495,9 @@ async function handleAdmin(request: Request, env: SiteEnv, url: URL): Promise<Re
   if (publicRoute) return publicRoute(request, env, site, db);
 
   const removal = request.method === "DELETE" && url.pathname.match(/^\/api\/admin\/passkeys\/([^/]+)$/);
+  const sessionRemoval = request.method === "DELETE" && url.pathname.match(/^\/api\/admin\/sessions\/([0-9a-f]{64})$/);
   const privateRoute = privateAdminRoutes[key];
-  if (!privateRoute && !removal) return adminJson(404, { error: "Not found." });
+  if (!privateRoute && !removal && !sessionRemoval) return adminJson(404, { error: "Not found." });
   if (!(await signedIn(request, env))) {
     console.log(JSON.stringify({ event: "admin", result: "denied", route: key }));
     return adminJson(401, { error: "Sign in again." });
@@ -491,6 +505,14 @@ async function handleAdmin(request: Request, env: SiteEnv, url: URL): Promise<Re
   if (privateRoute) return privateRoute(request, env, site, db);
 
   if (!db) return needsDb();
+  if (sessionRemoval) {
+    const id = sessionRemoval[1];
+    const token = sessionToken(request);
+    const mine = !!token && (await sessionId(token)) === id;
+    if (!(await endSessionById(db, id))) return adminJson(404, { error: "That session already ended." });
+    console.log(JSON.stringify({ event: "admin", result: "session-ended", current: mine }));
+    return adminJson(200, { removed: true, signedIn: !mine }, mine ? { "set-cookie": clearedSessionCookie() } : {});
+  }
   // Without a password, removing the last passkey would lock everyone out.
   if (!env.ADMIN_TOKEN && (await listPasskeys(db)).length <= 1) {
     return adminJson(409, { error: "This is the only way in. Add another passkey or set ADMIN_TOKEN first." });

@@ -31,6 +31,13 @@ const SCHEMA = [
   )`,
 ];
 
+// Columns added after the first deploy, so the Sign-in tab can tell sessions apart.
+// ALTER TABLE has no IF NOT EXISTS, so each one is tried on its own and "duplicate column" is ignored.
+const SESSION_COLUMNS = ["created_at INTEGER", "last_seen_at INTEGER", "label TEXT", "user_agent TEXT", "country TEXT"];
+
+// last_seen_at is written at most this often, not on every admin request.
+const SEEN_EVERY_MS = 5 * 60 * 1000;
+
 const RP_NAME = "Azrael's Mods admin";
 // One admin, so every passkey belongs to the same WebAuthn user.
 const USER_ID = new TextEncoder().encode("azraels-mods-admin");
@@ -46,7 +53,18 @@ const ready = new WeakMap<D1Database, Promise<unknown>>();
 function ensureTables(db: D1Database): Promise<unknown> {
   let promise = ready.get(db);
   if (!promise) {
-    promise = db.batch(SCHEMA.map((sql) => db.prepare(sql)));
+    promise = db.batch(SCHEMA.map((sql) => db.prepare(sql))).then(() =>
+      Promise.all(
+        SESSION_COLUMNS.map((column) =>
+          db
+            .prepare(`ALTER TABLE admin_sessions ADD COLUMN ${column}`)
+            .run()
+            .catch((error) => {
+              if (!/duplicate column/i.test(String(error))) throw error;
+            }),
+        ),
+      ),
+    );
     promise.catch(() => ready.delete(db));
     ready.set(db, promise);
   }
@@ -174,13 +192,19 @@ export async function authenticationOptions(db: D1Database, url: URL, now = Date
   return options;
 }
 
-export async function verifyPasskey(db: D1Database, url: URL, response: AuthenticationResponseJSON, now = Date.now()): Promise<boolean> {
+// Returns the passkey's name when it verifies, so the session can say which one was used.
+export async function verifyPasskey(
+  db: D1Database,
+  url: URL,
+  response: AuthenticationResponseJSON,
+  now = Date.now(),
+): Promise<string | null> {
   await ensureTables(db);
   const row = await db
-    .prepare("SELECT id, public_key, counter, transports FROM admin_passkeys WHERE id = ?1")
+    .prepare("SELECT id, name, public_key, counter, transports FROM admin_passkeys WHERE id = ?1")
     .bind(response.id)
-    .first<{ id: string; public_key: string; counter: number; transports: string | null }>();
-  if (!row) return false;
+    .first<{ id: string; name: string; public_key: string; counter: number; transports: string | null }>();
+  if (!row) return null;
   const { rpID, origin } = relyingParty(url);
   const verification = await verifyAuthenticationResponse({
     response,
@@ -195,23 +219,45 @@ export async function verifyPasskey(db: D1Database, url: URL, response: Authenti
       transports: row.transports ? JSON.parse(row.transports) : undefined,
     },
   });
-  if (!verification.verified) return false;
+  if (!verification.verified) return null;
   await db
     .prepare("UPDATE admin_passkeys SET counter = ?1, last_used_at = ?2 WHERE id = ?3")
     .bind(verification.authenticationInfo.newCounter, new Date(now).toISOString(), row.id)
     .run();
-  return true;
+  return row.name;
+}
+
+// Where a sign-in came from, shown next to each session.
+export interface SessionDetails {
+  label?: string | null;
+  userAgent?: string | null;
+  country?: string | null;
 }
 
 // The cookie holds a random token; D1 stores only its hash.
-export async function createSession(db: D1Database, method: SignInMethod, now = Date.now()): Promise<string> {
+export async function createSession(
+  db: D1Database,
+  method: SignInMethod,
+  details: SessionDetails = {},
+  now = Date.now(),
+): Promise<string> {
   await ensureTables(db);
   const token = base64url(crypto.getRandomValues(new Uint8Array(32)));
   await db.batch([
     db.prepare("DELETE FROM admin_sessions WHERE expires_at < ?1").bind(now),
     db
-      .prepare("INSERT INTO admin_sessions (token_hash, method, expires_at) VALUES (?1, ?2, ?3)")
-      .bind(await sha256Hex(token), method, now + SESSION_TTL_MS),
+      .prepare(
+        "INSERT INTO admin_sessions (token_hash, method, expires_at, created_at, last_seen_at, label, user_agent, country) VALUES (?1, ?2, ?3, ?4, ?4, ?5, ?6, ?7)",
+      )
+      .bind(
+        await sha256Hex(token),
+        method,
+        now + SESSION_TTL_MS,
+        now,
+        details.label?.slice(0, 60) || null,
+        details.userAgent?.slice(0, 300) || null,
+        details.country?.slice(0, 8) || null,
+      ),
   ]);
   return token;
 }
@@ -227,11 +273,16 @@ export function sessionToken(request: Request): string | null {
 
 export async function sessionValid(db: D1Database, token: string, now = Date.now()): Promise<boolean> {
   await ensureTables(db);
+  const hash = await sha256Hex(token);
   const row = await db
-    .prepare("SELECT expires_at FROM admin_sessions WHERE token_hash = ?1")
-    .bind(await sha256Hex(token))
-    .first<{ expires_at: number }>();
-  return !!row && row.expires_at >= now;
+    .prepare("SELECT expires_at, last_seen_at FROM admin_sessions WHERE token_hash = ?1")
+    .bind(hash)
+    .first<{ expires_at: number; last_seen_at: number | null }>();
+  if (!row || row.expires_at < now) return false;
+  if (!row.last_seen_at || now - row.last_seen_at >= SEEN_EVERY_MS) {
+    await db.prepare("UPDATE admin_sessions SET last_seen_at = ?1 WHERE token_hash = ?2").bind(now, hash).run();
+  }
+  return true;
 }
 
 export async function endSession(db: D1Database, token: string): Promise<void> {
@@ -243,6 +294,64 @@ export async function activeSessions(db: D1Database, now = Date.now()): Promise<
   await ensureTables(db);
   const row = await db.prepare("SELECT COUNT(*) AS total FROM admin_sessions WHERE expires_at >= ?1").bind(now).first<{ total: number }>();
   return Number(row?.total ?? 0);
+}
+
+export interface SessionSummary {
+  id: string;
+  method: string;
+  label: string | null;
+  userAgent: string | null;
+  country: string | null;
+  // Sessions from before these were stored have no sign-in or last-seen time.
+  createdAt: string | null;
+  lastSeenAt: string | null;
+  expiresAt: string;
+  current: boolean;
+}
+
+const isoOrNull = (ms: number | null) => (typeof ms === "number" ? new Date(ms).toISOString() : null);
+
+// Every unexpired session, newest first. The id is the token's hash, which cannot be used to sign in.
+export async function listSessions(db: D1Database, currentToken: string | null, now = Date.now()): Promise<SessionSummary[]> {
+  await ensureTables(db);
+  const current = currentToken ? await sha256Hex(currentToken) : null;
+  const { results } = await db
+    .prepare(
+      "SELECT token_hash, method, expires_at, created_at, last_seen_at, label, user_agent, country FROM admin_sessions WHERE expires_at >= ?1 ORDER BY COALESCE(created_at, expires_at) DESC",
+    )
+    .bind(now)
+    .all<{
+      token_hash: string;
+      method: string;
+      expires_at: number;
+      created_at: number | null;
+      last_seen_at: number | null;
+      label: string | null;
+      user_agent: string | null;
+      country: string | null;
+    }>();
+  return results.map((row) => ({
+    id: row.token_hash,
+    method: row.method,
+    label: row.label,
+    userAgent: row.user_agent,
+    country: row.country,
+    createdAt: isoOrNull(row.created_at),
+    lastSeenAt: isoOrNull(row.last_seen_at),
+    expiresAt: new Date(row.expires_at).toISOString(),
+    current: row.token_hash === current,
+  }));
+}
+
+// A session's id, as listSessions gives it.
+export function sessionId(token: string): Promise<string> {
+  return sha256Hex(token);
+}
+
+export async function endSessionById(db: D1Database, id: string): Promise<boolean> {
+  await ensureTables(db);
+  const result = await db.prepare("DELETE FROM admin_sessions WHERE token_hash = ?1").bind(id).run();
+  return (result.meta.changes ?? 0) > 0;
 }
 
 // Signs out every browser, this one included.

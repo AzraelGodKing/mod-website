@@ -4,6 +4,7 @@ import "../styles/admin.css";
 import { games } from "../data/games";
 import { mods, modsForGame } from "../data/mods";
 import { platforms } from "../data/stats";
+import { TOOLS, releasesPage } from "../downloads/tools.mjs";
 
 type Column = { field: string; label: string };
 
@@ -153,6 +154,27 @@ const links = [
             ))
           }
         </div>
+
+        <section class="adm-tools" aria-labelledby="adm-tools-title">
+          <h2 id="adm-tools-title">Tools</h2>
+          <div class="adm-games">
+            {
+              TOOLS.map((tool) => (
+                <a class="adm-game-card" href={releasesPage(tool)} target="_blank" rel="noopener" data-game={tool.game} data-tool={tool.slug}>
+                  <span class="adm-game-name">{tool.name}</span>
+                  <strong data-tool-downloads>—</strong>
+                  <span class="adm-tile-note">
+                    {gameNames[tool.game] ?? tool.game} · downloads from this site
+                  </span>
+                  <span class="adm-tool-release">
+                    <span class="adm-pill is-muted" data-tool-version>Checking…</span>
+                    <span class="adm-tile-note" data-tool-released></span>
+                  </span>
+                </a>
+              ))
+            }
+          </div>
+        </section>
 
         <div class="adm-split">
           <section class="adm-card">
@@ -396,6 +418,29 @@ const links = [
             <button type="button" class="adm-btn is-danger" id="adm-signout-all">Sign out everywhere</button>
           </section>
         </div>
+
+        <section class="adm-card adm-sessions-card">
+          <h2>Active sessions</h2>
+          <p class="adm-muted">One row per signed-in browser. Sign one out if you don't recognise it.</p>
+          <div class="adm-table-wrap">
+            <table class="adm-table is-left adm-sessions-table">
+              <thead>
+                <tr>
+                  <th scope="col">Device</th>
+                  <th scope="col">Signed in with</th>
+                  <th scope="col">Signed in</th>
+                  <th scope="col">Last active</th>
+                  <th scope="col">Ends</th>
+                  <th scope="col"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="adm-session-rows">
+                <tr><td colspan="6" class="adm-muted">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="adm-status" id="adm-session-status" role="status"></p>
+        </section>
       </section>
     </section>
   </div>
@@ -542,6 +587,30 @@ const links = [
           cell.textContent = top[cell.dataset.topMod]?.score ? top[cell.dataset.topMod].name : "—";
         }
         markLeaders();
+        renderToolCounts();
+      }
+
+      // ---- Tools ----
+      // Counts come with the stats; versions come from GitHub with the overview.
+      function renderToolCounts() {
+        for (const card of document.querySelectorAll("[data-tool]")) {
+          card.querySelector("[data-tool-downloads]").textContent = format(snapshot?.tools?.[`tools/${card.dataset.tool}`]?.downloads);
+        }
+      }
+      function renderToolReleases(tools) {
+        let missing = 0;
+        for (const card of document.querySelectorAll("[data-tool]")) {
+          const release = tools?.find((tool) => tool.slug === card.dataset.tool)?.release;
+          const version = card.querySelector("[data-tool-version]");
+          const released = card.querySelector("[data-tool-released]");
+          if (!release) missing += 1;
+          version.className = `adm-pill ${release ? "is-ok" : "is-warn"}`;
+          version.textContent = release ? `v${release.version}` : "No release found";
+          released.textContent = release?.publishedAt ? `released ${ago(release.publishedAt)}` : "";
+          released.title = when(release?.publishedAt);
+          if (release?.notes) card.href = release.notes;
+        }
+        setCheck("tools", missing === 0, missing === 0 ? "Tool releases are on GitHub" : `${missing} tool${missing === 1 ? "" : "s"} have no GitHub release`);
       }
 
       // The biggest number in each column gets a highlight.
@@ -926,6 +995,7 @@ const links = [
           setCheck("password", data.password ? null : true, data.password ? "Password sign-in is on (ADMIN_TOKEN set)" : "Password sign-in is off");
           $("#adm-sessions").textContent = format(data.sessions);
           $("#adm-sessions-label").textContent = data.sessions === 1 ? "active session" : "active sessions";
+          renderToolReleases(data.tools);
         } catch (error) {
           if (error.status === 401) return showLogin(error.message);
           setCheck("overview", false, error.message);
@@ -1017,6 +1087,106 @@ const links = [
         }
       }
 
+      // ---- Sessions ----
+      // A short "Chrome on Windows" from the user agent; the full string is in the tooltip.
+      function deviceName(agent) {
+        if (!agent) return "Unknown device";
+        const browser = /Edg\//.test(agent)
+          ? "Edge"
+          : /OPR\//.test(agent)
+            ? "Opera"
+            : /Firefox\//.test(agent)
+              ? "Firefox"
+              : /Chrome\//.test(agent)
+                ? "Chrome"
+                : /Safari\//.test(agent)
+                  ? "Safari"
+                  : /curl|wget|python|node/i.test(agent)
+                    ? "Script"
+                    : "Browser";
+        const os = /iPhone|iPad/.test(agent)
+          ? "iOS"
+          : /Android/.test(agent)
+            ? "Android"
+            : /Windows/.test(agent)
+              ? "Windows"
+              : /Mac OS X|Macintosh/.test(agent)
+                ? "macOS"
+                : /CrOS/.test(agent)
+                  ? "ChromeOS"
+                  : /Linux/.test(agent)
+                    ? "Linux"
+                    : "";
+        return os ? `${browser} on ${os}` : browser;
+      }
+      const sessionStatus = $("#adm-session-status");
+      function renderSessions(sessions) {
+        const tbody = $("#adm-session-rows");
+        $("#adm-sessions").textContent = format(sessions.length);
+        $("#adm-sessions-label").textContent = sessions.length === 1 ? "active session" : "active sessions";
+        if (sessions.length === 0) return emptyRow(tbody, 6, "No active sessions.");
+        tbody.replaceChildren(
+          ...sessions.map((session) => {
+            const row = document.createElement("tr");
+            const device = document.createElement("th");
+            device.scope = "row";
+            const name = document.createElement("div");
+            name.className = "adm-session-device";
+            const title = document.createElement("strong");
+            title.textContent = deviceName(session.userAgent);
+            title.title = session.userAgent ?? "";
+            if (session.current) {
+              const pill = document.createElement("span");
+              pill.className = "adm-pill is-ok";
+              pill.textContent = "This browser";
+              title.append(pill);
+            }
+            const where = document.createElement("span");
+            where.textContent = session.country ? `From ${session.country}` : "Location not recorded";
+            name.append(title, where);
+            device.append(name);
+            const method = session.method === "passkey" ? `Passkey${session.label ? ` (${session.label})` : ""}` : "Password";
+            const action = document.createElement("td");
+            const end = document.createElement("button");
+            end.type = "button";
+            end.className = "adm-btn is-quiet";
+            end.textContent = "Sign out";
+            end.addEventListener("click", async () => {
+              const prompt = session.current ? "Sign out this browser?" : `Sign out ${deviceName(session.userAgent)}?`;
+              if (!confirm(prompt)) return;
+              try {
+                const result = await call(`/api/admin/sessions/${session.id}`, "DELETE");
+                if (!result.signedIn) return showLogin("Signed out.");
+                sessionStatus.textContent = "Session signed out.";
+                loadSessions();
+              } catch (error) {
+                if (error.status === 401) return showLogin(error.message);
+                sessionStatus.textContent = error.message;
+                loadSessions();
+              }
+            });
+            action.append(end);
+            row.append(
+              device,
+              cell(method),
+              session.createdAt ? timeCell(session.createdAt) : cell("—"),
+              session.lastSeenAt ? timeCell(session.lastSeenAt) : cell("—"),
+              timeCell(session.expiresAt),
+              action,
+            );
+            return row;
+          }),
+        );
+      }
+      async function loadSessions() {
+        try {
+          renderSessions((await call("/api/admin/sessions")).sessions);
+        } catch (error) {
+          if (error.status === 401) return showLogin(error.message);
+          emptyRow($("#adm-session-rows"), 6, error.message);
+        }
+      }
+
       // ---- Sign-in ----
       async function showLogin(message = "") {
         body.hidden = true;
@@ -1042,6 +1212,7 @@ const links = [
           render(next);
           loadPasskeys();
           loadOverview();
+          loadSessions();
           // Releases feed the tab badge and the health list, so they load straight away.
           loadTab("releases");
           showTab(location.hash.slice(1) || "overview", false);

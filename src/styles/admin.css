@@ -649,6 +649,40 @@
 .adm-card > .adm-btn {
   justify-self: start;
 }
+.adm-tools {
+  display: grid;
+  gap: 0.6rem;
+}
+.adm-tools h2 {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.adm-tool-release {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  margin-top: 0.3rem;
+}
+.adm-sessions-table td:last-child {
+  text-align: right;
+}
+.adm-session-device {
+  display: grid;
+  gap: 0.1rem;
+}
+.adm-session-device span {
+  color: var(--adm-faint);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+.adm-sessions-table .adm-pill {
+  margin-left: 0.4rem;
+}
 @media (max-width: 40rem) {
   .adm-bar {
     align-items: stretch;
@@ -735,4 +769,7 @@
 .adm-history-table summary {
   color: var(--adm-soft);
   cursor: pointer;
+}
+#adm-session-status:empty {
+  display: none;
 }
