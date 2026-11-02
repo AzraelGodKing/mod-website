@@ -1,0 +1,102 @@
+---
+import Base from "../../layouts/Base.astro";
+import { modsForGame } from "../../data/mods";
+
+// Azrael's RimWorld mods that have load rules from their About.xml.
+const checked = modsForGame("rimworld")
+  .filter((mod) => mod.loadRules)
+  .map((mod) => ({ name: mod.name, slug: mod.slug, rules: mod.loadRules! }));
+const data = JSON.stringify(checked).replace(/</g, "\\u003c");
+---
+
+<Base
+  title="RimWorld mod list checker"
+  description="Paste your RimWorld ModsConfig.xml to check Azrael's mods for missing requirements, conflicts and load order."
+  game="rimworld"
+>
+  <div class="zd-hub ml-rimworld">
+    <header class="zd-hero">
+      <p class="zd-kicker"><a href="/rimworld">RimWorld</a></p>
+      <h1>Mod list checker</h1>
+      <p>
+        Paste your mod list to check {checked.length} of Azrael's mods for anything they need, anything they clash with, and
+        where they should sit in the load order.
+      </p>
+    </header>
+    <div class="zd-hazard" aria-hidden="true"></div>
+    <section class="lo-check">
+      <p class="lo-where">
+        Your list is in <code>ModsConfig.xml</code>, in
+        <code>%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\Config</code> on Windows or
+        <code>~/.config/unity3d/Ludeon Studios/RimWorld by Ludeon Studios/Config</code> on Linux. You can also paste one package id per
+        line, top to bottom. Nothing you paste leaves your browser.
+      </p>
+      <label class="lo-file">
+        Open ModsConfig.xml <input type="file" accept=".xml,.txt" id="lo-file" />
+      </label>
+      <label class="lo-paste">
+        <span class="sr-only">Mod list</span>
+        <textarea id="lo-input" rows="10" spellcheck="false" placeholder="<activeMods>&#10;  <li>brrainz.harmony</li>&#10;  <li>ludeon.rimworld</li>&#10;  ..."></textarea>
+      </label>
+      <button type="button" id="lo-run">Check my list</button>
+      <div id="lo-results" aria-live="polite"></div>
+    </section>
+    <p class="zd-back"><a href="/rimworld">← Back to all RimWorld mods</a></p>
+  </div>
+  <script type="application/json" id="lo-data" set:html={data} />
+</Base>
+
+<script>
+  import { checkLoadOrder, parseModList } from "../../data/load-order.mjs";
+
+  const mods = JSON.parse(document.querySelector("#lo-data")!.textContent ?? "[]");
+  const input = document.querySelector<HTMLTextAreaElement>("#lo-input")!;
+  const out = document.querySelector<HTMLElement>("#lo-results")!;
+
+  const el = (tag: string, text?: string, className?: string) => {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+
+  function run() {
+    const ids = parseModList(input.value);
+    out.replaceChildren();
+    if (ids.length === 0) {
+      out.append(el("p", "Paste a ModsConfig.xml or a list of package ids first.", "lo-note"));
+      return;
+    }
+    const results = checkLoadOrder(ids, mods);
+    if (results.length === 0) {
+      out.append(el("p", `None of Azrael's mods are in this list of ${ids.length} mods.`, "lo-note"));
+      return;
+    }
+    const errors = results.flatMap((result) => result.problems).filter((problem) => problem.level === "error").length;
+    const warnings = results.flatMap((result) => result.problems).length - errors;
+    const summary =
+      errors + warnings === 0
+        ? `All ${results.length} of Azrael's mods in your list look fine.`
+        : `${errors} ${errors === 1 ? "problem" : "problems"} and ${warnings} load order ${warnings === 1 ? "tip" : "tips"} across ${results.length} mods.`;
+    out.append(el("p", summary, errors ? "lo-summary is-bad" : warnings ? "lo-summary is-warn" : "lo-summary is-good"));
+    const list = el("ul", undefined, "lo-list");
+    for (const result of results) {
+      const item = el("li");
+      const head = el("a", result.mod, "lo-mod");
+      (head as HTMLAnchorElement).href = `/rimworld/${result.slug}`;
+      item.append(head);
+      if (result.problems.length === 0) item.append(el("p", "No problems.", "lo-ok"));
+      for (const problem of result.problems) item.append(el("p", problem.text, problem.level === "error" ? "lo-error" : "lo-warn"));
+      list.append(item);
+    }
+    out.append(list);
+  }
+
+  document.querySelector("#lo-run")!.addEventListener("click", run);
+  document.querySelector<HTMLInputElement>("#lo-file")!.addEventListener("change", async (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    input.value = await file.text();
+    run();
+  });
+</script>

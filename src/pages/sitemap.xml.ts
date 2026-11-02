@@ -6,6 +6,7 @@ export const GET: APIRoute = ({ site }) => {
   const entries: { path: string; lastmod?: string }[] = [
     { path: "/" },
     ...games.map((game) => ({ path: `/${game.slug}` })),
+    { path: "/rimworld/check" },
     ...mods.map((mod) => ({ path: `/${mod.game}/${mod.slug}`, lastmod: uploadedOn(mod)?.iso.slice(0, 10) })),
   ];
   const urls = entries

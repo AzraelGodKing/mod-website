@@ -1,0 +1,189 @@
+---
+import type { ModConfig } from "../data/mods";
+import { BIOMES, optionsFor, parseEntities, parseSettings } from "../data/config-builder.mjs";
+
+interface Props {
+  config: ModConfig;
+  name: string;
+}
+
+const { config, name } = Astro.props;
+const hintFor = (key: string) => {
+  const hints = config.hints ?? {};
+  if (hints[key]) return hints[key];
+  const pattern = Object.keys(hints).find((entry) => entry.startsWith("*") && key.endsWith(entry.slice(1)));
+  return pattern ? hints[pattern] : "";
+};
+const settings = parseSettings(config.text).map((field) => ({
+  ...field,
+  options: optionsFor(config.options ?? {}, field.key, field.value),
+  hint: hintFor(field.key),
+}));
+// Long comment blocks fold behind their first sentence, so the grid stays readable.
+const helpFor = (field: { hint: string; help: string[] }) => {
+  const text = (field.hint || field.help.join(" ")).replace(/-{3,}[^-]*-{3,}/g, "").replace(/\s+/g, " ").trim();
+  if (text.length <= 150) return { short: text, rest: "" };
+  const cut = text.slice(0, 140).search(/[.:](\s|$)(?![\s\S]*[.:](\s|$))/);
+  const at = cut > 40 ? cut + 1 : 110;
+  return { short: text.slice(0, at).trim(), rest: text.slice(at).trim() };
+};
+const entities = config.kind === "entities" ? parseEntities(config.text) : [];
+const groups = [...new Set(entities.map((entry) => entry.group))];
+const label = (key: string) => key.replace(/^Ramp\./, "Ramp: ").replace(/([a-z])([A-Z])/g, "$1 $2");
+const creature = (entry: { name: string; note: string }) =>
+  entry.note.split(":")[0].replace(/^./, (c) => c.toUpperCase()) || entry.name.replace(/^(zombie|animal)/, "").replace(/([a-z])([A-Z])/g, "$1 $2");
+---
+
+<section class="rw-section zd-config" id="config" aria-labelledby="config-title" data-config-builder>
+  <h2 id="config-title">Build your {config.name}</h2>
+  {config.intro && <p class="rw-intro">{config.intro}</p>}
+  <form class="zd-config-form" data-kind={config.kind} data-file={config.name} onsubmit="return false">
+    {
+      config.kind === "entities" &&
+        groups.map((group) => (
+          <fieldset class="zd-config-group">
+            <legend>{group.toLowerCase()}</legend>
+            {entities
+              .filter((entry) => entry.group === group)
+              .map((entry) => (
+                <div class="zd-entity" data-entity={entry.name}>
+                  <span class="zd-entity-name">
+                    {creature(entry)} <code>{entry.name}</code>
+                  </span>
+                  <select data-action aria-label={`What happens to ${entry.name}`}>
+                    <option value="keep" selected={!entry.active}>Spawns</option>
+                    <option value="remove" selected={entry.active}>Removed</option>
+                    <option value="biomes">Removed in some biomes</option>
+                    <option value="swap">Swapped for…</option>
+                  </select>
+                  <select data-target hidden aria-label={`Spawn instead of ${entry.name}`}>
+                    {entities
+                      .filter((other) => other.name !== entry.name)
+                      .map((other) => (
+                        <option value={other.name}>{creature(other)}</option>
+                      ))}
+                  </select>
+                  <span class="zd-biomes" data-biomes hidden>
+                    {BIOMES.map((biome) => (
+                      <label>
+                        <input type="checkbox" value={biome} /> {biome.replace("_", " ")}
+                      </label>
+                    ))}
+                  </span>
+                </div>
+              ))}
+          </fieldset>
+        ))
+    }
+    <div class="zd-config-fields">
+      {settings.map((field) => (
+        <div class="zd-setting" data-key={field.key}>
+          <label class="zd-setting-label">
+            {config.defaultable && (
+              <input type="checkbox" data-set checked={!field.commented} aria-label={`Set ${field.key}`} />
+            )}
+            <span>{label(field.key)}</span>
+          </label>
+          {field.options ? (
+            <select data-value aria-label={field.key} disabled={config.defaultable && field.commented}>
+              {field.options.map((option) => (
+                <option value={option} selected={option === field.value}>{option}</option>
+              ))}
+            </select>
+          ) : (
+            <input type="text" data-value value={field.value} aria-label={field.key} spellcheck="false" disabled={config.defaultable && field.commented} />
+          )}
+          {(() => {
+            const help = helpFor(field);
+            if (!help.short) return null;
+            return help.rest ? (
+              <details class="zd-setting-help">
+                <summary>{help.short} <span class="zd-more">More</span></summary>
+                {help.rest}
+              </details>
+            ) : (
+              <p class="zd-setting-help">{help.short}</p>
+            );
+          })()}
+        </div>
+      ))}
+    </div>
+    <div class="zd-config-actions">
+      <button type="button" data-download-config>Download {config.name}</button>
+      <button type="button" class="zd-config-reset" data-reset-config>Reset</button>
+    </div>
+    <p class="zd-config-where">
+      Goes in <code>Mods/{config.folder}/{config.name}</code>. {config.after}
+    </p>
+  </form>
+  <script type="application/json" data-config-template set:html={JSON.stringify(config.text).replace(/</g, "\\u003c")} />
+</section>
+
+<script>
+  import { renderEntities, renderSettings } from "../data/config-builder.mjs";
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-config-builder]")) {
+    const form = root.querySelector<HTMLFormElement>("form")!;
+    const template = JSON.parse(root.querySelector("[data-config-template]")!.textContent ?? '""') as string;
+    const initial = form.innerHTML;
+
+    const wire = () => {
+      for (const row of form.querySelectorAll<HTMLElement>(".zd-entity")) {
+        const action = row.querySelector<HTMLSelectElement>("[data-action]")!;
+        const sync = () => {
+          row.querySelector<HTMLElement>("[data-target]")!.hidden = action.value !== "swap";
+          row.querySelector<HTMLElement>("[data-biomes]")!.hidden = action.value !== "biomes";
+          row.dataset.state = action.value;
+        };
+        action.addEventListener("change", sync);
+        sync();
+      }
+      for (const row of form.querySelectorAll<HTMLElement>(".zd-setting")) {
+        const set = row.querySelector<HTMLInputElement>("[data-set]");
+        const value = row.querySelector<HTMLInputElement | HTMLSelectElement>("[data-value]")!;
+        set?.addEventListener("change", () => (value.disabled = !set.checked));
+      }
+      form.querySelector("[data-download-config]")!.addEventListener("click", download);
+      form.querySelector("[data-reset-config]")!.addEventListener("click", () => {
+        form.innerHTML = initial;
+        wire();
+      });
+    };
+
+    function build(): string {
+      const values: Record<string, string | null> = {};
+      for (const row of form.querySelectorAll<HTMLElement>(".zd-setting")) {
+        const set = row.querySelector<HTMLInputElement>("[data-set]");
+        const value = row.querySelector<HTMLInputElement | HTMLSelectElement>("[data-value]")!;
+        values[row.dataset.key!] = set && !set.checked ? null : value.value;
+      }
+      let text = renderSettings(template, values);
+      if (form.dataset.kind === "entities") {
+        const choices: Record<string, any> = {};
+        for (const row of form.querySelectorAll<HTMLElement>(".zd-entity")) {
+          const action = row.querySelector<HTMLSelectElement>("[data-action]")!.value;
+          const name = row.dataset.entity!;
+          if (action === "swap") choices[name] = { action, target: row.querySelector<HTMLSelectElement>("[data-target]")!.value };
+          else if (action === "biomes")
+            choices[name] = { action, biomes: [...row.querySelectorAll<HTMLInputElement>("[data-biomes] input:checked")].map((box) => box.value) };
+          else choices[name] = { action };
+        }
+        text = renderEntities(text, choices);
+      }
+      return text;
+    }
+
+    function download() {
+      const blob = new Blob([build()], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = form.dataset.file ?? "config.txt";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    wire();
+  }
+</script>

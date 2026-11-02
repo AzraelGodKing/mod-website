@@ -14,6 +14,8 @@ interface Props {
   // The picture link previews show (Discord, Reddit, Nexus). A square store
   // icon gets the small card; a wide poster gets the large one.
   image?: { src: string; alt: string; square?: boolean };
+  // A mod page's own release feed.
+  feed?: { title: string; href: string };
 }
 
 const {
@@ -23,6 +25,7 @@ const {
   home = false,
   admin = false,
   noindex = false,
+  feed,
   // Pages without their own picture share the site card from scripts/make-share-image.mjs.
   image = { src: "/share.jpg", alt: "Azrael's Mods: mods for RimWorld, Sun Haven, and 7 Days to Die" },
 } = Astro.props;
@@ -58,6 +61,7 @@ const gameName = games.find((entry) => entry.slug === game)?.name;
     <meta name="twitter:card" content={imageUrl && !image?.square ? "summary_large_image" : "summary"} />
     {!admin && <link rel="alternate" type="application/rss+xml" title="Azrael's Mods: new releases" href="/feed.xml" />}
     {!admin && gameName && <link rel="alternate" type="application/rss+xml" title={`Azrael's Mods: ${gameName} releases`} href={`/${game}/feed.xml`} />}
+    {!admin && feed && <link rel="alternate" type="application/rss+xml" title={feed.title} href={feed.href} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

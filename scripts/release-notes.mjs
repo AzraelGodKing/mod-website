@@ -222,6 +222,32 @@ export function parseRimworldAbout(xml) {
   return { versions, requires };
 }
 
+/**
+ * RimWorld About.xml load rules for the mod list checker. Package ids are lowercased,
+ * as RimWorld compares them without case.
+ * @returns {{ packageId: string; dependencies: { id: string; name: string }[]; incompatible: string[]; loadAfter: string[]; loadBefore: string[] } | null}
+ */
+export function parseRimworldLoadRules(xml) {
+  const text = String(xml ?? "").replace(/<!--[\s\S]*?-->/g, "");
+  const packageId = text.match(/<packageId>\s*([^<\s]+)\s*<\/packageId>/)?.[1];
+  if (!packageId) return null;
+  const block = (tag) => text.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1] ?? "";
+  const ids = (tag) => [...block(tag).matchAll(/<li>\s*([^<\s]+)\s*<\/li>/g)].map((match) => match[1].toLowerCase());
+  const dependencies = [...block("modDependencies").matchAll(/<li>([\s\S]*?)<\/li>/g)]
+    .map((match) => ({
+      id: match[1].match(/<packageId>\s*([^<\s]+)\s*<\/packageId>/)?.[1]?.toLowerCase() ?? "",
+      name: match[1].match(/<displayName>([^<]+)<\/displayName>/)?.[1]?.trim() ?? "",
+    }))
+    .filter((dep) => dep.id);
+  return {
+    packageId: packageId.toLowerCase(),
+    dependencies: dependencies.map((dep) => ({ id: dep.id, name: dep.name || dep.id })),
+    incompatible: ids("incompatibleWith"),
+    loadAfter: ids("loadAfter"),
+    loadBefore: ids("loadBefore"),
+  };
+}
+
 /** Thunderstore manifest dependencies, "Owner-Name-1.2.3", as display names. BepInEx is the loader every mod needs. */
 export function thunderstoreRequires(manifest) {
   return (manifest?.dependencies ?? [])
@@ -278,12 +304,14 @@ export function releaseNotesReader(root, game) {
       const sources = [mod.changelog ?? [], parseVersionedMarkdown(readText(path.join(dir, "CHANGELOG.md")) ?? readText(path.join(dir, "changelog.md")))];
       let gameVersions = Array.isArray(mod.gameVersions) ? mod.gameVersions.map(String) : undefined;
       let requires = Array.isArray(mod.requires) ? mod.requires.map(String) : undefined;
+      let loadRules;
 
       if (game === "rimworld") {
         sources.push(parseVersionedMarkdown(readText(path.join(root, "site", "src", "data", "changelogs", `${mod.slug}.md`))));
         const about = parseRimworldAbout(readText(path.join(dir, "About", "About.xml")));
         gameVersions ??= about.versions.length ? about.versions : undefined;
         requires ??= about.requires.length ? about.requires : undefined;
+        loadRules = parseRimworldLoadRules(readText(path.join(dir, "About", "About.xml"))) ?? undefined;
       }
       if (game === "sun-haven") {
         const key = keys.find((candidate) => sunhavenLogs[candidate]?.length);
@@ -308,6 +336,7 @@ export function releaseNotesReader(root, game) {
         ...(changelog ? { changelog } : {}),
         ...(gameVersions?.length ? { gameVersions } : {}),
         ...(requires?.length ? { requires } : {}),
+        ...(loadRules ? { loadRules } : {}),
       };
     });
   };
