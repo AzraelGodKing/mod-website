@@ -24,6 +24,7 @@ pnpm-debug.log*
 
 # generated from the mod repos
 src/data/catalog.json
+src/data/stats-snapshot.json
 public/catalog/
 public/catalog-version.txt
 .catalog-sources/

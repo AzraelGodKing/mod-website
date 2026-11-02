@@ -2,6 +2,8 @@
 import type { ModRow } from "../data/hub-index";
 import { installHints, installLabels } from "../data/sevendays-index";
 import { heroVars } from "../data/themes";
+import { formatStat, modDownloads } from "../data/stat-values.mjs";
+import { statsSnapshot } from "../data/stats-snapshot";
 
 
 interface Props {
@@ -88,10 +90,10 @@ const sortOptions = [
           data-side={side ?? ""}
           data-order={index}
           data-updated={updated?.iso ?? ""}
-          data-downloads="-1"
+          data-downloads={String(modDownloads(statsSnapshot.mods?.[`${mod.game}/${mod.slug}`]) ?? -1)}
           data-text={`${mod.name} ${short} ${category} ${side ? installLabels[side] : ""} ${mod.description}`.toLowerCase()}
         >
-          <a class="zd-name has-thumb" role="cell" href={`/${game}/${mod.slug}`}>
+          <span class="zd-name has-thumb" role="cell">
             {thumb ? (
               <img
                 class:list={[thumb.square && "is-icon"]}
@@ -105,9 +107,9 @@ const sortOptions = [
             ) : (
               <span class="zd-thumb-blank" aria-hidden="true">{mod.name.charAt(0)}</span>
             )}
-            <strong>{mod.name}</strong>
+            <strong><a class="zd-name-link" href={`/${game}/${mod.slug}`}>{mod.name}</a></strong>
             <span>{short}</span>
-          </a>
+          </span>
           <span class="zd-cat" role="cell">{category}</span>
           {side && (
             <span class:list={["zd-side", `is-${side}`]} role="cell" title={installHints[side]}>{installLabels[side]}</span>
@@ -124,7 +126,7 @@ const sortOptions = [
             )}
           </span>
           <span class="zd-dl" role="cell">
-            <span data-dl-count>—</span>
+            <span data-dl-count>{formatStat(modDownloads(statsSnapshot.mods?.[`${mod.game}/${mod.slug}`]))}</span>
             <span class="zd-cell-label"> downloads</span>
           </span>
           <span class="zd-act" role="cell">

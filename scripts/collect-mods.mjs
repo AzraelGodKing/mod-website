@@ -15,6 +15,7 @@ const roots = [
 ];
 
 const manifestUrl = process.env.DOWNLOADS_MANIFEST ?? "https://downloads.azraelsmods.com/downloads.json";
+const statsUrl = process.env.STATS_URL ?? "https://azraelsmods.com/api/stats";
 
 function walk(dir, found) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -134,7 +135,8 @@ export async function writeThumb(source, dest, square) {
 
 // Mod pages show the wide poster at up to about 1100px, so they get a WebP copy
 // instead of the full PNG. Link previews keep the original file.
-export async function writePoster(source, dest) {
+// Phones get a 640px copy through srcset.
+export async function writePoster(source, dest, width = 1280) {
   let sharp;
   try {
     sharp = (await import("sharp")).default;
@@ -142,10 +144,27 @@ export async function writePoster(source, dest) {
     return false;
   }
   try {
-    await sharp(source).resize({ width: 1280, withoutEnlargement: true }).webp({ quality: 82 }).toFile(dest);
+    await sharp(source).resize({ width, withoutEnlargement: true }).webp({ quality: 82 }).toFile(dest);
     return true;
   } catch (error) {
     console.warn(`Could not make a poster from ${source}: ${error.message}`);
+    return false;
+  }
+}
+
+// Pages ship with the latest download counts so they show at once; the browser
+// still refreshes them. When the live site cannot be reached, the last saved
+// snapshot stays, or the pages show "—" until the browser loads the numbers.
+export async function saveStatsSnapshot(file, url = statsUrl, fetchImpl = fetch) {
+  try {
+    const response = await fetchImpl(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const snapshot = await response.json();
+    if (!snapshot || typeof snapshot !== "object" || (!snapshot.mods && !snapshot.games)) throw new Error("no counts in the response");
+    writeFileSync(file, `${JSON.stringify(snapshot)}\n`);
+    return true;
+  } catch (error) {
+    console.warn(`Download counts not saved (${error.message}); pages load them in the browser.`);
     return false;
   }
 }
@@ -338,7 +357,10 @@ async function main() {
         const thumb = (await writeThumb(found.source, thumbFile, square)) ? `/catalog/${mod.game}/${mod.slug}/thumb.webp` : undefined;
         const posterFile = path.join(destDir, "poster.webp");
         const poster = !square && (await writePoster(found.source, posterFile)) ? `/catalog/${mod.game}/${mod.slug}/poster.webp` : undefined;
-        preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}), ...(poster ? { poster } : {}) };
+        const smallFile = path.join(destDir, "poster-640.webp");
+        const posterSmall =
+          poster && size && size.width > 640 && (await writePoster(found.source, smallFile, 640)) ? `/catalog/${mod.game}/${mod.slug}/poster-640.webp` : undefined;
+        preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}), ...(poster ? { poster } : {}), ...(posterSmall ? { posterSmall } : {}) };
       }
       entries.push({ mod: attachConfig({ ...mod, images, ...(preview ? { preview } : {}) }, modDir, sevendaysConfigs), dir: modDir });
     }
@@ -372,6 +394,7 @@ async function main() {
   // Scheduled builds compare this with the live copy to decide whether to deploy.
   writeFileSync(path.join(siteRoot, "public", "catalog-version.txt"), `${catalogFingerprint(text)}\n`);
   console.log(`Wrote ${hosted.length} mods to ${out}`);
+  await saveStatsSnapshot(path.join(siteRoot, "src", "data", "stats-snapshot.json"));
 }
 
 const entry = process.argv[1];

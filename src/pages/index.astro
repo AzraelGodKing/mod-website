@@ -26,6 +26,20 @@ const total = games.reduce((sum, game) => sum + modsForGame(game.slug).length, 0
 const gameName = (slug: string) => games.find((game) => game.slug === slug)?.name ?? slug;
 const infoFor = (mod: (typeof allMods)[number]) => (mod.game === "7-days-to-die" ? indexInfo(mod) : hubInfo(mod));
 
+const siteUrl = (Astro.site?.origin ?? "https://azraelsmods.com").replace(/\/$/, "");
+// Lets search engines offer the site's own search box.
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Azrael's Mods",
+  url: `${siteUrl}/`,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/?q={search_term_string}` },
+    "query-input": "required name=search_term_string",
+  },
+};
+
 // Every mod, for the search box. Small enough to ship with the page.
 const searchIndex = allMods.map((mod) => {
   const info = infoFor(mod);
@@ -58,6 +72,7 @@ const recent = recentlyUpdated(6).map((mod) => {
   description="Mods for RimWorld, Sun Haven, and 7 Days to Die, with downloads alongside Steam, Thunderstore, and Nexus."
   home
 >
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, "\\u003c")} />
   <div class="entry">
     <section class="entry-hero">
       <div class="entry-copy">
@@ -252,6 +267,13 @@ const recent = recentlyUpdated(6).map((mod) => {
         event.preventDefault();
         input.focus();
       });
+      // /?q=words opens with that search, for links from the 404 page and search engines.
+      const query = new URLSearchParams(location.search).get("q");
+      if (query) {
+        input.value = query;
+        render();
+        input.focus();
+      }
     })();
   </script>
 </Base>

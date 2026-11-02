@@ -1,5 +1,10 @@
 ---
+import "../styles/fonts.css";
 import "../styles/site.css";
+import cormorant600 from "../assets/fonts/cormorant-garamond-latin-600-normal.woff2?url";
+import fraunces from "../assets/fonts/fraunces-latin-opsz-normal.woff2?url";
+import outfit from "../assets/fonts/outfit-latin-wght-normal.woff2?url";
+import redHat from "../assets/fonts/red-hat-text-latin-wght-normal.woff2?url";
 import { games } from "../data/games";
 import { gameVars, themeColor } from "../data/themes";
 
@@ -35,13 +40,19 @@ const fullTitle = title === siteName || title.endsWith(` · ${siteName}`) ? titl
 const canonical = new URL(here === "/" ? "/" : here, Astro.site);
 const imageUrl = image ? new URL(image.src, Astro.site).href : undefined;
 const gameName = games.find((entry) => entry.slug === game)?.name;
+// Preload only the fonts the first screen of this page draws with, so text
+// shows in its own face without waiting on the stylesheet.
+const preloads =
+  game === "sun-haven" ? [fraunces, outfit] : game === "7-days-to-die" ? [] : [cormorant600, redHat];
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
@@ -62,12 +73,8 @@ const gameName = games.find((entry) => entry.slug === game)?.name;
     {!admin && <link rel="alternate" type="application/rss+xml" title="Azrael's Mods: new releases" href="/feed.xml" />}
     {!admin && gameName && <link rel="alternate" type="application/rss+xml" title={`Azrael's Mods: ${gameName} releases`} href={`/${game}/feed.xml`} />}
     {!admin && feed && <link rel="alternate" type="application/rss+xml" title={feed.title} href={feed.href} />}
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,560&family=Outfit:wght@400;600;700&family=Red+Hat+Text:wght@400;600;700&display=swap"
-    />
+    {preloads.map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
+    <slot name="head" />
   </head>
   <body
     class:list={[game === "rimworld" && "rw-site", (home || admin) && "entry-site", admin && "admin-site"]}
@@ -107,52 +114,26 @@ const gameName = games.find((entry) => entry.slug === game)?.name;
         </footer>
       )
     }
-    <script is:inline>
-      (() => {
-        const lists = document.querySelectorAll("[data-stat-key]");
-        if (lists.length === 0) return;
-        const format = (value) => (typeof value === "number" ? value.toLocaleString("en-US") : "—");
-        const counts = (snapshot, list) => {
-          const key = list.dataset.statKey;
-          if (list.dataset.statScope === "game") return snapshot.games?.[key] ?? null;
-          const mod = snapshot.mods?.[key];
-          if (!mod) return null;
-          const thunderstore = mod.thunderstore?.downloads ?? null;
-          const nexus = mod.nexus?.downloads ?? null;
-          const site = mod.site?.downloads ?? null;
-          const parts = [site, thunderstore, nexus].filter((value) => value !== null);
-          return {
-            site,
-            total: parts.length > 0 ? parts.reduce((sum, value) => sum + value, 0) : null,
-            steam: mod.steam?.subscriptions ?? null,
-            thunderstore,
-            nexus,
-            nexus_unique: mod.nexus?.unique ?? null,
-            combined: thunderstore === null && nexus === null ? null : (thunderstore ?? 0) + (nexus ?? 0),
-          };
-        };
+    <script>
+      import { statText, statValues } from "../data/stat-values.mjs";
+
+      // The build already wrote the counts it had; this swaps in the live numbers.
+      const lists = document.querySelectorAll<HTMLElement>("[data-stat-key]");
+      if (lists.length > 0) {
         fetch("/api/stats")
           .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
           .then((snapshot) => {
             document.dispatchEvent(new CustomEvent("stats:loaded", { detail: snapshot }));
             for (const list of lists) {
-              const values = counts(snapshot, list);
+              const values = statValues(snapshot, list.dataset.statScope === "game" ? "game" : "mod", list.dataset.statKey ?? "");
               if (!values) continue;
-              for (const cell of list.querySelectorAll("[data-field]")) {
-                const field = cell.dataset.field;
-                if (field === "nexus_full") {
-                  cell.textContent =
-                    typeof values.nexus === "number"
-                      ? `${format(values.nexus)} (${format(values.nexus_unique)} unique)`
-                      : "—";
-                } else {
-                  cell.textContent = format(values[field]);
-                }
+              for (const cell of list.querySelectorAll<HTMLElement>("[data-field]")) {
+                cell.textContent = statText(values, cell.dataset.field ?? "");
               }
             }
           })
           .catch(() => {});
-      })();
+      }
     </script>
     <script is:inline>
       // The build's versions are already on the page. A mod released since then

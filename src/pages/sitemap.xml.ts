@@ -3,9 +3,16 @@ import { games } from "../data/games";
 import { mods, uploadedOn } from "../data/mods";
 
 export const GET: APIRoute = ({ site }) => {
+  // A catalog page changes when one of its mods does, so it takes its newest upload date.
+  const day = (list: typeof mods) =>
+    list
+      .map((mod) => uploadedOn(mod)?.iso.slice(0, 10))
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1);
   const entries: { path: string; lastmod?: string }[] = [
-    { path: "/" },
-    ...games.map((game) => ({ path: `/${game.slug}` })),
+    { path: "/", lastmod: day(mods) },
+    ...games.map((game) => ({ path: `/${game.slug}`, lastmod: day(mods.filter((mod) => mod.game === game.slug)) })),
     { path: "/rimworld/check" },
     ...mods.map((mod) => ({ path: `/${mod.game}/${mod.slug}`, lastmod: uploadedOn(mod)?.iso.slice(0, 10) })),
   ];
