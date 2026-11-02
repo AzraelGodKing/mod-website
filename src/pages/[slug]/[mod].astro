@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
+import ConfigBuilder from "../../components/ConfigBuilder.astro";
 import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { hubInfo } from "../../data/hub-index";
@@ -34,6 +35,7 @@ const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
 const direct = r2Download(mod);
 const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
+const feedHref = `/${mod.game}/${mod.slug}/feed.xml`;
 const latestKey = notReady ? undefined : `${mod.game}/${mod.slug}`;
 const sevendays = mod.game === "7-days-to-die";
 const sevenInfo = sevendays ? indexInfo(mod) : undefined;
@@ -60,6 +62,7 @@ const storeLinks = [
   description={mod.description}
   game={mod.game}
   image={picture ? { src: picture.src, alt: `${mod.name} preview`, square: picture.square } : undefined}
+  feed={notReady ? undefined : { title: `${mod.name} updates`, href: feedHref }}
 >
   {
     mod.game === "rimworld" || mod.game === "sun-haven" || mod.game === "7-days-to-die" ? (
@@ -284,10 +287,18 @@ const storeLinks = [
               </section>
             )
           }
+          {sevendays && mod.config && <ConfigBuilder config={mod.config} name={mod.name} />}
           {
             changelog.length > 0 && (
               <section class="rw-section zd-changelog" id="changelog" aria-labelledby="changelog-title">
-                <h2 id="changelog-title">What's new</h2>
+                <div class="zd-changelog-head">
+                  <h2 id="changelog-title">What's new</h2>
+                  {!notReady && (
+                    <a class="zd-follow" href={feedHref} title={`Get new ${mod.name} versions in your RSS reader`}>
+                      Follow updates (RSS)
+                    </a>
+                  )}
+                </div>
                 {changelog.slice(0, 1).map((entry) => (
                   <article class="zd-change">
                     <h3>

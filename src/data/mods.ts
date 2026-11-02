@@ -64,6 +64,31 @@ export interface ModEntry {
   bytes?: number;
   // Older changelog versions whose zip is still hosted, found at build time.
   olderDownloads?: string[];
+  // 7 Days: the shipped config file, for the config builder (src/data/sevendays-configs.json).
+  config?: ModConfig;
+  // RimWorld: About.xml rules for the mod list checker.
+  loadRules?: LoadRules;
+}
+
+export interface ModConfig {
+  file: string;
+  name: string;
+  folder: string;
+  kind: "settings" | "entities";
+  text: string;
+  defaultable?: boolean;
+  intro?: string;
+  after?: string;
+  options?: Record<string, string[]>;
+  hints?: Record<string, string>;
+}
+
+export interface LoadRules {
+  packageId: string;
+  dependencies: { id: string; name: string }[];
+  incompatible: string[];
+  loadAfter: string[];
+  loadBefore: string[];
 }
 
 export const mods = catalog.mods as ModEntry[];
