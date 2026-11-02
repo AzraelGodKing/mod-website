@@ -30,14 +30,31 @@ const helpFor = (field: { hint: string; help: string[] }) => {
 const entities = config.kind === "entities" ? parseEntities(config.text) : [];
 const groups = [...new Set(entities.map((entry) => entry.group))];
 const label = (key: string) => key.replace(/^Ramp\./, "Ramp: ").replace(/([a-z])([A-Z])/g, "$1 $2");
+const summary =
+  config.kind === "entities"
+    ? `${entities.length} creatures to remove, swap, or limit by biome${settings.length ? `, plus ${settings.length} setting${settings.length === 1 ? "" : "s"}` : ""}.`
+    : `${settings.length} setting${settings.length === 1 ? "" : "s"}, each with a short explanation.`;
 const creature = (entry: { name: string; note: string }) =>
   entry.note.split(":")[0].replace(/^./, (c) => c.toUpperCase()) || entry.name.replace(/^(zombie|animal)/, "").replace(/([a-z])([A-Z])/g, "$1 $2");
 ---
 
 <section class="rw-section zd-config" id="config" aria-labelledby="config-title" data-config-builder>
-  <h2 id="config-title">Build your {config.name}</h2>
-  {config.intro && <p class="rw-intro">{config.intro}</p>}
+  <div class="zd-config-card">
+    <div class="zd-config-card-text">
+      <h2 id="config-title">Build your {config.name}</h2>
+      <p class="zd-config-summary">
+        Pick your settings and download a ready {config.name}, no file editing. {summary}
+      </p>
+    </div>
+    <button type="button" class="zd-config-open" data-open-config aria-haspopup="dialog">Open config builder</button>
+  </div>
+  <dialog class="zd-config-dialog" aria-labelledby="config-dialog-title">
+    <div class="zd-config-dialog-head">
+      <h2 id="config-dialog-title">Build your {config.name}</h2>
+      <button type="button" class="zd-config-close" data-close-config aria-label="Close config builder">&times;</button>
+    </div>
   <form class="zd-config-form" data-kind={config.kind} data-file={config.name} onsubmit="return false">
+    {config.intro && <p class="rw-intro zd-config-intro">{config.intro}</p>}
     {
       config.kind === "entities" &&
         groups.map((group) => (
@@ -108,14 +125,15 @@ const creature = (entry: { name: string; note: string }) =>
         </div>
       ))}
     </div>
+    <p class="zd-config-where">
+      Goes in <code>Mods/{config.folder}/{config.name}</code>. {config.after}
+    </p>
     <div class="zd-config-actions">
       <button type="button" data-download-config>Download {config.name}</button>
       <button type="button" class="zd-config-reset" data-reset-config>Reset</button>
     </div>
-    <p class="zd-config-where">
-      Goes in <code>Mods/{config.folder}/{config.name}</code>. {config.after}
-    </p>
   </form>
+  </dialog>
   <script type="application/json" data-config-template set:html={JSON.stringify(config.text).replace(/</g, "\\u003c")} />
 </section>
 
@@ -126,6 +144,20 @@ const creature = (entry: { name: string; note: string }) =>
     const form = root.querySelector<HTMLFormElement>("form")!;
     const template = JSON.parse(root.querySelector("[data-config-template]")!.textContent ?? '""') as string;
     const initial = form.innerHTML;
+    const dialog = root.querySelector<HTMLDialogElement>("dialog")!;
+    const opener = root.querySelector<HTMLButtonElement>("[data-open-config]")!;
+
+    opener.addEventListener("click", () => dialog.showModal());
+    root.querySelector("[data-close-config]")!.addEventListener("click", () => dialog.close());
+    // A click on the dimmed backdrop lands on the dialog itself, outside its content box.
+    dialog.addEventListener("click", (event) => {
+      if (event.target !== dialog) return;
+      const box = dialog.getBoundingClientRect();
+      const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+      if (!inside) dialog.close();
+    });
+    dialog.addEventListener("close", () => opener.focus());
+    if (location.hash === "#config") dialog.showModal();
 
     const wire = () => {
       for (const row of form.querySelectorAll<HTMLElement>(".zd-entity")) {
