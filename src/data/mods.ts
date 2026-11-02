@@ -68,18 +68,32 @@ export interface ModEntry {
   bytes?: number;
   // Older changelog versions whose zip is still hosted, found at build time.
   olderDownloads?: string[];
-  // 7 Days: the shipped config file, for the config builder (src/data/sevendays-configs.json).
-  config?: ModConfig;
+  // 7 Days: the shipped config files, one builder each (src/data/sevendays-configs.json).
+  configs?: ModConfig[];
   // RimWorld: About.xml rules for the mod list checker.
   loadRules?: LoadRules;
 }
 
 export interface ModConfig {
+  // Section id on the page, and the #hash that opens it.
+  id: string;
   file: string;
+  // The file the builder downloads (output, or the shipped file's own name).
   name: string;
+  output?: string;
   folder: string;
-  kind: "settings" | "entities";
+  kind: "settings" | "entities" | "webhook";
   text: string;
+  title?: string;
+  summary?: string;
+  // Key of the Discord webhook URL, shown first with its own check.
+  webhook?: string;
+  // Key of repeated "<days> <hour> | <message>" lines, edited as a list.
+  reminders?: string;
+  // Group settings under the file's "---- NAME ----" headers.
+  sections?: boolean;
+  // List the file header's {placeholder} help.
+  placeholders?: boolean;
   defaultable?: boolean;
   intro?: string;
   after?: string;

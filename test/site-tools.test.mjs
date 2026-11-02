@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { optionsFor, parseEntities, parseSettings, renderEntities, renderSettings } from "../src/data/config-builder.mjs";
+import {
+  checkWebhook,
+  optionsFor,
+  parseEntities,
+  parsePlaceholders,
+  parseReminders,
+  parseSettings,
+  renderEntities,
+  renderReminders,
+  renderSettings,
+  renderWebhookFile,
+  settingSections,
+} from "../src/data/config-builder.mjs";
 import { checkLoadOrder, parseModList } from "../src/data/load-order.mjs";
 import { parseRimworldLoadRules } from "../scripts/release-notes.mjs";
 
@@ -92,4 +104,75 @@ test("the checker flags missing needs, clashes and load order", () => {
   const [fine] = checkLoadOrder(["brrainz.harmony", "azraelgodking.homesteader", "azraelgodking.strata"], mods);
   assert.deepEqual(fine.problems, []);
   assert.deepEqual(checkLoadOrder(["brrainz.harmony"], mods), []);
+});
+
+const discord = `# In every message you can use:
+#   {day}      the blood moon's day number
+#   {timeleft} time left in game time, like "6 hours":
+#              until the horde starts
+#   {players}  names of who's online       {count}  how many are online
+#   \\n         a new line
+
+Webhook=
+
+# ---- REMINDERS before the blood moon ----------------
+#   Reminder = 3 8  | example, left alone
+
+Reminder = 1 12 | Tomorrow · Day {day}
+Reminder = 0 18 | Tonight
+
+# ---- /BM IN GAME CHAT ----
+ChatCommand=on
+`;
+
+test("discord.txt reminders are read, rewritten in place, and none writes Reminder=none", () => {
+  assert.deepEqual(parseReminders(discord), [
+    { days: "1", hour: "12", message: "Tomorrow · Day {day}" },
+    { days: "0", hour: "18", message: "Tonight" },
+  ]);
+  const out = renderReminders(discord, [
+    { days: 3, hour: 8, message: "Soon\\nreally" },
+    { days: "x", hour: 1, message: "dropped" },
+    { days: 0, hour: 21, message: "" },
+  ]).split("\r\n");
+  const at = out.indexOf("Reminder = 3 8 | Soon\\nreally");
+  assert.ok(at > 0);
+  assert.equal(out[at + 1], "Reminder = 0 21");
+  assert.equal(out.filter((line) => line.startsWith("Reminder")).length, 2);
+  assert.ok(out.includes("#   Reminder = 3 8  | example, left alone"));
+  const none = renderReminders(discord, []).split("\r\n");
+  assert.deepEqual(none.filter((line) => /^Reminder/.test(line)), ["Reminder=none"]);
+  assert.deepEqual(parseReminders(none.join("\n")), []);
+});
+
+test("discord.txt webhook, sections and placeholders", () => {
+  const out = renderSettings(discord, { Webhook: " https://discord.com/api/webhooks/123/abc-DEF " });
+  assert.ok(out.split("\r\n").includes("Webhook=https://discord.com/api/webhooks/123/abc-DEF"));
+  const sections = settingSections(discord);
+  const chat = parseSettings(discord).find((field) => field.key === "ChatCommand");
+  assert.equal(sections.get(chat.line), "/bm in game chat");
+  const reminder = parseSettings(discord).find((field) => field.key === "Reminder");
+  assert.equal(sections.get(reminder.line), "Reminders before the blood moon");
+  assert.deepEqual(
+    parsePlaceholders(discord).map((entry) => entry.name),
+    ["{day}", "{timeleft}", "{players}", "{count}", "\\n"],
+  );
+  assert.match(parsePlaceholders(discord)[1].text, /until the horde starts$/);
+});
+
+test("webhook URLs are checked like the mods check them", () => {
+  assert.equal(checkWebhook(""), "empty");
+  assert.equal(checkWebhook("https://discord.com/api/webhooks/1234567890/aBc_d-E"), "ok");
+  assert.equal(checkWebhook("https://canary.discord.com/api/webhooks/1/x?thread_id=5"), "ok");
+  assert.equal(checkWebhook("https://discord.com/channels/1/2"), "bad");
+  assert.equal(checkWebhook("http://discord.com/api/webhooks/1/x"), "bad");
+  assert.equal(checkWebhook("https://discord.com/api/webhooks/1"), "bad");
+});
+
+test("Bait's webhook.txt keeps its comments and ends with the URL", () => {
+  const shipped = "# Copy this file to webhook.txt\n# Bait posts rare tames.\n# https://discord.com/api/webhooks/...\n";
+  assert.equal(
+    renderWebhookFile(shipped, "https://discord.com/api/webhooks/1/x"),
+    "# Copy this file to webhook.txt\r\n# Bait posts rare tames.\r\nhttps://discord.com/api/webhooks/1/x\r\n",
+  );
 });

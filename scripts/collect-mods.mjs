@@ -289,18 +289,33 @@ export async function attachOlderDownloads(mods, fetchImpl = globalThis.fetch) {
   );
 }
 
-// The shipped config file of the 7 Days mods listed in sevendays-configs.json, for the
-// config builder on their pages. Installed at Mods/<folder>/<file>.
+// The shipped config files of the 7 Days mods listed in sevendays-configs.json (one entry,
+// or a list when a mod has more than one file), for the builders on their pages.
+// Installed at Mods/<folder>/<output>, where folder is the ModInfo.xml Name the zip unpacks to.
 export function attachConfig(mod, modDir, configs) {
-  const entry = configs?.[mod.slug];
-  if (mod.game !== "7-days-to-die" || !entry) return mod;
-  const file = path.join(modDir, entry.file);
-  if (!existsSync(file)) {
-    console.warn(`${mod.slug}: ${entry.file} is missing, so its page has no config builder`);
-    return mod;
+  const listed = configs?.[mod.slug];
+  if (mod.game !== "7-days-to-die" || !listed) return mod;
+  const folder = installFolder(modDir);
+  const found = (Array.isArray(listed) ? listed : [listed]).flatMap((entry) => {
+    const file = path.join(modDir, entry.file);
+    if (!existsSync(file)) {
+      console.warn(`${mod.slug}: ${entry.file} is missing, so its page has no builder for it`);
+      return [];
+    }
+    const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+    return [{ id: "config", ...entry, name: entry.output ?? path.basename(entry.file), folder, text }];
+  });
+  return found.length ? { ...mod, configs: found } : mod;
+}
+
+// build.ps1 zips each mod under its ModInfo.xml Name (AzraelBait, not the repo's Bait folder).
+export function installFolder(modDir) {
+  for (const info of [path.join(modDir, "mod", "ModInfo.xml"), path.join(modDir, "ModInfo.xml")]) {
+    if (!existsSync(info)) continue;
+    const name = readFileSync(info, "utf8").match(/<Name\s+value="([^"]+)"/);
+    if (name) return name[1];
   }
-  const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
-  return { ...mod, config: { ...entry, name: path.basename(entry.file), folder: path.basename(modDir), text } };
+  return path.basename(modDir);
 }
 
 export async function hostedFiles(fetchImpl = globalThis.fetch) {

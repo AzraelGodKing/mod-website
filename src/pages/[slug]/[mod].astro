@@ -349,7 +349,7 @@ const storeLinks = [
               </section>
             )
           }
-          {sevendays && mod.config && <ConfigBuilder config={mod.config} name={mod.name} />}
+          {sevendays && mod.configs?.map((config) => <ConfigBuilder config={config} name={mod.name} />)}
           {
             changelog.length > 0 && (
               <section class="rw-section zd-changelog" id="changelog" aria-labelledby="changelog-title">
