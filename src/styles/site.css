@@ -3402,6 +3402,12 @@ body.entry-site main {
   max-width: 44rem;
 }
 
+.adm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
 .adm-toggle {
   display: inline-flex;
   align-items: center;
