@@ -22,6 +22,7 @@ import {
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
+import { fetchLatestRelease, parseToolPath, releasesPage } from "./downloads/tools.mjs";
 import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
 import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
@@ -319,6 +320,25 @@ async function handleDownloadRedirect(request: Request, env: SiteEnv, ctx: Execu
   });
 }
 
+// /download/tools/<slug>[/exe|/zip]: the newest GitHub release of a desktop app.
+// When GitHub can't be read or the file is missing, the releases page is the fallback.
+async function handleToolDownload(request: Request, env: SiteEnv, ctx: ExecutionContext, pathname: string): Promise<Response> {
+  const parsed = parseToolPath(pathname);
+  if (!parsed) return new Response("Not found", { status: 404 });
+  const { tool, variant } = parsed;
+  const release = await fetchLatestRelease(tool, (input, init) => fetch(input, init as RequestInit));
+  const file = release?.files[variant];
+  if (!release || !file) {
+    return new Response(null, { status: 302, headers: { location: releasesPage(tool), "cache-control": "no-store" } });
+  }
+  const db = env.DOWNLOADS_DB;
+  if (db && request.method === "GET" && !isBot(request.headers.get("user-agent"))) {
+    const key = `tools/${tool.slug}`;
+    ctx.waitUntil(recordDownload(db, key, release.version).catch((error) => console.warn(`[downloads] count failed for ${key}: ${error}`)));
+  }
+  return new Response(null, { status: 302, headers: { location: file.url, "cache-control": "no-store" } });
+}
+
 function adminJson(status: number, payload: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -497,6 +517,9 @@ export default {
     }
     if (/^\/download\/7-days-to-die\/bundle\/?$/.test(url.pathname)) {
       return handleBundle(request, env, ctx, url);
+    }
+    if (url.pathname.startsWith("/download/tools/")) {
+      return handleToolDownload(request, env, ctx, url.pathname);
     }
     if (url.pathname.startsWith("/download/")) {
       return handleDownloadRedirect(request, env, ctx, url.pathname);

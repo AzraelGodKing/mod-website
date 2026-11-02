@@ -1,0 +1,62 @@
+---
+// Desktop apps for a game, under its mod list. The buttons go through
+// /download/tools/<slug>, which always sends the newest GitHub release; the version
+// and sizes here are read at build time and left out when GitHub can't be reached.
+import { formatBytes } from "../downloads/latest.mjs";
+import { VARIANTS, fetchLatestRelease, releasesPage, toolsForGame } from "../downloads/tools.mjs";
+
+interface Props {
+  game: string;
+}
+
+const { game } = Astro.props;
+const tools = await Promise.all(
+  toolsForGame(game).map(async (tool) => ({
+    tool,
+    release: await fetchLatestRelease(tool, (input, init) => fetch(input, { headers: init?.headers })),
+  })),
+);
+const variants = Object.entries(VARIANTS) as [keyof typeof VARIANTS, (typeof VARIANTS)[keyof typeof VARIANTS]][];
+---
+
+{tools.length > 0 && (
+  <section class="zd-wrap zd-tools" aria-labelledby="zd-tools-title">
+    <h2 id="zd-tools-title">Tools</h2>
+    {tools.map(({ tool, release }) => (
+      <article class="zd-tool" id={tool.slug}>
+        <div class="zd-tool-text">
+          <h3>
+            {tool.name}
+            {release && <span class="zd-tool-ver">v{release.version}</span>}
+          </h3>
+          <p>{tool.summary}</p>
+          <p class="zd-tool-meta">
+            Windows ·{" "}
+            <a href={release?.notes ?? releasesPage(tool)}>Release notes</a> ·{" "}
+            <a href={`https://github.com/${tool.repo}`}>Source on GitHub</a>
+          </p>
+        </div>
+        <ul class="zd-tool-files">
+          {variants.map(([variant, info]) => {
+            const size = formatBytes(release?.files[variant]?.bytes);
+            return (
+              <li>
+                <a
+                  class:list={["zd-get", variant !== "setup" && "is-alt"]}
+                  href={`/download/tools/${tool.slug}${variant === "setup" ? "" : `/${variant}`}`}
+                  aria-label={`Download ${tool.name}: ${info.label}`}
+                >
+                  {info.label}
+                </a>
+                <span>
+                  {info.note}
+                  {size && ` ${size}.`}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </article>
+    ))}
+  </section>
+)}

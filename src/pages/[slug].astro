@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import ModList from "../components/ModList.astro";
 import StoreCounts from "../components/StoreCounts.astro";
+import Tools from "../components/Tools.astro";
 import { games } from "../data/games";
 import { modsForGame, previewFor, r2Download, uploadedOn } from "../data/mods";
 import { featuredOrder, hubIndex, hubInfo, type ModRow } from "../data/hub-index";
@@ -80,7 +81,8 @@ const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct d
                 {rows.length} mods for colonies that farm, harden, dig, remember, make time for each other, and keep the small comforts.
               </p>
               <p class="zd-hero-link">
-                <a href="/rimworld/check">Check your mod list</a> for missing requirements, conflicts and load order.
+                <a href="/rimworld/check">Check your mod list</a> for missing requirements, conflicts and load order, or get{" "}
+                <a href="#modwright">Modwright</a> to sort it on Windows.
               </p>
             </>
           ) : sunhaven ? (
@@ -100,6 +102,9 @@ const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct d
               <p>
                 {rows.length} mods for the horde. Search, filter by what you need, and see at a glance whether it goes on the server, your game, or both.
               </p>
+              <p class="zd-hero-link">
+                <a href="#survivors-toolkit">Survivor's Toolkit</a> turns them on and off, keeps profiles and starts the game.
+              </p>
             </>
           )}
           <StoreCounts game={game.slug} variant="hero" />
@@ -113,6 +118,7 @@ const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct d
           featured={!sevendays}
           bundle={sevendays}
         />
+        <Tools game={game.slug} />
       </div>
 
 </Base>

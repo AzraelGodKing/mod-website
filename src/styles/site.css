@@ -1589,6 +1589,101 @@ body.rw-site > header nav a[aria-current] {
   background: var(--ml-hot-2);
 }
 
+.zd-get.is-alt {
+  background: transparent;
+  color: var(--ml-ink);
+  box-shadow: inset 0 0 0 1px var(--ml-line);
+}
+
+.zd-get.is-alt:hover {
+  background: var(--ml-hover);
+  box-shadow: inset 0 0 0 1px var(--ml-hot);
+}
+
+/* Desktop apps under a game's mod list. */
+.zd-tools {
+  padding-top: 2.4rem;
+}
+
+.zd-tools h2 {
+  margin: 0 0 0.8rem;
+  font-family: var(--ml-display);
+  text-transform: var(--ml-case);
+  letter-spacing: 0.04em;
+  font-size: 1.35rem;
+}
+
+.zd-tool {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1rem 2rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  background: var(--ml-panel);
+}
+
+.zd-tool + .zd-tool {
+  margin-top: 0.8rem;
+}
+
+.zd-tool h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.zd-tool-ver {
+  margin-left: 0.5rem;
+  color: var(--ml-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.zd-tool p {
+  margin: 0 0 0.5rem;
+  color: var(--ml-desc);
+  line-height: 1.5;
+}
+
+.zd-tool .zd-tool-meta {
+  margin: 0;
+  color: var(--ml-muted);
+  font-size: 0.85rem;
+}
+
+.zd-tool-meta a {
+  color: var(--ml-soft);
+}
+
+.zd-tool-files {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-content: start;
+}
+
+.zd-tool-files .zd-get {
+  white-space: nowrap;
+}
+
+.zd-tool-files li {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  color: var(--ml-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .zd-tool {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .zd-get.is-soon {
   background: var(--ml-line);
   color: var(--ml-soft);
