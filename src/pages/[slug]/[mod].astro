@@ -43,6 +43,19 @@ const info = sevenInfo ?? hubInfo(mod);
 const countRows = statRows(mod.game, true);
 const commands = sevendays ? commandsFor(mod.slug) : undefined;
 const guide = mod.guide;
+// The "Works with" list links each mod this game has a page for.
+const nameKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+const sameGame = new Map(modsForGame(mod.game).map((entry) => [nameKey(entry.name), entry]));
+const compatEntries = (list: { name: string; note: string }[] | undefined) =>
+  (list ?? []).map((entry) => {
+    const match = sameGame.get(nameKey(entry.name));
+    return { ...entry, href: match ? `/${match.game}/${match.slug}/` : undefined };
+  });
+const compatGroups = [
+  { kind: "good", label: "Works with", entries: compatEntries(guide?.worksWith) },
+  { kind: "avoid", label: "Leave these off", entries: compatEntries(guide?.avoid) },
+].filter((group) => group.entries.length);
+const compatTitle = compatGroups.length === 1 ? compatGroups[0].label : "Alongside other mods";
 const overview = guide?.overview?.length ? guide.overview : [mod.description];
 const sections = guide?.sections ?? [];
 const facts = fileFacts(mod);
@@ -372,41 +385,24 @@ const storeLinks = [
             )
           }
           {
-            (guide?.worksWith?.length || guide?.avoid?.length || guide?.compatNotes?.length) ? (
+            compatGroups.length || guide?.compatNotes?.length ? (
               <section class="rw-section">
-                <h2>Alongside other mods</h2>
-                <div class="rw-compat">
-                  {
-                    guide.worksWith?.length ? (
-                      <div>
-                        <h3>Works with</h3>
-                        <ul class="rw-notes">
-                          {guide.worksWith.map((entry) => (
-                            <li>
-                              <strong>{entry.name}</strong>
-                              {entry.note ? ` — ${entry.note}` : ""}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null
-                  }
-                  {
-                    guide.avoid?.length ? (
-                      <div>
-                        <h3>Leave these off</h3>
-                        <ul class="rw-notes">
-                          {guide.avoid.map((entry) => (
-                            <li>
-                              <strong>{entry.name}</strong>
-                              {entry.note ? ` — ${entry.note}` : ""}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null
-                  }
-                </div>
+                <h2>{compatTitle}</h2>
+                {compatGroups.map((group) => (
+                  <div class={`rw-compat rw-compat-${group.kind}`}>
+                    {compatGroups.length > 1 && <h3 class="rw-compat-label">{group.label}</h3>}
+                    <ul>
+                      {group.entries.map((entry) => (
+                        <li>
+                          <span class="rw-compat-name">
+                            {entry.href ? <a href={entry.href}>{entry.name}</a> : entry.name}
+                          </span>
+                          {entry.note && <span class="rw-compat-note">{entry.note}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
                 {guide.compatNotes?.map((note) => (
                   <p class="rw-intro">{note}</p>
                 ))}
