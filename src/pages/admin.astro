@@ -247,10 +247,22 @@ const links = [
             The version each page was built with next to what <code>downloads.json</code> holds right now. A newer upload
             shows on the site without a rebuild.
           </p>
-          <label class="adm-toggle">
-            <input type="checkbox" id="adm-release-attention" />
-            <span>Needs attention only</span>
-          </label>
+          <div class="adm-filters">
+            <label class="adm-select">
+              <span>Game</span>
+              <select id="adm-release-game">
+                <option value="">All games</option>
+                {games.map((game) => <option value={game.slug}>{game.name}</option>)}
+              </select>
+            </label>
+            <label class="adm-select">
+              <span>Status</span>
+              <select id="adm-release-status">
+                <option value="">All statuses</option>
+                <option value="attention">Needs attention</option>
+              </select>
+            </label>
+          </div>
         </div>
         <div class="adm-table-wrap">
           <table class="adm-table is-left">
@@ -660,11 +672,30 @@ const links = [
       };
       const needsAttention = (mod) => stateLabels[mod.state]?.[1] === "warn";
       let releases = [];
-      const attention = $("#adm-release-attention");
+      const releaseGame = $("#adm-release-game");
+      const releaseStatus = $("#adm-release-status");
+      releaseStatus.append(
+        ...Object.entries(stateLabels).map(([value, [label]]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          return option;
+        }),
+      );
       function renderReleases() {
         const tbody = $("#adm-releases");
-        const list = attention.checked ? releases.filter(needsAttention) : releases;
-        if (list.length === 0) return emptyRow(tbody, 6, attention.checked ? "Nothing needs attention." : "No mods.");
+        const game = releaseGame.value;
+        const status = releaseStatus.value;
+        const list = releases.filter(
+          (mod) =>
+            (!game || mod.game === game) &&
+            (!status || (status === "attention" ? needsAttention(mod) : mod.state === status)),
+        );
+        if (list.length === 0) {
+          const message =
+            releases.length === 0 ? "No mods." : status === "attention" && !game ? "Nothing needs attention." : "No releases match these filters.";
+          return emptyRow(tbody, 6, message);
+        }
         tbody.replaceChildren(
           ...list.map((mod) => {
             const row = document.createElement("tr");
@@ -709,7 +740,8 @@ const links = [
           emptyRow($("#adm-releases"), 6, error.message);
         }
       }
-      attention.addEventListener("change", renderReleases);
+      releaseGame.addEventListener("change", renderReleases);
+      releaseStatus.addEventListener("change", renderReleases);
 
       // ---- Activity ----
       async function loadActivity() {
