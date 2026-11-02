@@ -7,6 +7,8 @@ import { hubInfo } from "../../data/hub-index";
 import { fileFacts, gameVersionLabel, isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, versionDownload, type ModEntry } from "../../data/mods";
 import { renderInline } from "../../../scripts/release-notes.mjs";
 import { statRows } from "../../data/stats";
+import { statText, statValues } from "../../data/stat-values.mjs";
+import { statsSnapshot } from "../../data/stats-snapshot";
 import { commandsFor } from "../../data/sevendays-commands";
 import { indexInfo, installHints, installLabels } from "../../data/sevendays-index";
 import { heroVars, lookFor } from "../../data/themes";
@@ -38,6 +40,7 @@ const sevendays = mod.game === "7-days-to-die";
 const sevenInfo = sevendays ? indexInfo(mod) : undefined;
 const info = sevenInfo ?? hubInfo(mod);
 const countRows = statRows(mod.game, true);
+const countValues = statValues(statsSnapshot, "mod", `${mod.game}/${mod.slug}`);
 const commands = sevendays ? commandsFor(mod.slug) : undefined;
 const guide = mod.guide;
 // The "Works with" list links each mod this game has a page for.
@@ -66,6 +69,34 @@ const badgeBase = `/badge/${mod.game}/${mod.slug}`;
 const badgeMarkdown = `[![Downloads](${siteUrl}${badgeBase}.svg)](${pageUrl}) [![Version](${siteUrl}${badgeBase}/version.svg)](${pageUrl})`;
 const changeDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
 const changeLabel = (date?: string) => (date && !Number.isNaN(Date.parse(date)) ? changeDate.format(new Date(date)) : "");
+// Search engines read this as the mod's card: what it is, the version, and where it sits on the site.
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: mod.name,
+    description: mod.description,
+    url: `${siteUrl}/${mod.game}/${mod.slug}`,
+    applicationCategory: "GameApplication",
+    applicationSubCategory: `${game?.name ?? "Game"} mod`,
+    operatingSystem: "Windows",
+    softwareVersion: mod.version,
+    ...(picture ? { image: `${siteUrl}${picture.src}` } : {}),
+    ...(updated ? { dateModified: updated.iso } : {}),
+    ...(mod.requires?.length ? { softwareRequirements: mod.requires.join(", ") } : {}),
+    author: { "@type": "Person", name: "Azrael", url: siteUrl },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Azrael's Mods", item: `${siteUrl}/` },
+      { "@type": "ListItem", position: 2, name: `${game?.name ?? "Game"} mods`, item: `${siteUrl}/${mod.game}` },
+      { "@type": "ListItem", position: 3, name: mod.name, item: `${siteUrl}/${mod.game}/${mod.slug}` },
+    ],
+  },
+];
 const storeLinks = [
   ["Steam", mod.links.steam],
   ["Thunderstore", mod.links.thunderstore],
@@ -80,6 +111,7 @@ const storeLinks = [
   image={picture ? { src: picture.src, alt: `${mod.name} preview`, square: picture.square } : undefined}
   feed={notReady ? undefined : { title: `${mod.name} updates`, href: feedHref }}
 >
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, "\\u003c")} />
       <div
         class:list={[
           mod.game === "rimworld" ? "rw-hub rw-mod" : mod.game === "sun-haven" ? "sh-hub sh-mod" : "zd-hub zd-mod",
@@ -167,7 +199,7 @@ const storeLinks = [
                 {countRows.map((row) => (
                   <div>
                     <dt>{row.label}</dt>
-                    <dd data-field={row.field}>—</dd>
+                    <dd data-field={row.field}>{statText(countValues, row.field)}</dd>
                   </div>
                 ))}
                 {(worksOn || mod.requires?.length) && (
@@ -223,6 +255,9 @@ const storeLinks = [
               <figure class="rw-poster">
                 <img
                   src={preview}
+                  srcset={picture?.srcset}
+                  fetchpriority="high"
+                  sizes={picture?.srcset ? (sevendays ? "(max-width: 936px) calc(100vw - 2.5rem), 896px" : "(max-width: 1180px) calc(100vw - 2.5rem), 1140px") : undefined}
                   alt={`${mod.name} preview`}
                   width={picture?.width ?? 960}
                   height={picture?.height ?? 540}

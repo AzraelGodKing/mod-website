@@ -1,0 +1,8 @@
+# Cloudflare static assets: built CSS, JS and fonts have a content hash in
+# their names, so they can be cached for a year. Mod pictures can change when a
+# mod updates, so they get a day.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/catalog/*
+  Cache-Control: public, max-age=86400

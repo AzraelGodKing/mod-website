@@ -884,7 +884,7 @@ body.rw-site > header nav a[aria-current] {
   --ml-soft: #cbbba8;
   --ml-desc: #b9a998;
   --ml-muted: #a89888;
-  --ml-faint: #8a7a6a;
+  --ml-faint: #988878;
   --ml-line: #3a3028;
   --ml-line-soft: #2a231f;
   --ml-field: #1a1614;
@@ -937,8 +937,8 @@ body.rw-site > header nav a[aria-current] {
   --ml-ink: #2a2119;
   --ml-soft: #5c4a38;
   --ml-desc: #6b5843;
-  --ml-muted: #8a6d4e;
-  --ml-faint: #9a8268;
+  --ml-muted: #765c40;
+  --ml-faint: #80664c;
   --ml-line: #e6d5b8;
   --ml-line-soft: #f0e4cf;
   --ml-field: #fffdf8;
@@ -1035,6 +1035,14 @@ body.rw-site > header nav a[aria-current] {
 .zd-hub.guide-page .rw-section > h2,
 .zd-hub.guide-page .zd-config h2 {
   text-transform: uppercase;
+}
+
+/* The per-mod accent is a mid tone; on the dark 7 Days pages small accent text gets a lighter mix to stay readable. */
+.zd-hub.guide-page .rw-kicker,
+.zd-hub.guide-page .rw-kicker a,
+.zd-hub.guide-page .rw-tagline,
+.zd-hub.guide-page .rw-feature-tag {
+  color: color-mix(in srgb, var(--accent) 62%, #fff);
 }
 
 .zd-hub.guide-page .rw-tabs button,
@@ -1275,11 +1283,33 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .zd-name {
+  position: relative;
   display: grid;
   gap: 0.1rem;
   min-width: 0;
   color: var(--ml-ink);
+}
+
+/* The name is the link; it stretches over the whole cell so the picture and blurb click through too. */
+.zd-name-link,
+.zd-name-link:visited {
+  color: inherit;
   text-decoration: none;
+}
+
+.zd-name-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.zd-name-link:focus-visible {
+  outline: none;
+}
+
+.zd-name:has(.zd-name-link:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .zd-name.has-thumb {
@@ -1328,17 +1358,14 @@ body.rw-site > header nav a[aria-current] {
   align-self: start;
 }
 
-.zd-name:visited {
-  color: var(--ml-ink);
-}
-
 .zd-name strong {
   font-size: 1.02rem;
   letter-spacing: 0.03em;
   text-transform: var(--ml-case);
 }
 
-.zd-name:hover strong {
+.zd-name:hover strong,
+.zd-name:has(.zd-name-link:focus-visible) strong {
   color: var(--accent);
   text-decoration: underline;
 }
@@ -1573,7 +1600,7 @@ body.rw-site > header nav a[aria-current] {
 
 /* ---- 7 Days: pick mods for one server or player zip ---- */
 .zd-list.has-bundle {
-  --zd-cols: minmax(0, 1fr) 6.5rem 8rem 3.8rem 6.6rem 5.4rem 8rem;
+  --zd-cols: minmax(0, 1fr) 6.5rem 8rem 3.8rem 6.6rem 5.4rem 9rem;
 }
 
 .has-bundle .zd-act {
@@ -2234,6 +2261,56 @@ body.entry-site main {
 .plain-links li span {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.not-found h2 {
+  margin: 1.75rem 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.not-found-code {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.not-found-search {
+  margin-top: 1.75rem;
+}
+
+.not-found-search label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+.not-found-search div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.not-found-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.not-found-search button {
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
 }
 
 /* ---- Mod page: compact Details, file check, and changelog ---- */

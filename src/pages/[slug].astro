@@ -38,10 +38,38 @@ const blurbs: Record<string, string> = {
 const stores = [...new Set(gameMods.flatMap((mod) => [mod.links.steam && "Steam", mod.links.thunderstore && "Thunderstore", mod.links.nexus && "Nexus"]).filter(Boolean))];
 const blurb = blurbs[game.slug] ? ` ${blurbs[game.slug]}` : "";
 const alongside = stores.length > 0 ? ` alongside ${stores.join(" and ")}` : "";
+const siteUrl = (Astro.site?.origin ?? "https://azraelsmods.com").replace(/\/$/, "");
+// The catalog as a list of its mods, plus where it sits on the site.
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${game.name} mods`,
+    url: `${siteUrl}/${game.slug}`,
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: rows.map((row, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: row.mod.name,
+        url: `${siteUrl}/${game.slug}/${row.mod.slug}`,
+      })),
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Azrael's Mods", item: `${siteUrl}/` },
+      { "@type": "ListItem", position: 2, name: `${game.name} mods`, item: `${siteUrl}/${game.slug}` },
+    ],
+  },
+];
 const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct downloads${alongside}.`;
 ---
 
 <Base title={`${game.name} mods`} description={description} game={game.slug}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, "\\u003c")} />
       <div class:list={["zd-hub", rimworld && "ml-rimworld", sunhaven && "ml-sunhaven"]}>
         <header class="zd-hero">
           {rimworld ? (

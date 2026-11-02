@@ -1,5 +1,7 @@
 ---
 import { statRows } from "../data/stats";
+import { statText, statValues } from "../data/stat-values.mjs";
+import { statsSnapshot } from "../data/stats-snapshot";
 
 interface Props {
   game: string;
@@ -9,6 +11,7 @@ interface Props {
 
 const { game, mod, variant } = Astro.props;
 const rows = statRows(game, variant === "hero");
+const values = mod ? statValues(statsSnapshot, "mod", `${game}/${mod}`) : statValues(statsSnapshot, "game", game);
 ---
 
 <dl
@@ -20,7 +23,7 @@ const rows = statRows(game, variant === "hero");
     rows.map((row) => (
       <div>
         <dt>{row.label}</dt>
-        <dd data-field={row.field}>—</dd>
+        <dd data-field={row.field}>{statText(values, row.field)}</dd>
       </div>
     ))
   }
