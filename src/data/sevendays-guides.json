@@ -171,7 +171,7 @@
     "notes": [
       "Server only. Players install nothing and can leave EasyAntiCheat on.",
       "Replacing this mod's code still needs a server restart. kbags reload only refreshes the bag times.",
-      "1.2.1 is the version that runs on 7 Days 3.3. That update removed the old backpack timer."
+      "Built for 7 Days V3.4. 1.2.1 was the first version for 3.3, which removed the old backpack timer."
     ],
     "worksWith": [],
     "avoid": [],
@@ -223,7 +223,7 @@
   },
   "storage-backpack": {
     "overview": [
-      "A craftable Storage Backpack that you set down and fill like a 48-slot chest. Break it up close and it goes back into your inventory. Place any Storage Backpack again and everything is back inside.",
+      "A craftable Storage Backpack that you set down and fill like a 48-slot chest. Break it up close and it goes back into your inventory as a Storage Backpack (Packed). Place that one again and everything is back inside.",
       "The server keeps the contents, so nothing is lost or duplicated."
     ],
     "badges": ["Server", "Optional for players"],
@@ -238,11 +238,11 @@
           },
           {
             "title": "Packing up",
-            "body": "Break it with a melee tool or your fists. It goes back into your inventory and the server holds what was inside. A private chat message says what was packed and unpacked."
+            "body": "Break it with a melee tool or your fists. It goes back into your inventory as a Storage Backpack (Packed) if it had things in it, or a plain one if it was empty. The server holds what was inside. A private chat message says what was packed and unpacked."
           },
           {
             "title": "Unpacking",
-            "body": "Place any Storage Backpack and your stored contents come back, newest first if you packed more than one. Quality, durability, mods, dyes, and ammo counts are all kept."
+            "body": "Place the Packed backpack and your stored contents come back, newest first if you packed more than one. Quality, durability, mods, dyes, and ammo counts are all kept."
           },
           {
             "title": "Broken by something else",
@@ -260,7 +260,7 @@
           },
           {
             "title": "Packed backpacks",
-            "body": "They don't stack, can't be sold to traders, and can't be scrapped. Giving a friend a plain backpack doesn't give them your stored contents."
+            "body": "They don't stack, can't be sold to traders, and can't be scrapped. Contents that went back to your inventory are yours: a friend who places your Packed backpack gets an empty one. A Packed backpack dropped on the ground belongs to whoever places it."
           },
           {
             "title": "Dupe-safe",
@@ -414,7 +414,7 @@
     ],
     "notes": [
       "Restart after editing upgrades.txt. A typo in an item name shows up in the game log.",
-      "1.0.1 is the version for 7 Days 3.3.",
+      "Built for 7 Days V3.4. 1.0.1 was the first version for 3.3.",
       "Players launch without EasyAntiCheat."
     ],
     "worksWith": [

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Storage Backpack guide matches 1.0.4: a backpack with things in it comes back to your inventory as a Storage Backpack (Packed), and a friend who places your Packed backpack gets an empty one. The Keep Backpacks and Upgrade Bench notes now say the mods are built for V3.4 instead of naming the 3.3 versions as current.
 - README badges: `/badge/<game>/<mod>.svg` shows a mod's downloads (this site + Thunderstore + Nexus; Steam-only mods show subscribers) and `/badge/<game>/<mod>/version.svg` its current version, as shields-style SVGs for GitHub, Nexus or Thunderstore pages. Each mod page's Details has a "README badges" toggle with a preview and a Copy button for the Markdown. Counts are cached for an hour, the version for five minutes; an unknown mod gets a grey "mod not found" badge.
 - Craftable Stained Glass is on the 7 Days to Die list (Crafting, Server only) with a preview image and a guide. It has no Linear label yet, so its reports carry the game and website labels. Its page appears once the mod is on 7d2d_mods `main`.
 - Storage Backpack is on the 7 Days to Die list (Gameplay, Server, client optional) with a preview image, a guide, its `sbp` console commands, and a Works with note for Drone Loot Filter. It has no Linear label yet, so its reports carry the game and website labels. Its page appears once the mod is on 7d2d_mods `main`.
