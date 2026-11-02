@@ -61,3 +61,13 @@ test("a failed GitHub read gives null instead of throwing", async () => {
   });
   assert.equal(ok.version, "0.4.0");
 });
+
+test("tool counts come from the site's clicks, with Survivor's Toolkit's test click taken off", async () => {
+  const { toolCounts } = await import("../src/downloads/tools.mjs");
+  assert.equal(toolCounts(null), null);
+  assert.deepEqual(toolCounts({ "tools/modwright": 12, "tools/survivors-toolkit": 5, "rimworld/strata": 99 }), {
+    "tools/modwright": { downloads: 12 },
+    "tools/survivors-toolkit": { downloads: 4 },
+  });
+  assert.deepEqual(toolCounts({}), { "tools/modwright": { downloads: 0 }, "tools/survivors-toolkit": { downloads: 0 } });
+});

@@ -3,6 +3,8 @@
 // /download/tools/<slug>, which always sends the newest GitHub release; the version
 // and sizes here are read at build time and left out when GitHub can't be reached.
 import { formatBytes } from "../downloads/latest.mjs";
+import { formatStat } from "../data/stat-values.mjs";
+import { statsSnapshot } from "../data/stats-snapshot";
 import { VARIANTS, fetchLatestRelease, releasesPage, toolsForGame } from "../downloads/tools.mjs";
 
 interface Props {
@@ -31,7 +33,10 @@ const variants = Object.entries(VARIANTS) as [keyof typeof VARIANTS, (typeof VAR
           </h3>
           <p>{tool.summary}</p>
           <p class="zd-tool-meta">
-            Windows ·{" "}
+            <span class="zd-tool-count">
+              <span data-tool-count={`tools/${tool.slug}`}>{formatStat(statsSnapshot.tools?.[`tools/${tool.slug}`]?.downloads)}</span> downloads
+            </span>{" "}
+            · Windows ·{" "}
             <a href={release?.notes ?? releasesPage(tool)}>Release notes</a> ·{" "}
             <a href={`https://github.com/${tool.repo}`}>Source on GitHub</a>
           </p>
@@ -60,3 +65,14 @@ const variants = Object.entries(VARIANTS) as [keyof typeof VARIANTS, (typeof VAR
     ))}
   </section>
 )}
+
+<script>
+  // The live counts from /api/stats replace the ones baked in at build time.
+  document.addEventListener("stats:loaded", (event) => {
+    const tools = (event as CustomEvent).detail?.tools ?? {};
+    for (const node of document.querySelectorAll<HTMLElement>("[data-tool-count]")) {
+      const value = tools[node.dataset.toolCount ?? ""]?.downloads;
+      if (typeof value === "number") node.textContent = value.toLocaleString("en-US");
+    }
+  });
+</script>

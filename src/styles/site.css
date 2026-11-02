@@ -1651,6 +1651,11 @@ body.rw-site > header nav a[aria-current] {
   font-size: 0.85rem;
 }
 
+.zd-tool-count {
+  color: var(--ml-soft);
+  font-weight: 700;
+}
+
 .zd-tool-meta a {
   color: var(--ml-soft);
 }
