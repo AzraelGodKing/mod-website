@@ -90,6 +90,11 @@ const known: Record<string, IndexInfo> = {
     installs: "client",
     short: "Shows your vehicle speed on the HUD in MPH or KM/H.",
   },
+  "storage-backpack": {
+    category: "Gameplay",
+    installs: "optional",
+    short: "A placeable backpack that packs up with everything still inside.",
+  },
   "upgrade-bench": {
     category: "Crafting",
     installs: "both",

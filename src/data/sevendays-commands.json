@@ -185,6 +185,17 @@
       }
     ]
   },
+  "storage-backpack": {
+    "groups": [
+      {
+        "title": "Server: console",
+        "rows": [
+          { "cmd": "sbp", "does": "List stored backpacks, newest first. active is still packed, used was unpacked in the last 7 days.", "admin": true },
+          { "cmd": "sbp give <player> <id>", "does": "Drop a packed backpack with that id at an online player. Brings back a lost one; a used id is made active again. The id is in the server log.", "admin": true }
+        ]
+      }
+    ]
+  },
   "remove-any-entity": {
     "intro": "Server console commands. Creatures already in the world stay unless you cull them.",
     "groups": [
