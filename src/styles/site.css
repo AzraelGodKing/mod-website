@@ -870,8 +870,7 @@ body.rw-site > header nav a[aria-current] {
 .guide-page .rw-section h2,
 .guide-page .rw-more > h2,
 .guide-page .rw-feature h3,
-.guide-page .rw-faq h3,
-.guide-page .rw-compat h3 {
+.guide-page .rw-faq h3 {
   color: var(--hero-ink);
 }
 
@@ -919,7 +918,6 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .rw-section > h2,
-.rw-compat h3,
 .rw-feature h3,
 .rw-faq h3 {
   font-family: "Cormorant Garamond", Palatino, serif;
@@ -957,8 +955,7 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .rw-features,
-.rw-faq,
-.rw-compat {
+.rw-faq {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
   gap: 0.8rem;
@@ -970,8 +967,7 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .rw-feature h3,
-.rw-faq h3,
-.rw-compat h3 {
+.rw-faq h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.6rem;
@@ -1009,8 +1005,71 @@ body.rw-site > header nav a[aria-current] {
   font-weight: 700;
 }
 
-.rw-compat {
-  margin-bottom: 0.8rem;
+/* "Works with" / "Leave these off": one row per mod, name then note. */
+.rw-compat ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid color-mix(in srgb, var(--accent, #c9a45c) 28%, transparent);
+}
+
+.rw-compat li {
+  display: grid;
+  grid-template-columns: minmax(9rem, 13rem) 1fr;
+  gap: 0.2rem 1.25rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent, #c9a45c) 28%, transparent);
+}
+
+.rw-compat-name {
+  color: var(--hero-ink, #f3e9d8);
+  font-weight: 700;
+}
+
+.rw-compat-name a,
+.rw-compat-name a:visited {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent, #c9a45c) 55%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.rw-compat-name a:hover {
+  color: var(--accent, #c9a45c);
+  text-decoration-color: currentColor;
+}
+
+.rw-compat-avoid .rw-compat-name::before {
+  content: "✕ ";
+  color: var(--accent, #c9a45c);
+}
+
+.rw-compat-note {
+  color: var(--hero-muted, #a89882);
+  font-size: 0.95rem;
+}
+
+.rw-compat + .rw-compat {
+  margin-top: 1.4rem;
+}
+
+.rw-compat-label {
+  margin: 0 0 0.5rem;
+  color: var(--accent, #c9a45c);
+  font: 700 0.7rem "Red Hat Text", "Segoe UI", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rw-compat + .rw-intro {
+  margin-top: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .rw-compat li {
+    grid-template-columns: 1fr;
+  }
 }
 
 .guide-page .rw-actions a,
@@ -1075,7 +1134,6 @@ body.rw-site > header nav a[aria-current] {
 .sh-hub.guide-page .rw-section > h2,
 .sh-hub.guide-page .rw-feature h3,
 .sh-hub.guide-page .rw-faq h3,
-.sh-hub.guide-page .rw-compat h3,
 .sh-hub.guide-page .rw-stat-num,
 .sh-hub.guide-page .rw-more > h2,
 .sh-hub.guide-page .report h2 {
@@ -1421,7 +1479,6 @@ body.rw-site > header nav a[aria-current] {
 .zd-hub.guide-page .rw-section > h2,
 .zd-hub.guide-page .rw-feature h3,
 .zd-hub.guide-page .rw-faq h3,
-.zd-hub.guide-page .rw-compat h3,
 .zd-hub.guide-page .rw-stat-num,
 .zd-hub.guide-page .rw-more > h2,
 .zd-hub.guide-page .report h2 {
