@@ -176,3 +176,58 @@ test("Bait's webhook.txt keeps its comments and ends with the URL", () => {
     "# Copy this file to webhook.txt\r\n# Bait posts rare tames.\r\nhttps://discord.com/api/webhooks/1/x\r\n",
   );
 });
+
+test("Bait's webhook.txt from 1.13.0 is a settings file with sections, placeholders and the off switch", () => {
+  const bait = [
+    "# Bait Discord posts",
+    "# In every message you can use:",
+    "#   {player}   the player who tamed it",
+    "#   {creature} the creature type",
+    "#   \\n         a new line",
+    "",
+    "Webhook=",
+    "",
+    "# off stops every Bait post.",
+    "Enabled=on",
+    "",
+    "# ---- TAMES ----------------------------------------",
+    "# rare = radiated and up, all = every tame, off = none.",
+    "PostTames=rare",
+    "",
+    "MsgTame=🧟 **{player}** tamed a **{creature}**!",
+    "",
+  ].join("\n");
+  assert.deepEqual(parsePlaceholders(bait).map((entry) => entry.name), ["{player}", "{creature}", "\\n"]);
+  const fields = parseSettings(bait);
+  assert.deepEqual(fields.map((field) => field.key), ["Webhook", "Enabled", "PostTames", "MsgTame"]);
+  assert.equal(settingSections(bait).get(fields[2].line), "Tames");
+  assert.deepEqual(optionsFor({}, "Enabled", "on"), ["on", "off"]);
+  const out = renderSettings(bait, { Webhook: "https://discord.com/api/webhooks/1/x", Enabled: "off", PostTames: "all" }).split("\r\n");
+  assert.ok(out.includes("Webhook=https://discord.com/api/webhooks/1/x"));
+  assert.ok(out.includes("Enabled=off"));
+  assert.ok(out.includes("PostTames=all"));
+  assert.ok(out.includes("MsgTame=🧟 **{player}** tamed a **{creature}**!"));
+});
+
+test("a config entry falls back to its older builder while the shipped file is the old kind", async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const path = await import("node:path");
+  const { attachConfig } = await import("../scripts/collect-mods.mjs");
+  const entry = { id: "webhook", file: "mod/webhook.example.txt", output: "webhook.txt", kind: "settings", webhook: "Webhook", intro: "new", fallback: { kind: "webhook", intro: "old" } };
+  const mod = { game: "7-days-to-die", slug: "zombie-and-animal-bait" };
+  const dir = mkdtempSync(path.join(tmpdir(), "bait-"));
+  mkdirSync(path.join(dir, "mod"));
+  writeFileSync(path.join(dir, "mod", "ModInfo.xml"), '<xml><Name value="AzraelBait"/></xml>');
+  writeFileSync(path.join(dir, "mod", "webhook.example.txt"), "# Copy this file to webhook.txt\n# https://discord.com/api/webhooks/...\n");
+  const old = attachConfig(mod, dir, { [mod.slug]: [entry] }).configs[0];
+  assert.equal(old.kind, "webhook");
+  assert.equal(old.intro, "old");
+  assert.equal(old.fallback, undefined);
+  assert.equal(old.folder, "AzraelBait");
+  writeFileSync(path.join(dir, "mod", "webhook.example.txt"), "# Bait\nWebhook=\nEnabled=on\n");
+  const now = attachConfig(mod, dir, { [mod.slug]: [entry] }).configs[0];
+  assert.equal(now.kind, "settings");
+  assert.equal(now.intro, "new");
+  assert.equal(now.fallback, undefined);
+});
