@@ -61,6 +61,10 @@ const sections = guide?.sections ?? [];
 const facts = fileFacts(mod);
 const worksOn = gameVersionLabel(mod);
 const changelog = mod.changelog ?? [];
+const siteUrl = (Astro.site?.origin ?? "https://azraelsmods.com").replace(/\/$/, "");
+const pageUrl = `${siteUrl}/${mod.game}/${mod.slug}/`;
+const badgeBase = `/badge/${mod.game}/${mod.slug}`;
+const badgeMarkdown = `[![Downloads](${siteUrl}${badgeBase}.svg)](${pageUrl}) [![Version](${siteUrl}${badgeBase}/version.svg)](${pageUrl})`;
 const changeDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
 const changeLabel = (date?: string) => (date && !Number.isNaN(Date.parse(date)) ? changeDate.format(new Date(date)) : "");
 const storeLinks = [
@@ -181,6 +185,17 @@ const storeLinks = [
                   </div>
                 )}
               </dl>
+              <details class="zd-verify zd-badges">
+                <summary>README badges</summary>
+                <span class="zd-badge-preview">
+                  <img src={`${badgeBase}.svg`} alt="Downloads badge" height="20" loading="lazy" />
+                  <img src={`${badgeBase}/version.svg`} alt="Version badge" height="20" loading="lazy" />
+                </span>
+                <span class="zd-hash">
+                  <code data-value={badgeMarkdown} title={badgeMarkdown}>Markdown</code>
+                  <button type="button" class="zd-copy" data-copy-hash>Copy</button>
+                </span>
+              </details>
             </aside>
           </div>
         </header>

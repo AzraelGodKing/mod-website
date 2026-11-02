@@ -25,6 +25,7 @@ import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseD
 import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
 import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
+import { BADGE_COLORS, compactNumber, downloadTotal, parseBadgePath, renderBadge } from "./badges/badge.mjs";
 import { downloadHistory, isBot, recordDownload, recordStoreDay, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
@@ -167,6 +168,43 @@ async function handleDownloads(request: Request): Promise<Response> {
       "cache-control": "public, max-age=300",
     },
   });
+}
+
+function badgeResponse(request: Request, svg: string, status: number, maxAge: number): Response {
+  return new Response(request.method === "HEAD" ? null : svg, {
+    status,
+    headers: {
+      "content-type": "image/svg+xml; charset=utf-8",
+      "cache-control": `public, max-age=${maxAge}`,
+      "access-control-allow-origin": "*",
+    },
+  });
+}
+
+// README badges. GitHub's image proxy (camo) caches by these headers, so the
+// counts update within the hour and the version within five minutes.
+async function handleBadge(request: Request, env: SiteEnv, pathname: string): Promise<Response> {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
+  }
+  const parsed = parseBadgePath(pathname);
+  const key = parsed ? `${parsed.game}/${parsed.slug}` : "";
+  if (!parsed || !catalogMods.some((mod) => `${mod.game}/${mod.slug}` === key)) {
+    return badgeResponse(request, renderBadge("azraelsmods", "mod not found", BADGE_COLORS.missing), 404, 300);
+  }
+  if (parsed.kind === "version") {
+    const version = (await currentDownloads())[key]?.version;
+    const svg = version
+      ? renderBadge("version", `v${version}`, BADGE_COLORS.version)
+      : renderBadge("version", "not hosted", BADGE_COLORS.missing);
+    return badgeResponse(request, svg, 200, 300);
+  }
+  const { mods } = await statsWithSite(env, await readStats(env));
+  const total = downloadTotal(mods[key]);
+  const svg = total
+    ? renderBadge(total.label, compactNumber(total.value), BADGE_COLORS.downloads)
+    : renderBadge("downloads", "n/a", BADGE_COLORS.missing);
+  return badgeResponse(request, svg, 200, 3600);
 }
 
 // An older zip is checked with a HEAD first, so a version that was never hosted
@@ -453,6 +491,9 @@ export default {
     }
     if (url.pathname === "/api/downloads") {
       return handleDownloads(request);
+    }
+    if (url.pathname.startsWith("/badge/")) {
+      return handleBadge(request, env, url.pathname);
     }
     if (/^\/download\/7-days-to-die\/bundle\/?$/.test(url.pathname)) {
       return handleBundle(request, env, ctx, url);
