@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { NOT_READY, compareVersions } from "../src/downloads/latest.mjs";
 import { releaseNotesReader } from "./release-notes.mjs";
+import { parseSettings } from "../src/data/config-builder.mjs";
 
 export { compareVersions };
 
@@ -303,9 +304,18 @@ export function attachConfig(mod, modDir, configs) {
       return [];
     }
     const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
-    return [{ id: "config", ...entry, name: entry.output ?? path.basename(entry.file), folder, text }];
+    const { fallback, ...rest } = entry;
+    // A file from before the mod grew its key = value form (Bait's webhook.txt was only a URL until 1.13.0)
+    // gets the entry's older builder until that version is on main.
+    const used = fallback && rest.webhook && !hasSetting(text, rest.webhook) ? { ...rest, ...fallback } : rest;
+    return [{ id: "config", ...used, name: entry.output ?? path.basename(entry.file), folder, text }];
   });
   return found.length ? { ...mod, configs: found } : mod;
+}
+
+/** An uncommented "key = value" line for key. */
+function hasSetting(text, key) {
+  return parseSettings(text).some((field) => field.key === key && !field.commented);
 }
 
 // build.ps1 zips each mod under its ModInfo.xml Name (AzraelBait, not the repo's Bait folder).

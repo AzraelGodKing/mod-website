@@ -82,12 +82,39 @@
       "id": "webhook",
       "file": "mod/webhook.example.txt",
       "output": "webhook.txt",
-      "kind": "webhook",
+      "kind": "settings",
       "title": "Discord posts",
-      "summary": "Paste your Discord webhook and download a ready webhook.txt, so rare tames, level milestones and evolutions are posted to your channel.",
+      "summary": "Paste your Discord webhook, pick which Bait posts you want (tames, levels, evolutions, retirements, Alphas) and how they read, or turn them all off, and download a ready webhook.txt.",
       "webhook": "Webhook",
-      "intro": "Server only. Already running Blood Moon Sound with a discord.txt? Bait uses that webhook when it has no webhook.txt, so you can skip this.",
-      "after": "Put it in the mod folder on the server (never in a zip you give players), then restart the server."
+      "sections": true,
+      "placeholders": true,
+      "intro": "Server only. Already running Blood Moon Sound with a discord.txt? Leave the URL empty and Bait posts to that webhook, with the choices below. Every message can use the placeholders below; \\n starts a new line, and an empty message uses the standard one.",
+      "after": "Put it in the mod folder on the server (never in a zip you give players), then type  /thrall admin webhook reload  in game chat as an admin, or restart the server.  /thrall admin webhook test  sends a test post.",
+      "options": {
+        "PostTames": [
+          "rare",
+          "all",
+          "off"
+        ]
+      },
+      "hints": {
+        "Enabled": "off stops every Bait post, even with a webhook in Blood Moon Sound's discord.txt",
+        "PostTames": "rare = radiated, charged, infernal, bosses and demolishers; all = every tame; off = none",
+        "TameMinLevel": "Only post tames of this level or more (0 = any)",
+        "LevelEvery": "Post at every multiple of this level, like 50, 100, 150 (0 = never)",
+        "MsgTame": "Posted for a tame: {player}, {creature}, {thrall}, {level}",
+        "MsgLevel": "Posted for a level milestone: {thrall}, {player}, {creature}, {level}, {kills}",
+        "MsgEvolve": "Posted for an evolution: {player}, {from}, {thrall}, {creature}, {level}, {kills}",
+        "MsgRetire": "Posted for a retirement: {player}, {thrall}, {creature}, {level}, {kills}",
+        "MsgAlpha": "Posted when an Alpha appears: {alpha}, {creature}, {level}, {where}, {player}",
+        "MsgAlphaTamed": "Posted when an Alpha is tamed: {player}, {alpha}, {creature}, {level}"
+      },
+      "fallback": {
+        "kind": "webhook",
+        "summary": "Paste your Discord webhook and download a ready webhook.txt, so rare tames, level milestones and evolutions are posted to your channel.",
+        "intro": "Server only. Already running Blood Moon Sound with a discord.txt? Bait uses that webhook when it has no webhook.txt, so you can skip this.",
+        "after": "Put it in the mod folder on the server (never in a zip you give players), then restart the server."
+      }
     }
   ]
 }
