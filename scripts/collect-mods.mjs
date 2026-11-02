@@ -132,6 +132,24 @@ export async function writeThumb(source, dest, square) {
   }
 }
 
+// Mod pages show the wide poster at up to about 1100px, so they get a WebP copy
+// instead of the full PNG. Link previews keep the original file.
+export async function writePoster(source, dest) {
+  let sharp;
+  try {
+    sharp = (await import("sharp")).default;
+  } catch {
+    return false;
+  }
+  try {
+    await sharp(source).resize({ width: 1280, withoutEnlargement: true }).webp({ quality: 82 }).toFile(dest);
+    return true;
+  } catch (error) {
+    console.warn(`Could not make a poster from ${source}: ${error.message}`);
+    return false;
+  }
+}
+
 export function catalogFingerprint(text) {
   return createHash("sha256").update(text).digest("hex");
 }
@@ -318,7 +336,9 @@ async function main() {
         const square = Boolean(size && size.width === size.height);
         const thumbFile = path.join(destDir, "thumb.webp");
         const thumb = (await writeThumb(found.source, thumbFile, square)) ? `/catalog/${mod.game}/${mod.slug}/thumb.webp` : undefined;
-        preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}) };
+        const posterFile = path.join(destDir, "poster.webp");
+        const poster = !square && (await writePoster(found.source, posterFile)) ? `/catalog/${mod.game}/${mod.slug}/poster.webp` : undefined;
+        preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}), ...(poster ? { poster } : {}) };
       }
       entries.push({ mod: attachConfig({ ...mod, images, ...(preview ? { preview } : {}) }, modDir, sevendaysConfigs), dir: modDir });
     }

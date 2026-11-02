@@ -2,7 +2,6 @@
 import Base from "../../layouts/Base.astro";
 import ReportForm from "../../components/ReportForm.astro";
 import ConfigBuilder from "../../components/ConfigBuilder.astro";
-import StoreCounts from "../../components/StoreCounts.astro";
 import { games } from "../../data/games";
 import { hubInfo } from "../../data/hub-index";
 import { fileFacts, gameVersionLabel, isNotReady, mods, modsForGame, previewFor, r2Download, uploadedOn, versionDownload, type ModEntry } from "../../data/mods";
@@ -29,9 +28,7 @@ const look = lookFor(mod.slug);
 const picture = previewFor(mod);
 // A square store icon sits beside the title; a wide poster gets its own row.
 const icon = picture?.square ? picture.src : undefined;
-const preview = picture && !picture.square ? picture.src : undefined;
-// Only the plain fallback layout lists the other mods; the game pages link back to the full list.
-const others = modsForGame(mod.game).filter((entry) => entry.slug !== mod.slug);
+const preview = picture && !picture.square ? picture.poster : undefined;
 const direct = r2Download(mod);
 const updated = uploadedOn(mod);
 const notReady = isNotReady(mod);
@@ -61,6 +58,8 @@ const sections = guide?.sections ?? [];
 const facts = fileFacts(mod);
 const worksOn = gameVersionLabel(mod);
 const changelog = mod.changelog ?? [];
+// A big release lists its first few changes; the rest fold away.
+const NOTES_SHOWN = 6;
 const siteUrl = (Astro.site?.origin ?? "https://azraelsmods.com").replace(/\/$/, "");
 const pageUrl = `${siteUrl}/${mod.game}/${mod.slug}/`;
 const badgeBase = `/badge/${mod.game}/${mod.slug}`;
@@ -81,8 +80,6 @@ const storeLinks = [
   image={picture ? { src: picture.src, alt: `${mod.name} preview`, square: picture.square } : undefined}
   feed={notReady ? undefined : { title: `${mod.name} updates`, href: feedHref }}
 >
-  {
-    mod.game === "rimworld" || mod.game === "sun-haven" || mod.game === "7-days-to-die" ? (
       <div
         class:list={[
           mod.game === "rimworld" ? "rw-hub rw-mod" : mod.game === "sun-haven" ? "sh-hub sh-mod" : "zd-hub zd-mod",
@@ -117,10 +114,28 @@ const storeLinks = [
               {overview.map((paragraph) => (
                 <p class="rw-intro">{paragraph}</p>
               ))}
+              <p class="rw-actions">
+                {
+                  direct && (
+                    <a class="download" href={direct.url}>
+                      Download <span data-latest={latestKey} data-latest-field="file">{direct.file}</span>
+                    </a>
+                  )
+                }
+                {
+                  notReady && (
+                    <a class="download" href="/not-ready">
+                      Download
+                    </a>
+                  )
+                }
+                {storeLinks.map(([label, href]) => (
+                  <a href={href}>{label}</a>
+                ))}
+              </p>
             </div>
             <aside class="rw-stats zd-details" aria-labelledby="mod-details" data-stat-scope="mod" data-stat-key={`${mod.game}/${mod.slug}`}>
               <h2 class="rw-stat-label" id="mod-details">Details</h2>
-              <p class="zd-details-summary">{info.short}</p>
               <dl>
                 <div>
                   <dt>Type</dt>
@@ -213,25 +228,6 @@ const storeLinks = [
               </figure>
             )
           }
-          <p class="rw-actions">
-            {
-              direct && (
-                <a class="download" href={direct.url}>
-                  Download <span data-latest={latestKey} data-latest-field="file">{direct.file}</span>
-                </a>
-              )
-            }
-            {
-              notReady && (
-                <a class="download" href="/not-ready">
-                  Download
-                </a>
-              )
-            }
-            {storeLinks.map(([label, href]) => (
-              <a href={href}>{label}</a>
-            ))}
-          </p>
           {
             sections.length > 0 && (
               <section class="rw-section" data-feature-tabs>
@@ -335,10 +331,20 @@ const storeLinks = [
                       {entry.version === mod.version && <span class="rw-feature-tag">Current</span>}
                     </h3>
                     <ul class="rw-notes">
-                      {entry.notes.map((note) => (
+                      {entry.notes.slice(0, NOTES_SHOWN).map((note) => (
                         <li set:html={renderInline(note)} />
                       ))}
                     </ul>
+                    {entry.notes.length > NOTES_SHOWN && (
+                      <details class="zd-older zd-more-notes">
+                        <summary>{entry.notes.length - NOTES_SHOWN} more changes in v{entry.version}</summary>
+                        <ul class="rw-notes">
+                          {entry.notes.slice(NOTES_SHOWN).map((note) => (
+                            <li set:html={renderInline(note)} />
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   </article>
                 ))}
                 {
@@ -424,9 +430,6 @@ const storeLinks = [
               </section>
             ) : null
           }
-          <p class="zd-back">
-            <a href={`/${mod.game}`}>← Back to all {game?.name} mods</a>
-          </p>
           <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
         </div>
         <script is:inline>
@@ -473,72 +476,4 @@ const storeLinks = [
           }
         </script>
       </div>
-    ) : (
-  <article style={heroVars(mod.slug)}>
-    <header class="hero">
-      <p>
-        <a href={`/${mod.game}`}>{game?.name}</a>
-      </p>
-      <h1>{mod.name}</h1>
-      <p class="mark">{look.mark}</p>
-      <p class="version">
-        Version <span data-latest={latestKey} data-latest-field="version">{mod.version}</span>
-        {updated && (
-          <>
-            {" "}· Updated <time datetime={updated.iso} data-latest={latestKey} data-latest-field="uploadedAt">{updated.label}</time>
-          </>
-        )}
-      </p>
-      <StoreCounts game={mod.game} mod={mod.slug} variant="page" />
-      {
-        preview && (
-          <img
-            src={preview}
-            alt={`${mod.name} preview`}
-            width={picture?.width ?? 960}
-            height={picture?.height ?? 540}
-            decoding="async"
-          />
-        )
-      }
-    </header>
-    <p class="lede">{mod.description}</p>
-    <p class="actions">
-      {
-        direct && (
-          <a class="download" href={direct.url}>
-            Download <span data-latest={latestKey} data-latest-field="file">{direct.file}</span>
-          </a>
-        )
-      }
-      {
-        notReady && (
-          <a class="download" href="/not-ready">
-            Download
-          </a>
-        )
-      }
-      {storeLinks.map(([label, href]) => (
-        <a href={href}>{label}</a>
-      ))}
-    </p>
-    {
-      others.length > 0 && (
-        <nav class="others" aria-label={`Other ${game?.name ?? "game"} mods`}>
-          <h2>Other {game?.name} mods</h2>
-          <div class="chips">
-            {others.map((entry) => (
-              <a class="mod-chip" style={heroVars(entry.slug)} href={`/${entry.game}/${entry.slug}`}>
-                <span class="mark">{lookFor(entry.slug).mark}</span>
-                <strong>{entry.name}</strong>
-              </a>
-            ))}
-          </div>
-        </nav>
-      )
-    }
-    <ReportForm game={mod.game} mod={mod.slug} name={mod.name} gameName={game?.name ?? ""} />
-  </article>
-    )
-  }
 </Base>

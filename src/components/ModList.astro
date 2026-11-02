@@ -124,14 +124,14 @@ const sortOptions = [
             )}
           </span>
           <span class="zd-dl" role="cell">
-            <span class="zd-cell-label">Downloads </span>
             <span data-dl-count>—</span>
+            <span class="zd-cell-label"> downloads</span>
           </span>
           <span class="zd-act" role="cell">
             {bundle && direct && (
-              <label class="zd-pick" title="Add to bundle">
-                <input type="checkbox" data-pick={mod.slug} />
-                <span class="sr-only">Add {mod.name} to the bundle</span>
+              <label class="zd-pick" title="Add to the server bundle">
+                <input type="checkbox" data-pick={mod.slug} aria-label={`Add ${mod.name} to the bundle`} />
+                <span class="zd-pick-text" aria-hidden="true">Bundle</span>
               </label>
             )}
             {direct ? (

@@ -6,7 +6,6 @@ import { games } from "../data/games";
 import { modsForGame, previewFor, r2Download, uploadedOn } from "../data/mods";
 import { featuredOrder, hubIndex, hubInfo, type ModRow } from "../data/hub-index";
 import { indexInfo, sevendaysCategories } from "../data/sevendays-index";
-import { heroVars, lookFor } from "../data/themes";
 
 export function getStaticPaths() {
   return games.map((game) => ({
@@ -20,7 +19,6 @@ const gameMods = modsForGame(game.slug);
 const rimworld = game.slug === "rimworld";
 const sunhaven = game.slug === "sun-haven";
 const sevendays = game.slug === "7-days-to-die";
-const hub = rimworld || sunhaven || sevendays;
 const rows: ModRow[] = sevendays
   ? [...gameMods]
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -44,8 +42,6 @@ const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct d
 ---
 
 <Base title={`${game.name} mods`} description={description} game={game.slug}>
-  {
-    hub ? (
       <div class:list={["zd-hub", rimworld && "ml-rimworld", sunhaven && "ml-sunhaven"]}>
         <header class="zd-hero">
           {rimworld ? (
@@ -90,22 +86,5 @@ const description = `${gameMods.length} free ${game.name} mods${blurb}. Direct d
           bundle={sevendays}
         />
       </div>
-    ) : (
-      <>
-        <header class="game-intro">
-          <h1>{game.name}</h1>
-        </header>
-        <div class="cards">
-          {gameMods.map((mod) => (
-            <a class="mod-card" style={heroVars(mod.slug)} href={`/${game.slug}/${mod.slug}`}>
-              <span class="mark">{lookFor(mod.slug).mark}</span>
-              <strong>{mod.name}</strong>
-              <span class="ver"><span data-latest={`${mod.game}/${mod.slug}`} data-latest-field="version">{mod.version}</span></span>
-              <p>{mod.description}</p>
-            </a>
-          ))}
-        </div>
-      </>
-    )
-  }
+
 </Base>
