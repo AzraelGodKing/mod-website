@@ -177,6 +177,67 @@
     "avoid": [],
     "compatNotes": []
   },
+  "storage-backpack": {
+    "overview": [
+      "A craftable Storage Backpack that you set down and fill like a 48-slot chest. Break it up close and it goes back into your inventory. Place any Storage Backpack again and everything is back inside.",
+      "The server keeps the contents, so nothing is lost or duplicated."
+    ],
+    "badges": ["Server", "Optional for players"],
+    "sections": [
+      {
+        "id": "use",
+        "label": "Using it",
+        "features": [
+          {
+            "title": "Crafting",
+            "body": "10 leather, 20 cloth, and 2 duct tape, with no workbench. It has 100 HP."
+          },
+          {
+            "title": "Packing up",
+            "body": "Break it with a melee tool or your fists. It goes back into your inventory and the server holds what was inside. A private chat message says what was packed and unpacked."
+          },
+          {
+            "title": "Unpacking",
+            "body": "Place any Storage Backpack and your stored contents come back, newest first if you packed more than one. Quality, durability, mods, dyes, and ammo counts are all kept."
+          },
+          {
+            "title": "Broken by something else",
+            "body": "A zombie, an explosion, or a gun that doesn't harvest drops it as a Storage Backpack (Packed) with the contents inside. Whoever places that one gets them. It lasts 24 hours on the ground."
+          }
+        ]
+      },
+      {
+        "id": "rules",
+        "label": "Rules",
+        "features": [
+          {
+            "title": "No backpacks in backpacks",
+            "body": "A packed backpack can't go inside another one. If one is inside when you break a backpack, it drops next to it, still packed. Empty backpacks are plain items and can go inside."
+          },
+          {
+            "title": "Packed backpacks",
+            "body": "They don't stack, can't be sold to traders, and can't be scrapped. Giving a friend a plain backpack doesn't give them your stored contents."
+          },
+          {
+            "title": "Dupe-safe",
+            "body": "Each pack is saved on the server under an id, and an id can unpack only once, so copying an item can't copy its contents. Unpacked records are deleted after 7 days."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Install on the server. Players can join without it and leave EasyAntiCheat on: the server sends the new blocks, recipe, and text when they join. Players can install it too.",
+      "Change the size in Config/loot.xml, the recipe in Config/recipes.xml, and the HP in Config/blocks.xml. Don't shrink the size on a running server: placed backpacks drop whatever no longer fits."
+    ],
+    "worksWith": [
+      {
+        "name": "Drone Loot Filter",
+        "note": "Auto-Loot drones already leave both backpack items alone, on the ground and in containers. No need to add them to /dai."
+      }
+    ],
+    "avoid": [],
+    "compatNotes": []
+  },
   "quest-disconnect-fix": {
     "overview": [
       "Stops a quest logout crash that leaves a player in the world after they disconnect. Rejoining then fails until the server restarts.",

@@ -31,6 +31,7 @@ const icons = {
   "slot-lock-fix": "lock",
   "spawn-tuner": "sliders-horizontal",
   speedometer: "gauge",
+  "storage-backpack": "package",
   "upgrade-bench": "anvil",
   "zombie-and-animal-bait": "beef",
   "zombie-and-animal-bait-ui": "paw-print",
