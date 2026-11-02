@@ -132,6 +132,9 @@ const storeLinks = [
                 {storeLinks.map(([label, href]) => (
                   <a href={href}>{label}</a>
                 ))}
+                <button type="button" class="rw-report" data-open-report aria-haspopup="dialog" aria-controls="report">
+                  Report a problem
+                </button>
               </p>
             </div>
             <aside class="rw-stats zd-details" aria-labelledby="mod-details" data-stat-scope="mod" data-stat-key={`${mod.game}/${mod.slug}`}>

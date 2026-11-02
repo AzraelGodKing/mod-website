@@ -491,7 +491,8 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .rw-actions a,
-.rw-actions a:visited {
+.rw-actions a:visited,
+.rw-actions .rw-report {
   padding: 0.6rem 0.9rem;
   border: 1px solid #3d3229;
   color: #f4ece1;
@@ -502,9 +503,18 @@ body.rw-site > header nav a[aria-current] {
   text-transform: uppercase;
 }
 
-.rw-actions a:hover {
+.rw-actions a:hover,
+.rw-actions .rw-report:hover {
   border-color: #c9a15b;
   color: #e8c98a;
+}
+
+/* Report a problem sits at the end of the row, a quieter button beside the links. */
+.rw-actions .rw-report {
+  margin-left: auto;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .rw-actions a.download,
@@ -549,8 +559,7 @@ body.rw-site > header nav a[aria-current] {
   font-family: "Red Hat Text", "Segoe UI", sans-serif;
 }
 
-.rw-mod #report-form button,
-.rw-mod .report-open {
+.rw-mod #report-form button {
   background: #c9a15b;
   color: #1a140c;
   font-family: "Red Hat Text", "Segoe UI", sans-serif;
@@ -789,12 +798,14 @@ body.rw-site > header nav a[aria-current] {
 }
 
 .guide-page .rw-actions a,
-.guide-page .rw-actions a:visited {
+.guide-page .rw-actions a:visited,
+.guide-page .rw-actions .rw-report {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   color: var(--hero-ink);
 }
 
-.guide-page .rw-actions a:hover {
+.guide-page .rw-actions a:hover,
+.guide-page .rw-actions .rw-report:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -825,8 +836,7 @@ body.rw-site > header nav a[aria-current] {
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.guide-page #report-form button,
-.guide-page .report-open {
+.guide-page #report-form button {
   background: var(--accent);
   color: var(--accent-ink);
 }
@@ -1032,7 +1042,8 @@ body.rw-site > header nav a[aria-current] {
 .zd-hub.guide-page .rw-feature,
 .zd-hub.guide-page .rw-stats,
 .zd-hub.guide-page .rw-faq article,
-.zd-hub.guide-page .rw-actions a {
+.zd-hub.guide-page .rw-actions a,
+.zd-hub.guide-page .rw-actions .rw-report {
   border-radius: 0;
 }
 
@@ -2458,6 +2469,29 @@ body.entry-site main {
   border: 1px solid color-mix(in srgb, var(--hero-ink) 25%, transparent);
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* The report popup reuses the config builder dialog, narrower, on each mod page's own colours. */
+.report-dialog {
+  width: min(36rem, calc(100vw - 2rem));
+  background: color-mix(in srgb, var(--hero-ink, var(--ink)) 6%, var(--wash, var(--card)));
+  color: var(--hero-ink, var(--ink));
+}
+
+.report-dialog .report {
+  min-height: 0;
+  margin: 0;
+  padding: 1rem 1.2rem 1.2rem;
+  overflow-y: auto;
+  border: 0;
+  background: none;
+}
+
+.report-dialog .report > p:first-of-type,
+.report-dialog #report-form {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .zd-config-dialog .zd-config-form {

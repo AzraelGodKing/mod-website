@@ -11,29 +11,33 @@ interface Props {
 const { game, mod, name, gameName } = Astro.props;
 ---
 
-<section class="report" id="report">
-  <h2>Report a problem</h2>
-  <div class="known-issues" id="known-issues" hidden>
-    <h3>Known issues</h3>
-    <p class="known-note">Already on the list. No need to report these again.</p>
-    <ul></ul>
+<dialog class="zd-config-dialog report-dialog" id="report" aria-labelledby="report-title">
+  <div class="zd-config-dialog-head">
+    <h2 id="report-title">Report a problem</h2>
+    <button type="button" class="zd-config-close" data-close-report aria-label="Close the report form">&times;</button>
   </div>
-  <p>This report is for {name} on {gameName}.</p>
-  <button type="button" class="report-open" aria-controls="report-form" aria-expanded="false">Write a report</button>
-  <form id="report-form" hidden data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
-    <label>
-      Summary
-      <input name="summary" required minlength="8" maxlength="120" autocomplete="off" />
-    </label>
-    <label>
-      What happened
-      <textarea name="details" required minlength="20" maxlength="4000" rows="6"></textarea>
-    </label>
-    <div id="report-turnstile"></div>
-    <p id="report-status" role="status"></p>
-    <button type="submit">Send report</button>
-  </form>
-</section>
+  <section class="report">
+    <div class="known-issues" id="known-issues" hidden>
+      <h3>Known issues</h3>
+      <p class="known-note">Already on the list. No need to report these again.</p>
+      <ul></ul>
+    </div>
+    <p>This report is for {name} on {gameName}.</p>
+    <form id="report-form" data-sitekey={turnstileSitekey} data-game={game} data-mod={mod}>
+      <label>
+        Summary
+        <input name="summary" required minlength="8" maxlength="120" autocomplete="off" />
+      </label>
+      <label>
+        What happened
+        <textarea name="details" required minlength="20" maxlength="4000" rows="6"></textarea>
+      </label>
+      <div id="report-turnstile"></div>
+      <p id="report-status" role="status"></p>
+      <button type="submit">Send report</button>
+    </form>
+  </section>
+</dialog>
 
 <script is:inline>
   // Open issues for this mod, from Linear through the Worker. Hidden when there are none.
@@ -120,8 +124,8 @@ const { game, mod, name, gameName } = Astro.props;
       if (form.isConnected) button.disabled = false;
     }
   });
-  // The form stays folded until someone asks for it, and Turnstile loads only then,
-  // so reading a mod page does not pull in the challenge script.
+  // The form lives in a popup opened from the top of the page. Turnstile loads only
+  // when it first opens, so reading a mod page does not pull in the challenge script.
   let requested = false;
   const loadTurnstile = () => {
     if (requested) return;
@@ -131,14 +135,22 @@ const { game, mod, name, gameName } = Astro.props;
     script.async = true;
     document.head.append(script);
   };
-  const opener = document.querySelector(".report-open");
-  const openForm = (focus) => {
-    form.hidden = false;
-    opener.hidden = true;
-    opener.setAttribute("aria-expanded", "true");
+  const dialog = document.querySelector("#report");
+  const opener = document.querySelector("[data-open-report]");
+  const openReport = () => {
+    if (!dialog.open) dialog.showModal();
     loadTurnstile();
-    if (focus) form.querySelector("input")?.focus();
+    form.querySelector("input")?.focus();
   };
-  opener.addEventListener("click", () => openForm(true));
-  if (location.hash === "#report") openForm(false);
+  opener?.addEventListener("click", openReport);
+  dialog.querySelector("[data-close-report]").addEventListener("click", () => dialog.close());
+  // A click on the dimmed backdrop lands on the dialog itself, outside its content box.
+  dialog.addEventListener("click", (event) => {
+    if (event.target !== dialog) return;
+    const box = dialog.getBoundingClientRect();
+    const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+    if (!inside) dialog.close();
+  });
+  dialog.addEventListener("close", () => opener?.focus());
+  if (location.hash === "#report") openReport();
 </script>
