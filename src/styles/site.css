@@ -3607,6 +3607,18 @@ body.entry-site main {
   margin-top: 0.3rem;
 }
 
+.zd-badges {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+}
+
+.zd-badge-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
 .zd-hash code {
   font-size: 0.78rem;
 }

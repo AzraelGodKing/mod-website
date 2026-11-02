@@ -12,7 +12,7 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*", "/download/*"]
+    "run_worker_first": ["/api/*", "/download/*", "/badge/*"]
   },
   // Secrets, set outside the repo: TURNSTILE_SECRET, LINEAR_API_KEY, LINEAR_READ_KEY (optional, known issues), NEXUSMODS_API_KEY, ADMIN_TOKEN.
   // TURNSTILE_HOSTNAMES is the public site hostname. Local values live in .dev.vars.
