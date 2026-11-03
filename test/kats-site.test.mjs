@@ -72,3 +72,37 @@ test("the Kat's RICS site builds every page and the upload portal", () => {
   assert.match(index, /prefers-color-scheme: light/);
   assert.match(readFileSync(path.join(out, "upload.html"), "utf8"), /noindex/);
 });
+
+test("My coins hides what a viewer can't afford and starred rows are remembered", async () => {
+  const { useBalance } = await import("../kats/web/src/composables/useBalance.js");
+  const { useStars } = await import("../kats/web/src/composables/useStars.js");
+  const { useFilters } = await import("../kats/web/src/composables/useFilters.js");
+  const { ref } = await import("vue");
+
+  const { balance, limit, affordable } = useBalance();
+  assert.equal(limit.value, null);
+  assert.equal(affordable(1_000_000), true, "an empty balance hides nothing");
+  balance.value = "1,500";
+  assert.equal(limit.value, 1500);
+  assert.equal(affordable(1500), true);
+  assert.equal(affordable(1501), false);
+  balance.value = "lots";
+  assert.equal(limit.value, null, "text that is not a number is ignored");
+  balance.value = "";
+
+  const stars = useStars("test-items");
+  stars.toggle("Thrumbo");
+  assert.equal(stars.has("Thrumbo"), true);
+  assert.equal(stars.count.value, 1);
+  stars.toggle("Thrumbo");
+  assert.equal(stars.has("Thrumbo"), false);
+
+  const q = ref("beer");
+  const on = ref(false);
+  const filters = useFilters([[q, ""], [on, true]]);
+  assert.equal(filters.active.value, 2);
+  filters.clear();
+  assert.equal(q.value, "");
+  assert.equal(on.value, true);
+  assert.equal(filters.active.value, 0);
+});

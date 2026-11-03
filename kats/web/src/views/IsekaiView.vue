@@ -2,6 +2,9 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { rowsOf } from "../lib/catalogs";
@@ -26,6 +29,15 @@ const sq = useQueryState("q", "");
 const cq = useQueryState("cq", "");
 const kq = useQueryState("kq", "");
 const kclass = useQueryState("class", "");
+const kStarred = useQueryState("starred", false);
+const kStars = useStars("isekai-keystones");
+const kFilters = useFilters([[kq, ""], [kclass, ""], [kStarred, false]]);
+
+function showKeystones(classLabel) {
+  kq.value = "";
+  kclass.value = classLabel;
+  tab.value = "keystones";
+}
 
 const sSort = useSort("abbr");
 const cSort = useSort("label");
@@ -103,6 +115,7 @@ const filteredKeys = computed(() => {
   const term = kq.value.trim().toLowerCase();
   let list = keystones.value.filter((r) =>
     (!kclass.value || r.classLabel === kclass.value) &&
+    (!kStarred.value || kStars.has(r.nodeId)) &&
     (!term ||
       r.label.toLowerCase().includes(term) ||
       r.classLabel.toLowerCase().includes(term) ||
@@ -183,7 +196,12 @@ const filteredKeys = computed(() => {
             <div class="mod">{{ row.gimmickDescription }}</div>
           </td>
           <td class="num hide-sm">{{ row.nodes }}</td>
-          <td class="num">{{ row.keystones }}</td>
+          <td class="num">
+            <button v-if="row.keystones" type="button" class="link-btn" @click="showKeystones(row.label)">
+              {{ row.keystones }} →
+            </button>
+            <template v-else>0</template>
+          </td>
         </template>
       </DataTable>
     </div>
@@ -195,11 +213,13 @@ const filteredKeys = computed(() => {
           <option value="">All classes</option>
           <option v-for="c in classLabels" :key="c" :value="c">{{ c }}</option>
         </select>
+        <FilterTools v-model:starred-only="kStarred" :active="kFilters.active.value" :star-count="kStars.count.value" @clear="kFilters.clear" />
         <span class="count">{{ fmt(filteredKeys.length) }} keystone{{ filteredKeys.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
         :columns="keyCols"
         :rows="filteredKeys"
+        :stars="kStars"
         empty="No keystones match."
         :sort-key="kSort.sortKey.value"
         :sort-dir="kSort.sortDir.value"

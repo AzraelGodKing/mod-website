@@ -2,6 +2,12 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import ChangeBadge from "../components/ChangeBadge.vue";
+import { useBalance } from "../composables/useBalance";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
+import { useChanges } from "../composables/useChanges";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { chatCommand, rowsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
@@ -15,7 +21,12 @@ const cat = useQueryState("category", "");
 const mod = useQueryState("mod", "");
 const cmd = useQueryState("command", "");
 const enabledOnly = useQueryState("purchasable", true);
+const starredOnly = useQueryState("starred", false);
 const { sortKey, sortDir, toggleSort, sorted } = useSort("name");
+const { affordable, limit } = useBalance();
+const stars = useStars("items");
+const { badge } = useChanges();
+const filters = useFilters([[q, ""], [cat, ""], [mod, ""], [cmd, ""], [enabledOnly, true], [starredOnly, false]]);
 
 const columns = [
   { key: "name", label: "Item" },
@@ -30,7 +41,7 @@ const { state, error, retry } = useLoader(async () => {
   items.value = (await loadJson("items")).map(rowsOf.items);
 });
 
-watch([q, cat, mod, cmd, enabledOnly], () => sync());
+watch([q, cat, mod, cmd, enabledOnly, starredOnly, limit], () => sync());
 
 const cats = computed(() => uniqueSorted(items.value, (r) => r.category));
 const mods = computed(() => uniqueSorted(items.value, (r) => r.mod));
@@ -64,6 +75,8 @@ const filtered = computed(() => {
     (!cat.value || r.category === cat.value) &&
     (!mod.value || r.mod === mod.value) &&
     matchesCmd(r) &&
+    affordable(r.price) &&
+    (!starredOnly.value || stars.has(r.defName)) &&
     (!term || r.name.toLowerCase().includes(term) || r.defName.toLowerCase().includes(term)),
   );
   list = sorted(list, (r) => (sortKey.value === "commands" ? cmdLabel(r) || "~" : r[sortKey.value]));
@@ -101,6 +114,7 @@ const filtered = computed(() => {
         <option value="none">No commands</option>
       </select>
       <label class="toggle"><input v-model="enabledOnly" type="checkbox"> Purchasable only</label>
+      <FilterTools v-model:starred-only="starredOnly" :active="filters.active.value" :star-count="stars.count.value" show-balance @clear="filters.clear" />
       <span class="count">{{ fmt(filtered.length) }} item{{ filtered.length === 1 ? "" : "s" }}</span>
     </div>
 
@@ -114,11 +128,12 @@ const filtered = computed(() => {
       :state="state"
       :error="error"
       :copy-for="chatCommand.items"
+      :stars="stars"
       @sort="toggleSort"
       @retry="retry"
     >
       <template #row="{ row }">
-        <td><b>{{ row.name }}</b></td>
+        <td><b>{{ row.name }}</b> <ChangeBadge :info="badge('items', row.name)" /></td>
         <td class="cat hide-sm">{{ row.category }}</td>
         <td class="price">{{ fmt(row.price) }}</td>
         <td class="qty hide-sm">{{ fmt(row.qty) }}</td>
