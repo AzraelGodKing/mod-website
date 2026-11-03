@@ -918,6 +918,117 @@ a.change-count { color: var(--accent-deep); text-decoration: none; }
 }
 .to-top:hover { border-color: var(--accent); }
 
+/* Round 3: details popup, table tools, compact rows */
+.info-btn {
+  appearance: none;
+  padding: 0 2px;
+  margin-left: 2px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.info-btn:hover { color: var(--accent-deep); }
+.star-cell { white-space: nowrap; }
+
+.table-tools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin: -4px 0 8px;
+}
+
+.table-shell.compact tbody td { padding-top: 6px; padding-bottom: 6px; font-size: 0.88rem; }
+.table-shell.compact .desc, .table-shell.compact .def { display: none; }
+
+.detail-dialog {
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.detail-dialog::backdrop { background: rgba(4, 8, 16, 0.6); backdrop-filter: blur(2px); }
+.detail-body { padding: 20px 22px 22px; }
+.detail-body header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.detail-body h2 { margin: 0; font-size: 1.4rem; letter-spacing: -0.02em; }
+.detail-body .muted { margin: 4px 0 0; }
+.detail-close {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+.detail-close:hover { border-color: var(--accent); color: var(--ink); }
+.detail-desc { margin: 14px 0 0; color: var(--ink-soft); white-space: pre-wrap; line-height: 1.5; }
+.detail-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+}
+.detail-fields dt { color: var(--muted); font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 2px; }
+.detail-fields dd { margin: 0; overflow-wrap: anywhere; }
+.detail-qty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--hint-bg);
+  font-size: 0.9rem;
+}
+.detail-qty label { display: flex; align-items: center; gap: 8px; color: var(--ink-soft); }
+.detail-qty input {
+  width: 80px;
+  background: var(--input-bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font: inherit;
+  font-family: var(--font-mono);
+}
+.detail-qty b { color: var(--accent); font-family: var(--font-mono); }
+.detail-commands { margin-top: 16px; }
+.detail-commands h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.command-chip {
+  appearance: none;
+  margin: 0 6px 6px 0;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--accent-deep);
+  font: 500 0.82rem/1.3 var(--font-mono);
+  cursor: copy;
+}
+.command-chip:hover { border-color: var(--accent); color: var(--ink); }
+
+.recent { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hit-label:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
 @media (max-width: 860px) {
   .app-frame { grid-template-columns: minmax(0, 1fr); }
   .rail {
@@ -972,6 +1083,8 @@ a.change-count { color: var(--accent-deep); text-decoration: none; }
   /* On phones the whole row is the copy button, so the extra column is dropped. */
   .copy-col, .copy-cell { display: none; }
   .balance input { width: 80px; }
+  .table-tools { justify-content: space-between; margin-top: 0; }
+  .detail-body { padding: 16px; }
   .to-top { right: 12px; bottom: 12px; }
   .change-card { padding: 14px; }
   .hit-list li { flex-wrap: wrap; }

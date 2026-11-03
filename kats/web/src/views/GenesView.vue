@@ -9,7 +9,7 @@ import { useStars } from "../composables/useStars";
 import { useFilters } from "../composables/useFilters";
 import { useChanges } from "../composables/useChanges";
 import { loadJson, loadMeta, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { DEFAULT_GENE_RATES, geneCost, rowsOf } from "../lib/catalogs";
+import { DEFAULT_GENE_RATES, geneCost, rowsOf, detailsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -126,6 +126,8 @@ const filtered = computed(() => {
 
     <DataTable
       label="Genes"
+      csv-name="genes"
+      :details-for="detailsOf['genes']"
       :stars="stars"
       :state="state"
       :error="error"

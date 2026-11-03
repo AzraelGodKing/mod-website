@@ -9,7 +9,7 @@ import { useFilters } from "../composables/useFilters";
 import { useChanges } from "../composables/useChanges";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { chatCommand, rowsOf } from "../lib/catalogs";
+import { chatCommand, rowsOf, detailsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -48,7 +48,7 @@ function cooldownText(seconds) {
 }
 
 const rSort = useSort("key");
-const aSort = useSort("usage");
+const aSort = useSort("usage", 1, "a");
 
 const ricsCols = [
   { key: "key", label: "Command" },
@@ -57,7 +57,7 @@ const ricsCols = [
   { key: "permission", label: "Permission" },
   { key: "cost", label: "Cost", thClass: "hide-sm", align: "right" },
   { key: "cooldown", label: "Cooldown", thClass: "hide-sm", align: "right" },
-  { key: "enabled", label: "Status" },
+  { key: "enabled", label: "Status", csv: (r) => (r.enabled ? "on" : "disabled") },
 ];
 
 const addonCols = [
@@ -156,6 +156,8 @@ const filteredAddon = computed(() => {
       </div>
       <DataTable
         label="RICS commands"
+        csv-name="commands"
+        :details-for="detailsOf['commands']"
         :columns="ricsCols"
         :rows="filteredRics"
         empty="No commands match your search."
@@ -199,6 +201,7 @@ const filteredAddon = computed(() => {
       </div>
       <DataTable
         label="Addon commands"
+        csv-name="addon-commands"
         :columns="addonCols"
         :rows="filteredAddon"
         empty="No addon commands match your search."

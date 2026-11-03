@@ -8,7 +8,7 @@ import { useStars } from "../composables/useStars";
 import { useFilters } from "../composables/useFilters";
 import { useChanges } from "../composables/useChanges";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { rowsOf } from "../lib/catalogs";
+import { rowsOf, detailsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -119,6 +119,8 @@ const filtered = computed(() => {
 
     <DataTable
       label="Backstories"
+      csv-name="backstories"
+      :details-for="detailsOf['backstories']"
       :stars="stars"
       :state="state"
       :error="error"

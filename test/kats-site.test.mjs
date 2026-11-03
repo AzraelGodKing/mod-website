@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { execFileSync } from "node:child_process";
-import { CATALOG_PAGES, chatCommand, geneCost, rowsOf, searchCatalog } from "../kats/web/src/lib/catalogs.js";
+import { CATALOG_PAGES, chatCommand, detailsOf, geneCost, rowsOf, searchCatalog, toCsv } from "../kats/web/src/lib/catalogs.js";
 import { links } from "../kats/web/src/lib/nav.js";
 import { LEGACY_PAGES, legacyPagePath } from "../kats/web/src/lib/legacy.js";
 import { relativeTime } from "../kats/web/src/lib/data.js";
@@ -105,4 +105,20 @@ test("My coins hides what a viewer can't afford and starred rows are remembered"
   assert.equal(q.value, "");
   assert.equal(on.value, true);
   assert.equal(filters.active.value, 0);
+});
+
+test("CSV export quotes cells and uses column csv functions", () => {
+  const columns = [{ key: "name", label: "Name" }, { key: "price", label: "Price", csv: (row) => row.price * 2 }];
+  const csv = toCsv(columns, [{ name: 'Beer, "cold"', price: 3 }]);
+  assert.equal(csv.split("\r\n")[0], "Name,Price");
+  assert.ok(csv.includes('"Beer, ""cold""",6'));
+});
+
+test("every detail popup builds a title and fields from real rows", () => {
+  for (const [name, details] of Object.entries(detailsOf)) {
+    const row = rowsOf[name](data(name)[0]);
+    const out = details(row);
+    assert.ok(out.title, `${name} has a title`);
+    assert.ok(Array.isArray(out.fields) && out.fields.length > 0, `${name} has fields`);
+  }
 });

@@ -7,7 +7,7 @@ import { useStars } from "../composables/useStars";
 import { useFilters } from "../composables/useFilters";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { rowsOf } from "../lib/catalogs";
+import { chatCommand, rowsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -40,8 +40,8 @@ function showKeystones(classLabel) {
 }
 
 const sSort = useSort("abbr");
-const cSort = useSort("label");
-const kSort = useSort("label");
+const cSort = useSort("label", 1, "c");
+const kSort = useSort("label", 1, "k");
 
 const statCols = [
   { key: "abbr", label: "Abbr" },
@@ -154,6 +154,8 @@ const filteredKeys = computed(() => {
       <DataTable
         :columns="statCols"
         :rows="filteredStats"
+        csv-name="isekai-stats"
+        :copy-for="chatCommand['isekai-stats']"
         empty="No stats match."
         :sort-key="sSort.sortKey.value"
         :sort-dir="sSort.sortDir.value"
@@ -178,6 +180,7 @@ const filteredKeys = computed(() => {
       <DataTable
         :columns="classCols"
         :rows="filteredClasses"
+        csv-name="isekai-classes"
         empty="No classes match."
         :sort-key="cSort.sortKey.value"
         :sort-dir="cSort.sortDir.value"
@@ -219,6 +222,7 @@ const filteredKeys = computed(() => {
       <DataTable
         :columns="keyCols"
         :rows="filteredKeys"
+        csv-name="isekai-keystones"
         :stars="kStars"
         empty="No keystones match."
         :sort-key="kSort.sortKey.value"

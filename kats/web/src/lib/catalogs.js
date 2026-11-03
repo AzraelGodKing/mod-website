@@ -128,6 +128,7 @@ export const chatCommand = {
   weather: (row) => (row.enabled ? `!weather ${row.label}` : ""),
   commands: (row) => (row.enabled ? `!${row.key}` : ""),
   "addon-commands": (row) => row.usage,
+  "isekai-stats": (row) => `!isekai level ${row.abbr} 1`,
 };
 
 export const DEFAULT_GENE_RATES = { complexity: 100, metabolism: 250, archite: 1000 };
@@ -187,4 +188,136 @@ export function searchCatalog(name, rows, term, limit = 8) {
   }
   scored.sort((a, b) => a.score - b.score || a.label.localeCompare(b.label));
   return { total: scored.length, hits: scored.slice(0, limit) };
+}
+
+const n = (value) => Number(value ?? 0).toLocaleString();
+const yes = (value) => (value ? "Yes" : "No");
+
+/**
+ * What the details popup shows for a row: a title, labelled fields, a description,
+ * the chat commands to copy, and (for the store) a quantity to buy.
+ */
+export const detailsOf = {
+  items: (r) => ({
+    title: r.name,
+    subtitle: `${r.category} · ${r.mod}`,
+    fields: [
+      ["Price", `${n(r.price)} coins`],
+      ["Max quantity", r.qty ? n(r.qty) : "No limit"],
+      ["Def name", r.defName],
+      ["Can buy", yes(r.enabled)],
+      ["Commands", [r.usable && "USE", r.equippable && "EQUIP", r.wearable && "WEAR"].filter(Boolean).join(", ") || "None"],
+    ],
+    commands: [
+      r.enabled && `!buy ${r.name}`,
+      r.usable && `!use ${r.name}`,
+      r.equippable && `!equip ${r.name}`,
+      r.wearable && `!wear ${r.name}`,
+      `!pricecheck ${r.name}`,
+    ].filter(Boolean),
+    quantity: r.enabled ? { price: r.price, max: r.qty || 0, command: `!buy ${r.name}` } : null,
+  }),
+  traits: (r) => ({
+    title: r.name,
+    subtitle: r.mod,
+    fields: [
+      ["Add price", `${n(r.addPrice)} coins`],
+      ["Remove price", `${n(r.removePrice)} coins`],
+      ["Degree", String(r.degree)],
+      ["Can add", yes(r.canAdd)],
+      ["Can remove", yes(r.canRemove)],
+      ["Bypasses trait limit", yes(r.bypassLimit)],
+      ["Effects", r.effects || "None listed"],
+      ["Def name", r.defName],
+    ],
+    description: r.description,
+    commands: [r.canAdd && `!addtrait ${r.name}`, r.canRemove && `!removetrait ${r.name}`, `!trait ${r.name}`].filter(Boolean),
+  }),
+  xenotypes: (r) => ({
+    title: r.xenotype,
+    subtitle: r.race,
+    fields: [
+      ["Price", `${n(r.price)} coins`],
+      ["Xenotype enabled", yes(r.xenotypeEnabled)],
+      ["Race enabled", yes(r.raceEnabled)],
+      ["Mod active", yes(r.modActive)],
+      ["Race def", r.raceDef],
+    ],
+    commands: [`!xenotypes ${r.race}`],
+  }),
+  incidents: (r) => ({
+    title: r.label,
+    subtitle: `${r.category} · ${r.mod}`,
+    fields: [
+      ["Cost", `${n(r.cost)} coins`],
+      ["Karma", r.karma],
+      ["Event cap", String(r.cap)],
+      ["Enabled", yes(r.enabled)],
+      ["Type", [r.isRaid && "Raid", r.isDisease && "Disease", r.isQuest && "Quest", r.isWeatherIncident && "Weather"].filter(Boolean).join(", ") || "Other"],
+      ["Def name", r.defName],
+    ],
+    commands: [r.enabled && `!event ${r.label}`, `!lookup event ${r.label}`].filter(Boolean),
+  }),
+  weather: (r) => ({
+    title: r.label,
+    subtitle: r.mod,
+    fields: [
+      ["Cost", `${n(r.cost)} coins`],
+      ["Karma", r.karma],
+      ["Cap", String(r.cap)],
+      ["Enabled", yes(r.enabled)],
+      ["Def name", r.defName],
+    ],
+    commands: [r.enabled && `!weather ${r.label}`, `!lookup weather ${r.label}`].filter(Boolean),
+  }),
+  commands: (r) => ({
+    title: `!${r.key}`,
+    subtitle: r.label,
+    fields: [
+      ["Permission", r.permission],
+      ["Cost", r.supportsCost ? `${n(r.cost)} coins` : "Free"],
+      ["Cooldown", r.cooldown ? `${n(r.cooldown)} seconds` : "None"],
+      ["Alias", r.alias || "None"],
+      ["Enabled", yes(r.enabled)],
+    ],
+    description: r.description,
+    commands: [r.enabled && `!${r.key}`, r.enabled && r.alias && `!${r.alias.replace(/^!/, "")}`].filter(Boolean),
+  }),
+  genes: (r) => ({
+    title: r.label,
+    subtitle: `${r.category} · ${r.mod}`,
+    fields: [
+      ["Complexity", String(r.biostatCpx)],
+      ["Metabolism", String(r.biostatMet)],
+      ["Archites", String(r.biostatArc)],
+      ["Estimated cost", `${n(r.estCost)} coins`],
+      ["Def name", r.defName],
+    ],
+    description: r.description,
+    commands: ["!geneedit"],
+  }),
+  backstories: (r) => ({
+    title: r.title,
+    subtitle: `${r.slot} · ${r.mod}`,
+    fields: [
+      ["Skills", r.skills || "None"],
+      ["Work disabled", r.workDisables || "None"],
+      ["Spawn categories", r.categories || "None"],
+      ["Shuffleable", yes(r.shuffleable)],
+      ["Def name", r.defName],
+    ],
+    description: r.description,
+    commands: [r.shuffleable && (r.slot === "Childhood" ? "!shufflechildhood" : "!shuffleadulthood")].filter(Boolean),
+  }),
+};
+
+/** Turns rows into a CSV file using each column's key (or its csv function). */
+export function toCsv(columns, rows) {
+  const cell = (value) => {
+    const text = value == null ? "" : String(value);
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  const head = columns.map((col) => cell(col.label)).join(",");
+  const body = rows.map((row) => columns.map((col) => cell(col.csv ? col.csv(row) : row[col.key])).join(","));
+  return [head, ...body].join("\r\n") + "\r\n";
 }

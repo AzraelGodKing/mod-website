@@ -10,7 +10,7 @@ import { useFilters } from "../composables/useFilters";
 import { useChanges } from "../composables/useChanges";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { chatCommand, rowsOf } from "../lib/catalogs";
+import { chatCommand, rowsOf, detailsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -53,14 +53,14 @@ function karmaClass(karma) {
 }
 
 const iSort = useSort("label");
-const wSort = useSort("label");
+const wSort = useSort("label", 1, "w");
 
 const incidentCols = [
   { key: "label", label: "Event" },
   { key: "category", label: "Category", thClass: "hide-sm" },
   { key: "cost", label: "Cost", align: "right" },
   { key: "karma", label: "Karma" },
-  { key: "flags", label: "Flags" },
+  { key: "flags", label: "Flags", csv: (r) => incidentFlags(r) },
   { key: "mod", label: "Mod", thClass: "hide-sm" },
 ];
 
@@ -201,6 +201,8 @@ const filteredWeather = computed(() => {
       </div>
       <DataTable
         label="Incidents"
+        csv-name="incidents"
+        :details-for="detailsOf['incidents']"
         :columns="incidentCols"
         :rows="filteredIncidents"
         :empty="incidentsEmpty"
@@ -251,6 +253,8 @@ const filteredWeather = computed(() => {
       </div>
       <DataTable
         label="Weather"
+        csv-name="weather"
+        :details-for="detailsOf['weather']"
         :columns="weatherCols"
         :rows="filteredWeather"
         :empty="weatherEmpty"

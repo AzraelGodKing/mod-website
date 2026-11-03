@@ -1,6 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { copyText } from "../composables/useCopy";
+import { useLocal } from "../composables/useLocal.js";
+import { toCsv } from "../lib/catalogs";
+import DetailDialog from "./DetailDialog.vue";
 
 const PAGE = 150;
 
@@ -14,10 +17,32 @@ const props = defineProps({
   error: { type: String, default: "" },
   copyFor: { type: Function, default: null },
   stars: { type: Object, default: null },
+  detailsFor: { type: Function, default: null },
+  csvName: { type: String, default: "" },
   label: { type: String, default: "" },
 });
 
 const emit = defineEmits(["sort", "retry"]);
+
+const compact = useLocal("katsrics-compact", false);
+const details = ref(null);
+const lead = computed(() => Boolean(props.stars || props.detailsFor));
+
+function openDetails(row) {
+  details.value = props.detailsFor(row);
+}
+
+function downloadCsv() {
+  const blob = new Blob([toCsv(props.columns, props.rows)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${props.csvName || "katsrics"}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 const limit = ref(PAGE);
 const visible = computed(() => props.rows.slice(0, limit.value));
@@ -70,11 +95,17 @@ function onRowClick(row, event) {
 
 <template>
   <main>
-    <div class="table-shell">
+    <div v-if="state === 'ready'" class="table-tools">
+      <label class="toggle"><input v-model="compact" type="checkbox"> Compact rows</label>
+      <button v-if="csvName && rows.length" type="button" class="link-btn" @click="downloadCsv">
+        Download CSV ({{ rows.length.toLocaleString() }} rows)
+      </button>
+    </div>
+    <div :class="['table-shell', { compact }]">
       <table :aria-label="label || undefined" :aria-busy="state === 'loading' ? 'true' : 'false'">
         <thead>
           <tr>
-            <th v-if="stars" class="star-col" scope="col" aria-label="Starred"></th>
+            <th v-if="lead" class="star-col" scope="col" aria-label="Star and details"></th>
             <th
               v-for="col in columns"
               :key="col.key"
@@ -99,8 +130,9 @@ function onRowClick(row, event) {
             :title="commandOf(row) ? `Click to copy ${commandOf(row)}` : undefined"
             @click="onRowClick(row, $event)"
           >
-            <td v-if="stars" class="star-cell">
+            <td v-if="lead" class="star-cell">
               <button
+                v-if="stars"
                 type="button"
                 :class="['star-btn', { on: stars.has(row._key) }]"
                 :aria-pressed="stars.has(row._key) ? 'true' : 'false'"
@@ -108,6 +140,15 @@ function onRowClick(row, event) {
                 @click="stars.toggle(row._key)"
               >
                 {{ stars.has(row._key) ? "★" : "☆" }}
+              </button>
+              <button
+                v-if="detailsFor"
+                type="button"
+                class="info-btn"
+                :aria-label="`Details for ${detailsFor(row).title}`"
+                @click="openDetails(row)"
+              >
+                ⓘ
               </button>
             </td>
             <slot name="row" :row="row" />
@@ -137,5 +178,6 @@ function onRowClick(row, event) {
         </button>
       </div>
     </div>
+    <DetailDialog :details="details" @close="details = null" />
   </main>
 </template>
