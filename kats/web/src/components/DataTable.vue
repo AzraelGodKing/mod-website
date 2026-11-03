@@ -13,6 +13,7 @@ const props = defineProps({
   state: { type: String, default: "ready" },
   error: { type: String, default: "" },
   copyFor: { type: Function, default: null },
+  stars: { type: Object, default: null },
   label: { type: String, default: "" },
 });
 
@@ -73,6 +74,7 @@ function onRowClick(row, event) {
       <table :aria-label="label || undefined" :aria-busy="state === 'loading' ? 'true' : 'false'">
         <thead>
           <tr>
+            <th v-if="stars" class="star-col" scope="col" aria-label="Starred"></th>
             <th
               v-for="col in columns"
               :key="col.key"
@@ -97,6 +99,17 @@ function onRowClick(row, event) {
             :title="commandOf(row) ? `Click to copy ${commandOf(row)}` : undefined"
             @click="onRowClick(row, $event)"
           >
+            <td v-if="stars" class="star-cell">
+              <button
+                type="button"
+                :class="['star-btn', { on: stars.has(row._key) }]"
+                :aria-pressed="stars.has(row._key) ? 'true' : 'false'"
+                :aria-label="stars.has(row._key) ? 'Unstar' : 'Star'"
+                @click="stars.toggle(row._key)"
+              >
+                {{ stars.has(row._key) ? "★" : "☆" }}
+              </button>
+            </td>
             <slot name="row" :row="row" />
             <td v-if="copyFor" class="copy-cell">
               <button

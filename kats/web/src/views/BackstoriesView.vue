@@ -2,6 +2,11 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import ChangeBadge from "../components/ChangeBadge.vue";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
+import { useChanges } from "../composables/useChanges";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { rowsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
@@ -14,6 +19,21 @@ const q = useQueryState("q", "");
 const slot = useQueryState("slot", "");
 const mod = useQueryState("source", "");
 const shuffleOnly = useQueryState("shuffleable", true);
+const skill = useQueryState("skill", "");
+const noDisables = useQueryState("noDisables", false);
+const starredOnly = useQueryState("starred", false);
+const stars = useStars("backstories");
+const { badge } = useChanges();
+const filters = useFilters([[q, ""], [slot, ""], [mod, ""], [shuffleOnly, true], [skill, ""], [noDisables, false], [starredOnly, false]]);
+
+/** "Shooting +3, Melee -2" → [{ name: "Shooting", value: 3 }, …] */
+function skillList(text) {
+  return String(text)
+    .split(/[;,]/)
+    .map((part) => part.trim().match(/^(.+?)\s*([+-]\d+)$/))
+    .filter(Boolean)
+    .map((m) => ({ name: m[1], value: Number(m[2]) }));
+}
 const { sortKey, sortDir, toggleSort, sorted } = useSort("title");
 
 const columns = [
@@ -28,9 +48,10 @@ const { state, error, retry } = useLoader(async () => {
   rows.value = (await loadJson("backstories")).map(rowsOf.backstories);
 });
 
-watch([q, slot, mod, shuffleOnly], () => sync());
+watch([q, slot, mod, shuffleOnly, skill, noDisables, starredOnly], () => sync());
 
 const mods = computed(() => uniqueSorted(rows.value, (r) => r.mod));
+const skills = computed(() => [...new Set(rows.value.flatMap((r) => skillList(r.skills).map((s) => s.name)))].sort());
 const childCount = computed(() => rows.value.filter((r) => r.slot === "Childhood").length);
 const adultCount = computed(() => rows.value.filter((r) => r.slot === "Adulthood").length);
 
@@ -47,6 +68,9 @@ const filtered = computed(() => {
     (!shuffleOnly.value || r.shuffleable) &&
     (!slot.value || r.slot === slot.value) &&
     (!mod.value || r.mod === mod.value) &&
+    (!skill.value || skillList(r.skills).some((s) => s.name === skill.value && s.value > 0)) &&
+    (!noDisables.value || !r.workDisables) &&
+    (!starredOnly.value || stars.has(r.defName)) &&
     (!term ||
       r.title.toLowerCase().includes(term) ||
       r.defName.toLowerCase().includes(term) ||
@@ -83,12 +107,19 @@ const filtered = computed(() => {
         <option value="">All sources</option>
         <option v-for="m in mods" :key="m" :value="m">{{ m }}</option>
       </select>
+      <select v-model="skill" aria-label="Boosts skill">
+        <option value="">Any skill</option>
+        <option v-for="s in skills" :key="s" :value="s">Boosts {{ s }}</option>
+      </select>
       <label class="toggle"><input v-model="shuffleOnly" type="checkbox"> Shuffleable only</label>
+      <label class="toggle"><input v-model="noDisables" type="checkbox"> No work disabled</label>
+      <FilterTools v-model:starred-only="starredOnly" :active="filters.active.value" :star-count="stars.count.value" @clear="filters.clear" />
       <span class="count">{{ fmt(filtered.length) }} backstor{{ filtered.length === 1 ? "y" : "ies" }}</span>
     </div>
 
     <DataTable
       label="Backstories"
+      :stars="stars"
       :state="state"
       :error="error"
       @retry="retry"
@@ -101,7 +132,7 @@ const filtered = computed(() => {
     >
       <template #row="{ row }">
         <td class="title-cell">
-          <b>{{ row.title }}</b>
+          <b>{{ row.title }}</b> <ChangeBadge :info="badge('backstories', row.title)" />
           <span class="def">{{ row.defName }}</span>
           <span v-if="row.description" class="desc">{{ row.description }}</span>
         </td>

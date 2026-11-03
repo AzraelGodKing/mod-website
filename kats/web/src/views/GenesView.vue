@@ -2,6 +2,12 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import ChangeBadge from "../components/ChangeBadge.vue";
+import { useBalance } from "../composables/useBalance";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
+import { useChanges } from "../composables/useChanges";
 import { loadJson, loadMeta, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { DEFAULT_GENE_RATES, geneCost, rowsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
@@ -16,6 +22,12 @@ const q = useQueryState("q", "");
 const category = useQueryState("category", "");
 const mod = useQueryState("source", "");
 const architeOnly = useQueryState("archite", false);
+const metabolism = useQueryState("metabolism", "");
+const starredOnly = useQueryState("starred", false);
+const { affordable, limit } = useBalance();
+const stars = useStars("genes");
+const { badge } = useChanges();
+const filters = useFilters([[q, ""], [category, ""], [mod, ""], [architeOnly, false], [metabolism, ""], [starredOnly, false]]);
 const { sortKey, sortDir, toggleSort, sorted } = useSort("label");
 
 const columns = [
@@ -40,7 +52,7 @@ const { state, error, retry } = useLoader(async () => {
   });
 });
 
-watch([q, category, mod, architeOnly], () => sync());
+watch([q, category, mod, architeOnly, metabolism, starredOnly, limit], () => sync());
 
 const mods = computed(() => uniqueSorted(rows.value, (r) => r.mod));
 const categories = computed(() => uniqueSorted(rows.value, (r) => r.category));
@@ -60,6 +72,11 @@ const filtered = computed(() => {
       (!category.value || r.category === category.value) &&
       (!mod.value || r.mod === mod.value) &&
       (!architeOnly.value || r.biostatArc > 0) &&
+      (metabolism.value !== "gives" || r.biostatMet > 0) &&
+      (metabolism.value !== "costs" || r.biostatMet < 0) &&
+      (metabolism.value !== "none" || r.biostatMet === 0) &&
+      affordable(r.estCost) &&
+      (!starredOnly.value || stars.has(r.defName)) &&
       (!term ||
         r.label.toLowerCase().includes(term) ||
         r.defName.toLowerCase().includes(term) ||
@@ -96,12 +113,20 @@ const filtered = computed(() => {
         <option value="">All sources</option>
         <option v-for="m in mods" :key="m" :value="m">{{ m }}</option>
       </select>
+      <select v-model="metabolism" aria-label="Metabolism">
+        <option value="">Any metabolism</option>
+        <option value="gives">Gives metabolism (+)</option>
+        <option value="costs">Costs metabolism (−)</option>
+        <option value="none">No metabolism change</option>
+      </select>
       <label class="toggle"><input v-model="architeOnly" type="checkbox"> Archite only</label>
+      <FilterTools v-model:starred-only="starredOnly" :active="filters.active.value" :star-count="stars.count.value" show-balance @clear="filters.clear" />
       <span class="count">{{ fmt(filtered.length) }} gene{{ filtered.length === 1 ? "" : "s" }}</span>
     </div>
 
     <DataTable
       label="Genes"
+      :stars="stars"
       :state="state"
       :error="error"
       @retry="retry"
@@ -114,7 +139,7 @@ const filtered = computed(() => {
     >
       <template #row="{ row }">
         <td class="title-cell">
-          <b>{{ row.label }}</b>
+          <b>{{ row.label }}</b> <ChangeBadge :info="badge('genes', row.label)" />
           <span class="def">{{ row.defName }}</span>
           <span v-if="row.description" class="desc">{{ row.description }}</span>
         </td>

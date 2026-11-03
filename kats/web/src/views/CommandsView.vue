@@ -2,6 +2,11 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import ChangeBadge from "../components/ChangeBadge.vue";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
+import { useChanges } from "../composables/useChanges";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { chatCommand, rowsOf } from "../lib/catalogs";
@@ -26,6 +31,22 @@ const aq = useQueryState("aq", "");
 const ainteg = useQueryState("integration", "");
 const aisekaiOnly = useQueryState("isekai", false);
 
+const rStarred = useQueryState("starred", false);
+const aStarred = useQueryState("astarred", false);
+const rStars = useStars("commands");
+const aStars = useStars("addon-commands");
+const { badge } = useChanges();
+const rFilters = useFilters([[rq, ""], [rperm, ""], [rEnabled, true], [rStarred, false]]);
+const aFilters = useFilters([[aq, ""], [ainteg, ""], [aisekaiOnly, false], [aStarred, false]]);
+
+function cooldownText(seconds) {
+  const s = Number(seconds) || 0;
+  if (s <= 0) return "—";
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.round(s / 60)}m`;
+  return `${Math.round(s / 3600)}h`;
+}
+
 const rSort = useSort("key");
 const aSort = useSort("usage");
 
@@ -35,6 +56,7 @@ const ricsCols = [
   { key: "description", label: "Description" },
   { key: "permission", label: "Permission" },
   { key: "cost", label: "Cost", thClass: "hide-sm", align: "right" },
+  { key: "cooldown", label: "Cooldown", thClass: "hide-sm", align: "right" },
   { key: "enabled", label: "Status" },
 ];
 
@@ -69,6 +91,7 @@ const filteredRics = computed(() => {
   let list = commands.value.filter((r) =>
     (!rEnabled.value || r.enabled) &&
     (!rperm.value || r.permission === rperm.value) &&
+    (!rStarred.value || rStars.has(r.key)) &&
     (!term ||
       r.key.toLowerCase().includes(term) ||
       r.label.toLowerCase().includes(term) ||
@@ -87,6 +110,7 @@ const filteredAddon = computed(() => {
   let list = addon.value.filter((r) =>
     (!aisekaiOnly.value || r.integration === "ISEKAI RPG LEVELING") &&
     (!ainteg.value || r.integration === ainteg.value) &&
+    (!aStarred.value || aStars.has(r.key)) &&
     (!term ||
       r.key.toLowerCase().includes(term) ||
       r.usage.toLowerCase().includes(term) ||
@@ -127,6 +151,7 @@ const filteredAddon = computed(() => {
           <option v-for="p in perms" :key="p" :value="p">{{ p }}</option>
         </select>
         <label class="toggle"><input v-model="rEnabled" type="checkbox"> Enabled only</label>
+        <FilterTools v-model:starred-only="rStarred" :active="rFilters.active.value" :star-count="rStars.count.value" @clear="rFilters.clear" />
         <span class="count">{{ fmt(filteredRics.length) }} command{{ filteredRics.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
@@ -139,18 +164,20 @@ const filteredAddon = computed(() => {
         :state="state"
         :error="error"
         :copy-for="chatCommand.commands"
+        :stars="rStars"
         @sort="rSort.toggleSort"
         @retry="retry"
       >
         <template #row="{ row }">
           <td>
-            <b>!{{ row.key }}</b>
+            <b>!{{ row.key }}</b> <ChangeBadge :info="badge('commands', `!${row.key}`)" />
             <div v-if="row.alias" class="mod">alias {{ row.alias }}</div>
           </td>
           <td class="cat hide-sm">{{ row.label }}</td>
           <td>{{ row.description }}</td>
           <td class="cat">{{ row.permission }}</td>
           <td class="price hide-sm">{{ row.supportsCost ? fmt(row.cost) : "—" }}</td>
+          <td class="num hide-sm">{{ cooldownText(row.cooldown) }}</td>
           <td class="flags">
             <span v-if="row.enabled" class="flag">ON</span>
             <span v-else class="off">DISABLED</span>
@@ -167,6 +194,7 @@ const filteredAddon = computed(() => {
           <option v-for="i in integs" :key="i" :value="i">{{ i }}</option>
         </select>
         <label class="toggle"><input v-model="aisekaiOnly" type="checkbox"> Isekai only</label>
+        <FilterTools v-model:starred-only="aStarred" :active="aFilters.active.value" :star-count="aStars.count.value" @clear="aFilters.clear" />
         <span class="count">{{ fmt(filteredAddon.length) }} command{{ filteredAddon.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
@@ -179,6 +207,7 @@ const filteredAddon = computed(() => {
         :state="state"
         :error="error"
         :copy-for="chatCommand['addon-commands']"
+        :stars="aStars"
         @sort="aSort.toggleSort"
         @retry="retry"
       >

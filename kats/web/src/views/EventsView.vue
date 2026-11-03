@@ -2,6 +2,12 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import ChangeBadge from "../components/ChangeBadge.vue";
+import { useBalance } from "../composables/useBalance";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
+import { useChanges } from "../composables/useChanges";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { chatCommand, rowsOf } from "../lib/catalogs";
@@ -30,6 +36,22 @@ const wmod = useQueryState("wmod", "");
 const wkarma = useQueryState("wkarma", "");
 const wEnabled = useQueryState("wenabled", true);
 
+const iStarred = useQueryState("starred", false);
+const wStarred = useQueryState("wstarred", false);
+const { affordable, limit } = useBalance();
+const iStars = useStars("incidents");
+const wStars = useStars("weather");
+const { badge } = useChanges();
+const iFilters = useFilters([[iq, ""], [icat, ""], [imod, ""], [ikarma, ""], [itype, ""], [iEnabled, true], [iStarred, false]]);
+const wFilters = useFilters([[wq, ""], [wmod, ""], [wkarma, ""], [wEnabled, true], [wStarred, false]]);
+
+function karmaClass(karma) {
+  const k = String(karma).toLowerCase();
+  if (k.includes("good")) return "karma good";
+  if (k.includes("doom") || k.includes("bad")) return "karma bad";
+  return "karma neutral";
+}
+
 const iSort = useSort("label");
 const wSort = useSort("label");
 
@@ -56,7 +78,7 @@ const { state, error, retry } = useLoader(async () => {
   weather.value = wRows.map(rowsOf.weather);
 });
 
-watch(tab, () => sync());
+watch([tab, limit], () => sync());
 
 const cats = computed(() => uniqueSorted(incidents.value, (r) => r.category));
 const iMods = computed(() => uniqueSorted(incidents.value, (r) => r.mod));
@@ -100,6 +122,8 @@ const filteredIncidents = computed(() => {
     (!imod.value || r.mod === imod.value) &&
     (!ikarma.value || r.karma === ikarma.value) &&
     matchesType(r) &&
+    affordable(r.cost) &&
+    (!iStarred.value || iStars.has(r.defName)) &&
     (!term || r.label.toLowerCase().includes(term) || r.defName.toLowerCase().includes(term)),
   );
   list = iSort.sorted(list, (r) => (iSort.sortKey.value === "flags" ? incidentFlags(r) || "~" : r[iSort.sortKey.value]));
@@ -123,6 +147,8 @@ const filteredWeather = computed(() => {
     (!wEnabled.value || r.enabled) &&
     (!wmod.value || r.mod === wmod.value) &&
     (!wkarma.value || r.karma === wkarma.value) &&
+    affordable(r.cost) &&
+    (!wStarred.value || wStars.has(r.defName)) &&
     (!term || r.label.toLowerCase().includes(term) || r.defName.toLowerCase().includes(term)),
   );
   list = wSort.sorted(list, (r) => r[wSort.sortKey.value]);
@@ -170,6 +196,7 @@ const filteredWeather = computed(() => {
           <option value="weather">Weather incident</option>
         </select>
         <label class="toggle"><input v-model="iEnabled" type="checkbox"> Enabled only</label>
+        <FilterTools v-model:starred-only="iStarred" :active="iFilters.active.value" :star-count="iStars.count.value" show-balance @clear="iFilters.clear" />
         <span class="count">{{ fmt(filteredIncidents.length) }} incident{{ filteredIncidents.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
@@ -182,17 +209,18 @@ const filteredWeather = computed(() => {
         :state="state"
         :error="error"
         :copy-for="chatCommand.incidents"
+        :stars="iStars"
         @sort="iSort.toggleSort"
         @retry="retry"
       >
         <template #row="{ row }">
           <td>
-            <b>{{ row.label }}</b>
+            <b>{{ row.label }}</b> <ChangeBadge :info="badge('incidents', row.label)" />
             <div class="mod">{{ row.defName }}</div>
           </td>
           <td class="cat hide-sm">{{ row.category }}</td>
           <td class="price">{{ fmt(row.cost) }}</td>
-          <td class="cat">{{ row.karma }}</td>
+          <td><span :class="karmaClass(row.karma)">{{ row.karma }}</span></td>
           <td class="flags">
             <span v-if="row.isRaid" class="flag">RAID</span>
             <span v-if="row.isDisease" class="flag">DISEASE</span>
@@ -218,6 +246,7 @@ const filteredWeather = computed(() => {
           <option v-for="k in wKarmas" :key="k" :value="k">{{ k }}</option>
         </select>
         <label class="toggle"><input v-model="wEnabled" type="checkbox"> Enabled only</label>
+        <FilterTools v-model:starred-only="wStarred" :active="wFilters.active.value" :star-count="wStars.count.value" show-balance @clear="wFilters.clear" />
         <span class="count">{{ fmt(filteredWeather.length) }} weather type{{ filteredWeather.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
@@ -230,17 +259,18 @@ const filteredWeather = computed(() => {
         :state="state"
         :error="error"
         :copy-for="chatCommand.weather"
+        :stars="wStars"
         @sort="wSort.toggleSort"
         @retry="retry"
       >
         <template #row="{ row }">
           <td>
-            <b>{{ row.label }}</b>
+            <b>{{ row.label }}</b> <ChangeBadge :info="badge('weather', row.label)" />
             <div class="mod">{{ row.defName }}</div>
             <span v-if="!row.enabled" class="off">DISABLED</span>
           </td>
           <td class="price">{{ fmt(row.cost) }}</td>
-          <td class="cat">{{ row.karma }}</td>
+          <td><span :class="karmaClass(row.karma)">{{ row.karma }}</span></td>
           <td class="num hide-sm">{{ row.cap }}</td>
           <td class="mod hide-sm">{{ row.mod }}</td>
         </template>

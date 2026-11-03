@@ -2,6 +2,12 @@
 import { computed, ref, watch } from "vue";
 import PageIntro from "../components/PageIntro.vue";
 import DataTable from "../components/DataTable.vue";
+import FilterTools from "../components/FilterTools.vue";
+import ChangeBadge from "../components/ChangeBadge.vue";
+import { useBalance } from "../composables/useBalance";
+import { useStars } from "../composables/useStars";
+import { useFilters } from "../composables/useFilters";
+import { useChanges } from "../composables/useChanges";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
 import { chatCommand, rowsOf } from "../lib/catalogs";
@@ -27,6 +33,15 @@ const tBypass = useQueryState("bypass", false);
 const xq = useQueryState("xq", "");
 const xrace = useQueryState("race", "");
 const xEnabled = useQueryState("enabled", true);
+
+const tStarred = useQueryState("starred", false);
+const xStarred = useQueryState("xstarred", false);
+const { affordable, limit } = useBalance();
+const tStars = useStars("traits");
+const xStars = useStars("xenotypes");
+const { badge } = useChanges();
+const tFilters = useFilters([[tq, ""], [tmod, ""], [tAddable, false], [tRemovable, false], [tBypass, false], [tStarred, false]]);
+const xFilters = useFilters([[xq, ""], [xrace, ""], [xEnabled, true], [xStarred, false]]);
 
 const tSort = useSort("name");
 const xSort = useSort("xenotype");
@@ -55,7 +70,7 @@ const { state, error, retry } = useLoader(async () => {
   xenotypes.value = xRows.map(rowsOf.xenotypes);
 });
 
-watch(tab, () => sync());
+watch([tab, limit], () => sync());
 
 const mods = computed(() => uniqueSorted(traits.value, (r) => r.mod));
 const races = computed(() => uniqueSorted(xenotypes.value, (r) => r.race));
@@ -81,6 +96,8 @@ const filteredTraits = computed(() => {
     (!tAddable.value || r.canAdd) &&
     (!tRemovable.value || r.canRemove) &&
     (!tBypass.value || r.bypassLimit) &&
+    affordable(r.addPrice) &&
+    (!tStarred.value || tStars.has(`${r.defName}-${r.degree}`)) &&
     (!term ||
       r.name.toLowerCase().includes(term) ||
       r.defName.toLowerCase().includes(term) ||
@@ -88,7 +105,7 @@ const filteredTraits = computed(() => {
       r.description.toLowerCase().includes(term)),
   );
   list = tSort.sorted(list, (r) => (tSort.sortKey.value === "flags" ? traitFlags(r) || "~" : r[tSort.sortKey.value]));
-  return list.map((r, i) => ({ ...r, _key: `${r.defName}-${r.degree}-${i}` }));
+  return list.map((r) => ({ ...r, _key: `${r.defName}-${r.degree}` }));
 });
 
 const filteredXenos = computed(() => {
@@ -96,6 +113,8 @@ const filteredXenos = computed(() => {
   let list = xenotypes.value.filter((r) =>
     (!xrace.value || r.race === xrace.value) &&
     (!xEnabled.value || (r.xenotypeEnabled && r.raceEnabled)) &&
+    affordable(r.price) &&
+    (!xStarred.value || xStars.has(`${r.raceDef}-${r.xenotype}`)) &&
     (!term ||
       r.race.toLowerCase().includes(term) ||
       r.raceDef.toLowerCase().includes(term) ||
@@ -145,6 +164,7 @@ const filteredXenos = computed(() => {
         <label class="toggle"><input v-model="tAddable" type="checkbox"> Addable only</label>
         <label class="toggle"><input v-model="tRemovable" type="checkbox"> Removable only</label>
         <label class="toggle"><input v-model="tBypass" type="checkbox"> Bypass limit only</label>
+        <FilterTools v-model:starred-only="tStarred" :active="tFilters.active.value" :star-count="tStars.count.value" show-balance @clear="tFilters.clear" />
         <span class="count">{{ fmt(filteredTraits.length) }} trait{{ filteredTraits.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
@@ -157,12 +177,13 @@ const filteredXenos = computed(() => {
         :state="state"
         :error="error"
         :copy-for="chatCommand.traits"
+        :stars="tStars"
         @sort="tSort.toggleSort"
         @retry="retry"
       >
         <template #row="{ row }">
           <td class="trait-cell">
-            <b>{{ row.name }}</b>
+            <b>{{ row.name }}</b> <ChangeBadge :info="badge('traits', row.name)" />
             <span class="def">{{ row.defName }}</span>
             <span v-if="row.description" class="desc">{{ row.description }}</span>
             <span v-if="row.effects" class="effects">{{ row.effects }}</span>
@@ -193,6 +214,7 @@ const filteredXenos = computed(() => {
           <option v-for="r in races" :key="r" :value="r">{{ r }}</option>
         </select>
         <label class="toggle"><input v-model="xEnabled" type="checkbox"> Enabled only</label>
+        <FilterTools v-model:starred-only="xStarred" :active="xFilters.active.value" :star-count="xStars.count.value" show-balance @clear="xFilters.clear" />
         <span class="count">{{ fmt(filteredXenos.length) }} xenotype{{ filteredXenos.length === 1 ? "" : "s" }}</span>
       </div>
       <DataTable
@@ -205,11 +227,12 @@ const filteredXenos = computed(() => {
         :state="state"
         :error="error"
         :copy-for="chatCommand.xenotypes"
+        :stars="xStars"
         @sort="xSort.toggleSort"
         @retry="retry"
       >
         <template #row="{ row }">
-          <td><b>{{ row.xenotype }}</b></td>
+          <td><b>{{ row.xenotype }}</b> <ChangeBadge :info="badge('xenotypes', `${row.xenotype} (${row.race})`)" /></td>
           <td class="cat">{{ row.race }}</td>
           <td class="price">{{ fmt(row.price) }}</td>
           <td class="flags">

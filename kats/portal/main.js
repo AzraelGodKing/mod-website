@@ -8,6 +8,47 @@ const fileName = document.querySelector("#file-name");
 const exportInput = document.querySelector("#export");
 const current = document.querySelector("#current");
 const rollback = document.querySelector("#rollback");
+const confirmBox = document.querySelector("#confirm");
+const preview = document.querySelector("#preview");
+const confirmYes = document.querySelector("#confirm-yes");
+const confirmNo = document.querySelector("#confirm-no");
+
+/** Shows what the upload would change and waits for File it or Cancel. */
+function askToFile(text) {
+  preview.textContent = text;
+  confirmBox.hidden = false;
+  confirmYes.focus();
+  return new Promise((resolve) => {
+    const done = (answer) => {
+      confirmBox.hidden = true;
+      confirmYes.removeEventListener("click", yes);
+      confirmNo.removeEventListener("click", no);
+      resolve(answer);
+    };
+    const yes = () => done(true);
+    const no = () => done(false);
+    confirmYes.addEventListener("click", yes);
+    confirmNo.addEventListener("click", no);
+  });
+}
+
+function detail(changes) {
+  const lines = [];
+  for (const [name, diff] of Object.entries(changes)) {
+    if (!diff) continue;
+    const show = (title, list, fmt) => {
+      if (!list.total) return;
+      const items = list.list.slice(0, 8).map(fmt).join(", ");
+      lines.push(`  ${name} ${title}: ${items}${list.total > 8 ? ` and ${list.total - 8} more` : ""}`);
+    };
+    show("new", diff.added, (x) => x);
+    show("removed", diff.removed, (x) => x);
+    show("price", diff.prices, (x) => `${x.name} ${x.from}→${x.to}`);
+    show("turned on", diff.enabled, (x) => x);
+    show("turned off", diff.disabled, (x) => x);
+  }
+  return lines.join("\n");
+}
 
 exportInput.addEventListener("change", () => {
   const names = [...exportInput.files].map((file) => file.name);
@@ -126,10 +167,18 @@ form.addEventListener("submit", async (event) => {
       setStatus("The export did not contain store, trait, race, incident, weather, command, gene, or backstory data.");
       return;
     }
+    setStatus("Checking clearance.");
+    const { id } = await api(password, "POST", "/api/revisions");
     setStatus("Comparing against the current catalog.");
     const changes = await changesFor(built.files);
+    const more = detail(changes);
+    setStatus("Waiting for review. Nothing has been filed yet.");
+    const go = await askToFile(`${summary(built.counts, changes)}${more ? `\n\n${more}` : ""}`);
+    if (!go) {
+      setStatus("Revision cancelled. The live catalog was not changed.");
+      return;
+    }
     setStatus("Filing the revision.");
-    const { id } = await api(password, "POST", "/api/revisions");
     for (const name of names) {
       setStatus(`Filing ${name}.`);
       await api(password, "PUT", `/api/revisions/${id}/${name}`, built.files[name]);
