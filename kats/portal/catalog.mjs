@@ -191,6 +191,86 @@ function rowsFor(name, data) {
   throw new Error(`Unknown catalog ${name}`);
 }
 
+export function geneRatesFrom(commandSettings) {
+  const raw = commandSettings?.geneedit?.CustomData;
+  if (!raw) return null;
+  let data;
+  try {
+    data = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {
+    return null;
+  }
+  const rates = {
+    complexity: Number(data.complexity),
+    metabolism: Number(data.metabolism),
+    archite: Number(data.archite),
+  };
+  return Object.values(rates).every(Number.isFinite) ? rates : null;
+}
+
+const DIFF = {
+  items: { key: (r) => r[2], label: (r) => r[1], price: (r) => r[3], enabled: (r) => Boolean(r[9]) },
+  traits: { key: (r) => `${r[1]}#${r[2]}`, label: (r) => r[0], price: (r) => r[3] },
+  xenotypes: {
+    key: (r) => `${r[1]}/${r[2]}`,
+    label: (r) => `${r[2]} (${r[0]})`,
+    price: (r) => r[3],
+    enabled: (r) => Boolean(r[4] && r[5]),
+  },
+  incidents: { key: (r) => r[1], label: (r) => r[0], price: (r) => r[3], enabled: (r) => Boolean(r[6]) },
+  weather: { key: (r) => r[1], label: (r) => r[0], price: (r) => r[2], enabled: (r) => Boolean(r[5]) },
+  commands: { key: (r) => r[0], label: (r) => `!${r[0]}`, price: (r) => r[4], enabled: (r) => Boolean(r[6]) },
+  genes: { key: (r) => r[1], label: (r) => r[0] },
+  backstories: { key: (r) => `${r[1]}#${r[2]}`, label: (r) => r[0] },
+};
+
+export const DIFF_LIMIT = 150;
+
+function capped(list) {
+  return { total: list.length, list: list.slice(0, DIFF_LIMIT) };
+}
+
+export function diffCatalog(name, before, after) {
+  const spec = DIFF[name];
+  if (!spec || !Array.isArray(before) || !Array.isArray(after)) return null;
+  const old = new Map(before.map((row) => [spec.key(row), row]));
+  const next = new Map(after.map((row) => [spec.key(row), row]));
+  const added = [];
+  const removed = [];
+  const prices = [];
+  const enabled = [];
+  const disabled = [];
+  for (const [key, row] of next) {
+    const was = old.get(key);
+    if (!was) {
+      added.push(spec.label(row));
+      continue;
+    }
+    if (spec.price && Number(spec.price(was)) !== Number(spec.price(row))) {
+      prices.push({ name: spec.label(row), from: Number(spec.price(was)), to: Number(spec.price(row)) });
+    }
+    if (spec.enabled && spec.enabled(was) !== spec.enabled(row)) {
+      (spec.enabled(row) ? enabled : disabled).push(spec.label(row));
+    }
+  }
+  for (const [key, row] of old) if (!next.has(key)) removed.push(spec.label(row));
+  const byName = (a, b) => String(a.name ?? a).localeCompare(String(b.name ?? b));
+  return {
+    before: before.length,
+    after: after.length,
+    added: capped(added.sort(byName)),
+    removed: capped(removed.sort(byName)),
+    prices: capped(prices.sort(byName)),
+    enabled: capped(enabled.sort(byName)),
+    disabled: capped(disabled.sort(byName)),
+  };
+}
+
+export function hasChanges(diff) {
+  if (!diff) return false;
+  return ["added", "removed", "prices", "enabled", "disabled"].some((part) => diff[part].total > 0);
+}
+
 export function buildCatalog(entries) {
   const chosen = new Map();
   const skipped = [];
@@ -207,10 +287,13 @@ export function buildCatalog(entries) {
 
   const files = {};
   const counts = {};
+  let geneRates = null;
   for (const [name, entry] of chosen) {
-    const rows = rowsFor(name, parseJson(entry.text));
+    const data = parseJson(entry.text);
+    const rows = rowsFor(name, data);
     files[name] = JSON.stringify(rows);
     counts[name] = rows.length;
+    if (name === "commands") geneRates = geneRatesFrom(data);
   }
-  return { files, counts, skipped };
+  return { files, counts, skipped, geneRates };
 }

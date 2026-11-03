@@ -45,3 +45,12 @@ fi
 if [[ -n "${ADMIN_TOKEN:-}" ]]; then
   put_secret ADMIN_TOKEN "$ADMIN_TOKEN"
 fi
+
+# Kat's RICS is its own worker. A failure here leaves the main site deploy in place.
+if npm run deploy:kats; then
+  if [[ -n "${KATS_UPLOAD_TOKEN:-}" ]]; then
+    printf '%s' "$KATS_UPLOAD_TOKEN" | npx wrangler secret put KATS_UPLOAD_TOKEN --config kats/wrangler.jsonc || echo "The Kat's RICS upload password was not updated."
+  fi
+else
+  echo "The Kat's RICS deploy failed. The main site is already live."
+fi

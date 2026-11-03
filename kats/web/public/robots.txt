@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /upload
+Disallow: /api/
+
+Sitemap: https://kats.azraelsmods.com/sitemap.xml

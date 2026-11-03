@@ -1,0 +1,21 @@
+{
+  "updatedAt": "2026-09-12T17:27:08Z",
+  "counts": {
+    "items": 5468,
+    "traits": 354,
+    "xenotypes": 1446,
+    "incidents": 254,
+    "weather": 36,
+    "commands": 112,
+    "genes": 299,
+    "backstories": 845
+  },
+  "changes": null,
+  "geneRates": {
+    "complexity": 100,
+    "metabolism": 250,
+    "archite": 1000
+  },
+  "previousUpdatedAt": null,
+  "canRollBack": false
+}
