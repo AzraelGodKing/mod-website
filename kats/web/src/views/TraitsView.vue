@@ -10,7 +10,7 @@ import { useFilters } from "../composables/useFilters";
 import { useChanges } from "../composables/useChanges";
 import TabBar from "../components/TabBar.vue";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { chatCommand, rowsOf } from "../lib/catalogs";
+import { chatCommand, rowsOf, detailsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -44,7 +44,7 @@ const tFilters = useFilters([[tq, ""], [tmod, ""], [tAddable, false], [tRemovabl
 const xFilters = useFilters([[xq, ""], [xrace, ""], [xEnabled, true], [xStarred, false]]);
 
 const tSort = useSort("name");
-const xSort = useSort("xenotype");
+const xSort = useSort("xenotype", 1, "x");
 
 const traitCols = [
   { key: "name", label: "Trait" },
@@ -52,7 +52,7 @@ const traitCols = [
   { key: "degree", label: "Degree", thClass: "hide-sm", align: "right" },
   { key: "addPrice", label: "Add $", align: "right" },
   { key: "removePrice", label: "Remove $", align: "right" },
-  { key: "flags", label: "Flags" },
+  { key: "flags", label: "Flags", csv: (r) => traitFlags(r) },
   { key: "mod", label: "Mod", thClass: "hide-sm" },
 ];
 
@@ -60,7 +60,7 @@ const xenoCols = [
   { key: "xenotype", label: "Xenotype" },
   { key: "race", label: "Race" },
   { key: "price", label: "Price", align: "right" },
-  { key: "enabled", label: "Enabled" },
+  { key: "enabled", label: "Enabled", csv: (r) => (r.ok ? "yes" : "no") },
   { key: "modActive", label: "Mod active", thClass: "hide-sm" },
 ];
 
@@ -169,6 +169,8 @@ const filteredXenos = computed(() => {
       </div>
       <DataTable
         label="Traits"
+        csv-name="traits"
+        :details-for="detailsOf['traits']"
         :columns="traitCols"
         :rows="filteredTraits"
         empty="No traits match your search."
@@ -219,6 +221,8 @@ const filteredXenos = computed(() => {
       </div>
       <DataTable
         label="Xenotypes"
+        csv-name="xenotypes"
+        :details-for="detailsOf['xenotypes']"
         :columns="xenoCols"
         :rows="filteredXenos"
         empty="No xenotypes match your search."

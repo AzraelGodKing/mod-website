@@ -9,7 +9,7 @@ import { useStars } from "../composables/useStars";
 import { useFilters } from "../composables/useFilters";
 import { useChanges } from "../composables/useChanges";
 import { loadJson, fmt, uniqueSorted, useLoader } from "../lib/data";
-import { chatCommand, rowsOf } from "../lib/catalogs";
+import { chatCommand, rowsOf, detailsOf } from "../lib/catalogs";
 import { useSort } from "../composables/useSort";
 import { useQueryState } from "../composables/useQueryState";
 import { useStickyOffsets } from "../composables/useStickyOffsets";
@@ -33,7 +33,7 @@ const columns = [
   { key: "category", label: "Category", thClass: "hide-sm" },
   { key: "price", label: "Price", align: "right" },
   { key: "qty", label: "Max Qty", thClass: "hide-sm", align: "right" },
-  { key: "commands", label: "Commands" },
+  { key: "commands", label: "Commands", csv: (r) => cmdLabel(r) },
   { key: "mod", label: "Mod", thClass: "hide-sm" },
 ];
 
@@ -120,6 +120,8 @@ const filtered = computed(() => {
 
     <DataTable
       label="Store items"
+      csv-name="store"
+      :details-for="detailsOf['items']"
       :columns="columns"
       :rows="filtered"
       empty="No items match your search."
