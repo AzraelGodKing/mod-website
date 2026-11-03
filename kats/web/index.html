@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kat's RICS — Chat coin catalog</title>
+<meta name="description" content="Everything Kat's chat can buy and trigger with coins in RimWorld: store items, traits, xenotypes, events, weather, commands, genes, and backstories.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/og.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kat's RICS">
+<meta property="og:title" content="Kat's RICS — Chat coin catalog">
+<meta property="og:description" content="Search everything chat can buy and trigger with coins: store, traits, events, weather, commands, and more.">
+<meta property="og:url" content="https://kats.azraelsmods.com/">
+<meta property="og:image" content="https://kats.azraelsmods.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+  (function () {
+    // Old links used #/traits style routes. Move them to the clean path before the app starts.
+    if (location.hash.indexOf("#/") === 0) history.replaceState(null, "", location.hash.slice(1));
+  })();
+  (function () {
+    var theme = "dark";
+    try {
+      var saved = localStorage.getItem("katsrics-theme");
+      if (saved === "light" || saved === "dark") theme = saved;
+      else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+    } catch (e) {}
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app"></div>
+  <noscript><p style="padding:2rem;font-family:sans-serif">Kat's RICS needs JavaScript to search the catalog.</p></noscript>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,78 +1,173 @@
 import { createExtractorFromData } from "node-unrar-js";
-import { buildCatalog } from "./catalog.mjs";
+import { buildCatalog, diffCatalog, hasChanges } from "./catalog.mjs";
 
 const form = document.querySelector("#upload-form");
+const fields = document.querySelector("#upload-fields");
 const status = document.querySelector("#status");
 const fileName = document.querySelector("#file-name");
-const rarInput = document.querySelector("#rar");
+const exportInput = document.querySelector("#export");
+const current = document.querySelector("#current");
+const rollback = document.querySelector("#rollback");
 
-rarInput.addEventListener("change", () => {
-  fileName.textContent = rarInput.files[0]?.name ?? "No file selected";
+exportInput.addEventListener("change", () => {
+  const names = [...exportInput.files].map((file) => file.name);
+  fileName.textContent = names.length ? names.join(", ") : "No file selected";
 });
 
 function setStatus(message) {
   status.textContent = message;
 }
 
-async function publish(password, files) {
-  const names = Object.keys(files);
-  for (const name of names) {
-    const response = await fetch(`/api/catalog/${name}`, {
-      method: "PUT",
-      headers: {
-        authorization: `Bearer ${password}`,
-        "content-type": "application/json",
-      },
-      body: files[name],
-    });
-    if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(`${name} was not saved (${response.status}). ${detail}`);
-    }
-  }
+function busy(on) {
+  fields.disabled = on;
+  rollback.disabled = on || rollback.dataset.available !== "true";
 }
 
-function countLine(counts) {
+function when(iso) {
+  if (!iso) return "Unknown";
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString();
+}
+
+async function showCurrent() {
+  try {
+    const response = await fetch("/data/meta.json", { cache: "no-store" });
+    const meta = response.ok ? await response.json() : null;
+    current.textContent = meta?.updatedAt ? `Current catalog filed ${when(meta.updatedAt)}.` : "No revision has been filed here yet.";
+    rollback.dataset.available = meta?.canRollBack ? "true" : "false";
+    rollback.title = meta?.previousUpdatedAt ? `Go back to the revision filed ${when(meta.previousUpdatedAt)}` : "";
+  } catch {
+    current.textContent = "The current catalog could not be read.";
+    rollback.dataset.available = "false";
+  }
+  rollback.disabled = rollback.dataset.available !== "true";
+}
+
+async function api(password, method, path, body) {
+  const response = await fetch(path, {
+    method,
+    headers: { authorization: `Bearer ${password}`, "content-type": "application/json" },
+    body,
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`${detail || "The request failed."} (${response.status})`);
+  }
+  return response.json();
+}
+
+async function readEntries(files) {
+  const entries = [];
+  const decoder = new TextDecoder("utf-8");
+  for (const file of files) {
+    if (/\.json$/i.test(file.name)) {
+      entries.push({ path: file.name, text: await file.text() });
+      continue;
+    }
+    const extractor = await createExtractorFromData({ data: await file.arrayBuffer() });
+    const extracted = extractor.extract();
+    for (const item of extracted.files) {
+      if (item.fileHeader.flags.directory || !item.extraction) continue;
+      entries.push({ path: item.fileHeader.name, text: decoder.decode(item.extraction) });
+    }
+  }
+  return entries;
+}
+
+async function changesFor(files) {
+  const changes = {};
+  for (const [name, json] of Object.entries(files)) {
+    try {
+      const response = await fetch(`/data/${name}.json`, { cache: "no-store" });
+      const before = response.ok ? await response.json() : null;
+      changes[name] = diffCatalog(name, before, JSON.parse(json));
+    } catch {
+      changes[name] = null;
+    }
+  }
+  return changes;
+}
+
+function summary(counts, changes) {
   return Object.entries(counts)
-    .map(([name, count]) => `${name} ${count}`)
-    .join(", ");
+    .map(([name, count]) => {
+      const diff = changes[name];
+      if (!diff) return `${name} ${count}`;
+      if (!hasChanges(diff)) return `${name} ${count} (no changes)`;
+      const parts = [
+        diff.added.total && `+${diff.added.total}`,
+        diff.removed.total && `-${diff.removed.total}`,
+        diff.prices.total && `${diff.prices.total} price`,
+      ].filter(Boolean);
+      return `${name} ${count} (${parts.join(", ") || "flags changed"})`;
+    })
+    .join("\n");
 }
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const password = new FormData(form).get("password");
-  const rar = rarInput.files[0];
+  const password = String(new FormData(form).get("password") ?? "");
+  const files = [...exportInput.files];
   if (!password) {
     setStatus("Clearance was not entered.");
     return;
   }
-  if (!rar) {
+  if (!files.length) {
     setStatus("No export is attached to this revision.");
     return;
   }
 
-  const entries = [];
+  busy(true);
   try {
     setStatus("Revision in progress. The export is under review.");
-    const bytes = await rar.arrayBuffer();
-    const extractor = await createExtractorFromData({ data: bytes });
-    const extracted = extractor.extract();
-    const decoder = new TextDecoder("utf-8");
-    for (const file of extracted.files) {
-      if (file.fileHeader.flags.directory || !file.extraction) continue;
-      entries.push({ path: file.fileHeader.name, text: decoder.decode(file.extraction) });
-    }
-    const built = buildCatalog(entries);
+    const built = buildCatalog(await readEntries(files));
     const names = Object.keys(built.files);
     if (names.length === 0) {
-      setStatus("The export did not contain store, trait, race, incident, weather, or command data.");
+      setStatus("The export did not contain store, trait, race, incident, weather, command, gene, or backstory data.");
       return;
     }
+    setStatus("Comparing against the current catalog.");
+    const changes = await changesFor(built.files);
     setStatus("Filing the revision.");
-    await publish(String(password), built.files);
-    const withheld = built.skipped.length ? " Private records were not filed." : "";
-    setStatus(`FILE STATUS: Active. Revision filed. ${countLine(built.counts)}.${withheld}`);
+    const { id } = await api(password, "POST", "/api/revisions");
+    for (const name of names) {
+      setStatus(`Filing ${name}.`);
+      await api(password, "PUT", `/api/revisions/${id}/${name}`, built.files[name]);
+    }
+    await api(
+      password,
+      "POST",
+      `/api/revisions/${id}/commit`,
+      JSON.stringify({ counts: built.counts, changes, geneRates: built.geneRates }),
+    );
+    const withheld = built.skipped.length ? "\nPrivate records were not filed." : "";
+    setStatus(`FILE STATUS: Active. Revision filed.\n${summary(built.counts, changes)}${withheld}`);
+    await showCurrent();
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "The upload failed.");
+    const message = error instanceof Error ? error.message : "The upload failed.";
+    setStatus(`${message}\nThe live catalog was not changed.`);
+  } finally {
+    busy(false);
   }
 });
+
+rollback.addEventListener("click", async () => {
+  const password = String(new FormData(form).get("password") ?? "");
+  if (!password) {
+    setStatus("Enter clearance before restoring the previous revision.");
+    return;
+  }
+  if (!window.confirm("Restore the previous revision? The current one will be withdrawn.")) return;
+  busy(true);
+  try {
+    const meta = await api(password, "POST", "/api/rollback");
+    setStatus(`Previous revision restored. Filed ${when(meta.updatedAt)}.`);
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : "The restore failed.");
+  } finally {
+    await showCurrent();
+    busy(false);
+  }
+});
+
+showCurrent();

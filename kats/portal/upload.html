@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>File status — KatsRics</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -171,7 +173,7 @@
     .file strong { color: var(--accent); font-weight: 650; }
     #file-name { color: var(--muted); font: 13px/1.4 var(--mono); text-align: right; }
 
-    .actions { display: flex; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
     button {
       padding: 0.85rem 1.2rem;
@@ -185,6 +187,17 @@
     }
 
     button:hover { filter: brightness(1.06); }
+    button:disabled { cursor: progress; filter: grayscale(0.6) brightness(0.8); box-shadow: none; }
+    button.secondary {
+      color: var(--ink);
+      background: transparent;
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+    button.secondary:disabled { cursor: not-allowed; opacity: 0.5; }
+    fieldset { display: grid; gap: 0.95rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+    fieldset:disabled .file { cursor: progress; opacity: 0.7; }
+    .current { margin: 1.1rem 0 0; color: var(--muted); font: 13px/1.45 var(--mono); }
 
     #status {
       min-height: 2.6rem;
@@ -222,21 +235,25 @@
         <p class="stamp">CAP export</p>
       </div>
       <h1>Catalog revision</h1>
-      <p class="lede">File a CAP export. The store, traits, races, incidents, weather, and commands are revised. Viewer lists and settings backups are not entered into the record.</p>
+      <p class="lede">File a CAP export (.rar). The store, traits, races, incidents, weather, and commands are revised. Genes.json and Backstories.json can be filed alongside it or on their own. Viewer lists and settings backups are not entered into the record. Nothing goes live until every file is saved.</p>
       <form id="upload-form">
+        <fieldset id="upload-fields">
         <label>Clearance
           <input name="password" type="password" autocomplete="current-password" required />
         </label>
         <label class="file">
           <span><strong>Select export</strong></span>
-          <input id="rar" type="file" accept=".rar,application/vnd.rar,application/x-rar-compressed" required />
+          <input id="export" type="file" multiple accept=".rar,.json,application/vnd.rar,application/x-rar-compressed,application/json" required />
           <span id="file-name">No file selected</span>
         </label>
         <div class="actions">
           <button type="submit">File this revision</button>
+          <button type="button" id="rollback" class="secondary" disabled>Restore previous revision</button>
         </div>
+        </fieldset>
       </form>
-      <p id="status" role="status">Awaiting a filed revision.</p>
+      <p class="current" id="current">Reading the current catalog.</p>
+      <p id="status" role="status" aria-live="polite">Awaiting a filed revision.</p>
     </section>
   </main>
   <p class="monitor">This channel is continuously monitored for unauthorized modification.</p>
