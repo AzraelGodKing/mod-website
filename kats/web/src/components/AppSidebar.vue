@@ -43,8 +43,7 @@ const updatedOn = computed(() => longDate(meta.value?.updatedAt));
       <button
         type="button"
         class="theme-toggle theme-toggle-sm"
-        :aria-pressed="isDark ? 'true' : 'false'"
-        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        :aria-label="isDark ? 'Day side: switch to light mode' : 'Night side: switch to dark mode'"
         @click="onToggle"
       >
         {{ isDark ? "Day side" : "Night side" }}
@@ -74,11 +73,11 @@ const updatedOn = computed(() => longDate(meta.value?.updatedAt));
         <span class="live-dot" aria-hidden="true"></span>
         Updated {{ updatedAgo }}
       </router-link>
+      <span v-else class="live-pill" aria-hidden="true">&nbsp;</span>
       <button
         type="button"
         class="theme-toggle theme-toggle-lg"
-        :aria-pressed="isDark ? 'true' : 'false'"
-        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        :aria-label="isDark ? 'Day side: switch to light mode' : 'Night side: switch to dark mode'"
         @click="onToggle"
       >
         {{ isDark ? "Day side" : "Night side" }}

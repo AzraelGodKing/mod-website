@@ -4,7 +4,7 @@
 [data-theme="dark"] {
   --ink: #e8f1ff;
   --ink-soft: #9db0c9;
-  --muted: #6d829c;
+  --muted: #7a8fa8;
   --bg: #070b14;
   --bg-elev: #0c1220;
   --panel: #10182a;
@@ -32,13 +32,13 @@
 [data-theme="light"] {
   --ink: #102033;
   --ink-soft: #3b5168;
-  --muted: #5d738a;
+  --muted: #4f647a;
   --bg: #eef3f8;
   --bg-elev: #f7fafc;
   --panel: #ffffff;
   --panel-2: #e8eef5;
   --line: #c9d6e4;
-  --accent: #0f8f78;
+  --accent: #0b6e5d;
   --accent-2: #c2185b;
   --accent-deep: #1565c0;
   --danger: #c62828;
@@ -48,11 +48,11 @@
   --thead-bg: #e8eef5;
   --thead-hover: #dce6f0;
   --row-line: #e4ecf4;
-  --row-hover: rgba(15, 143, 120, 0.08);
+  --row-hover: rgba(11, 110, 93, 0.08);
   --hint-bg: #f4f8fb;
-  --focus-ring: rgba(15, 143, 120, 0.2);
+  --focus-ring: rgba(11, 110, 93, 0.2);
   --grid: rgba(21, 101, 192, 0.06);
-  --glow: rgba(15, 143, 120, 0.2);
+  --glow: rgba(11, 110, 93, 0.2);
   --input-bg: #ffffff;
   color-scheme: light;
 }
@@ -396,6 +396,8 @@ a:hover { color: var(--accent); }
 }
 
 .controls input[type=search] { width: min(280px, 100%); }
+/* Fixed width so the filters don't move when the options arrive. */
+.controls select { width: 220px; max-width: 100%; text-overflow: ellipsis; }
 
 .controls input[type=search]:focus,
 .controls select:focus {
@@ -515,6 +517,10 @@ tbody td b { font-weight: 700; color: var(--ink); }
 
 tr.disabled td { opacity: 0.42; }
 
+.empty.loading { min-height: 70vh; }
+.changes .empty.loading { min-height: 60vh; }
+/* Kept in the layout while loading so the table doesn't move down when it appears. */
+.table-tools.pending { visibility: hidden; }
 .empty {
   text-align: center;
   color: var(--muted);
@@ -746,6 +752,7 @@ tbody tr.copyable { cursor: copy; }
 
 /* Changes and search */
 .changes, .search-results { display: grid; gap: 14px; }
+.changes-when { margin: 0; }
 .change-card {
   padding: 18px 20px;
   background: var(--panel);
@@ -812,9 +819,17 @@ a.change-count { color: var(--accent-deep); text-decoration: none; }
 
 /* Round 2: stars, badges, balance, clear, karma, chips, back to top */
 .star-col, .star-cell { width: 1%; padding-right: 0 !important; }
+.star-btn, .info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  vertical-align: middle;
+}
 .star-btn {
   appearance: none;
-  padding: 0 2px;
+  padding: 0;
   border: 0;
   background: none;
   color: var(--muted);
@@ -921,7 +936,7 @@ a.change-count { color: var(--accent-deep); text-decoration: none; }
 /* Round 3: details popup, table tools, compact rows */
 .info-btn {
   appearance: none;
-  padding: 0 2px;
+  padding: 0;
   margin-left: 2px;
   border: 0;
   background: none;
@@ -1030,7 +1045,7 @@ a.change-count { color: var(--accent-deep); text-decoration: none; }
 .hit-label:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 @media (max-width: 860px) {
-  .app-frame { grid-template-columns: minmax(0, 1fr); }
+  .app-frame { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .rail {
     position: static;
     height: auto;
@@ -1075,7 +1090,7 @@ a.change-count { color: var(--accent-deep); text-decoration: none; }
   .page-intro .lede { font-size: 0.95rem; margin-bottom: 12px; }
   .meta-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 12px; }
   .stat-card { display: inline-flex; align-items: baseline; gap: 5px; padding: 0; background: none; border: 0; }
-  .stat-card b { font-size: 0.95rem; }
+  .stat-card b { font-size: 0.95rem; min-width: 5ch; }
   .stat-card em { font-size: 0.7rem; }
   .hint { padding: 10px 12px; }
   .controls { padding-top: 10px; padding-bottom: 10px; }

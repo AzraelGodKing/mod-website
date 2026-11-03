@@ -16,6 +16,7 @@ watch(
     if (value && !dialog.value?.open) dialog.value?.showModal?.();
     if (!value && dialog.value?.open) dialog.value.close();
   },
+  { immediate: true },
 );
 
 const maxQty = computed(() => props.details?.quantity?.max || 999);
