@@ -1,11 +1,11 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch, defineAsyncComponent } from "vue";
+const DetailDialog = defineAsyncComponent(() => import("./DetailDialog.vue"));
 import { copyText } from "../composables/useCopy";
 import { useLocal } from "../composables/useLocal.js";
 import { toCsv } from "../lib/catalogs";
-import DetailDialog from "./DetailDialog.vue";
 
-const PAGE = 150;
+const PAGE = 60;
 
 const props = defineProps({
   columns: { type: Array, required: true },
@@ -95,7 +95,7 @@ function onRowClick(row, event) {
 
 <template>
   <main>
-    <div v-if="state === 'ready'" class="table-tools">
+    <div class="table-tools" :class="{ pending: state !== 'ready' }" :aria-hidden="state !== 'ready' ? 'true' : undefined">
       <label class="toggle"><input v-model="compact" type="checkbox"> Compact rows</label>
       <button v-if="csvName && rows.length" type="button" class="link-btn" @click="downloadCsv">
         Download CSV ({{ rows.length.toLocaleString() }} rows)
@@ -166,7 +166,7 @@ function onRowClick(row, event) {
           </tr>
         </tbody>
       </table>
-      <div v-if="state === 'loading'" class="empty" role="status">Loading catalog…</div>
+      <div v-if="state === 'loading'" class="empty loading" role="status">Loading catalog…</div>
       <div v-else-if="state === 'error'" class="empty error" role="alert">
         <p>{{ error || "The catalog could not be loaded." }}</p>
         <button type="button" class="retry-btn" @click="emit('retry')">Try again</button>
@@ -178,6 +178,6 @@ function onRowClick(row, event) {
         </button>
       </div>
     </div>
-    <DetailDialog :details="details" @close="details = null" />
+    <DetailDialog v-if="details" :details="details" @close="details = null" />
   </main>
 </template>

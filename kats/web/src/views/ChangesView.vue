@@ -60,10 +60,11 @@ function link(name, entry) {
     <PageIntro
       kicker="Channel 08"
       title="What changed"
-      :lede="updated ? `The catalog was last updated ${updated} (${ago}). Here's what that update changed.` : 'What the latest catalog update changed.'"
+      lede="What the latest catalog update added, removed, repriced, and turned on or off."
     />
     <main class="changes">
-      <div v-if="state === 'loading'" class="empty" role="status">Loading catalog…</div>
+      <p v-if="state === 'ready' && updated" class="muted changes-when">The catalog was last updated {{ updated }} ({{ ago }}).</p>
+      <div v-if="state === 'loading'" class="empty loading" role="status">Loading catalog…</div>
       <div v-else-if="state === 'error'" class="empty error" role="alert">
         <p>{{ error }}</p>
         <button type="button" class="retry-btn" @click="retry">Try again</button>

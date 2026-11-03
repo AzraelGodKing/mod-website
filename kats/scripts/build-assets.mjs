@@ -31,6 +31,7 @@ await esbuild.build({
   bundle: true,
   format: "esm",
   platform: "browser",
+  minify: true,
   logLevel: "warning",
 });
 
