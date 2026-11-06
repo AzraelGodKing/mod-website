@@ -25,7 +25,7 @@ import {
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
 import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
-import { TOOLS, fetchLatestRelease, parseToolPath, releasesPage, toolCounts } from "./downloads/tools.mjs";
+import { TOOLS, fetchGithubDownloads, fetchLatestRelease, parseToolPath, releasesPage, siteVersions, toolCounts } from "./downloads/tools.mjs";
 import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
 import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
@@ -440,11 +440,24 @@ const privateAdminRoutes: Record<string, AdminRoute> = {
     return adminJson(200, { manifest: files !== null, mods: releaseStatus(catalogMods, files) });
   },
   "GET /api/admin/overview": async (_request, env, _url, db) => {
-    const [sessions, tools] = await Promise.all([
+    const [sessions, log, tools] = await Promise.all([
       db ? activeSessions(db) : null,
-      // Same edge-cached GitHub read the tool download buttons use.
-      Promise.all(TOOLS.map(async (tool) => ({ slug: tool.slug, release: await fetchLatestRelease(tool, (input, init) => fetch(input, init)) }))),
+      db ? siteDownloadLog(db).catch(() => null) : null,
+      // Same edge-cached GitHub reads the tool download buttons use.
+      Promise.all(
+        TOOLS.map(async (tool) => {
+          const [release, github] = await Promise.all([
+            fetchLatestRelease(tool, (input, init) => fetch(input, init)),
+            fetchGithubDownloads(tool, (input, init) => fetch(input, init)),
+          ]);
+          return { slug: tool.slug, release, github };
+        }),
+      ),
     ]);
+    for (const entry of tools) {
+      const tool = TOOLS.find((item) => item.slug === entry.slug);
+      Object.assign(entry, { site: tool ? siteVersions(tool, log) : null });
+    }
     return adminJson(200, {
       sessions,
       password: !!env.ADMIN_TOKEN,
