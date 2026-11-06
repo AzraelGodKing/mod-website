@@ -5,6 +5,7 @@ import { games } from "../data/games";
 import { mods, modsForGame } from "../data/mods";
 import { platforms } from "../data/stats";
 import { TOOLS, releasesPage } from "../downloads/tools.mjs";
+import { ADMIN_SITES } from "../data/links.mjs";
 
 type Column = { field: string; label: string };
 
@@ -46,6 +47,7 @@ const links = [
   ["Public stats API", "/api/stats"],
   ["Live downloads API", "/api/downloads"],
   ["downloads.json", "https://downloads.azraelsmods.com/downloads.json"],
+  ["Kat's RICS upload", "https://kats.azraelsmods.com/upload"],
   ["Website repo", "https://github.com/AzraelGodKing/mod-website"],
   ...games.map((game) => [`${game.name} repo`, game.repo]),
 ];
@@ -170,6 +172,26 @@ const links = [
                     <span class="adm-pill is-muted" data-tool-version>Checking…</span>
                     <span class="adm-tile-note" data-tool-released></span>
                   </span>
+                </a>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="adm-tools adm-sites" aria-labelledby="adm-sites-title">
+          <h2 id="adm-sites-title">Sites</h2>
+          <div class="adm-games">
+            {
+              ADMIN_SITES.map((site) => (
+                <a class="adm-game-card" href={site.href} target="_blank" rel="noopener" data-site-status={site.status ?? undefined}>
+                  <span class="adm-game-name">{site.name}</span>
+                  <span class="adm-site-host">{new URL(site.href).host}</span>
+                  <span class="adm-tile-note">{site.note}</span>
+                  {site.status && (
+                    <span class="adm-tool-release">
+                      <span class="adm-pill is-muted" data-site-pill>Checking…</span>
+                    </span>
+                  )}
                 </a>
               ))
             }
@@ -589,6 +611,29 @@ const links = [
         markLeaders();
         renderToolCounts();
       }
+
+      // ---- Sites: up or down, from status.azraelsmods.com ----
+      (function loadSiteStatus() {
+        const cards = document.querySelectorAll("[data-site-status]");
+        if (!cards.length) return;
+        const LABEL = { up: ["Up", "is-ok"], degraded: ["Partly up", "is-warn"], down: ["Down", "is-bad"], unknown: ["Not checked yet", "is-muted"] };
+        const paint = (card, status) => {
+          const pill = card.querySelector("[data-site-pill]");
+          const [text, cls] = LABEL[status] ?? ["Status unavailable", "is-muted"];
+          pill.textContent = text;
+          pill.className = `adm-pill ${cls}`;
+        };
+        fetch("https://status.azraelsmods.com/api/status")
+          .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+          .then((data) => {
+            const byId = Object.fromEntries((data.services ?? []).map((service) => [service.id, service.status]));
+            for (const card of cards) {
+              const id = card.dataset.siteStatus;
+              paint(card, id === "overall" ? data.overall : byId[id]);
+            }
+          })
+          .catch(() => cards.forEach((card) => paint(card, null)));
+      })();
 
       // ---- Tools ----
       // Counts come with the stats; versions come from GitHub with the overview.
