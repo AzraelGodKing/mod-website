@@ -54,3 +54,14 @@ if npm run deploy:kats; then
 else
   echo "The Kat's RICS deploy failed. The main site is already live."
 fi
+
+# The other subdomains are small Workers of their own. Each failure is reported and
+# leaves everything else live.
+for site in docs live status; do
+  if ! npm run "deploy:$site"; then
+    echo "The $site.azraelsmods.com deploy failed. The main site is already live."
+  fi
+done
+if [[ -n "${STATUS_WEBHOOK_URL:-}" ]]; then
+  printf '%s' "$STATUS_WEBHOOK_URL" | npx wrangler secret put STATUS_WEBHOOK_URL --config status/wrangler.jsonc || echo "The status alert webhook was not updated."
+fi

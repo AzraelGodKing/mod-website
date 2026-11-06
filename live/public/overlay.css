@@ -1,0 +1,31 @@
+/* Transparent page for an OBS browser source. Recommended size: 1920 x 1080. */
+html, body { margin: 0; background: transparent; overflow: hidden; }
+body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+.stage { position: fixed; inset: 0; padding: 2.5rem; display: flex; pointer-events: none; }
+.stage[data-pos="tl"] { align-items: flex-start; justify-content: flex-start; }
+.stage[data-pos="tr"] { align-items: flex-start; justify-content: flex-end; }
+.stage[data-pos="bl"] { align-items: flex-end; justify-content: flex-start; }
+.stage[data-pos="br"] { align-items: flex-end; justify-content: flex-end; }
+.card {
+  --bg: rgba(20, 17, 15, 0.92); --ink: #f2ebe3; --muted: #cbbba8; --accent: #e8c98a; --line: rgba(232, 201, 138, 0.35);
+  position: relative; width: 26rem; padding: 1rem 1.25rem 1.1rem; border-radius: 10px; overflow: hidden;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transform-origin: var(--origin, bottom right); transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.card[hidden] { display: block; opacity: 0; }
+.card.out { opacity: 0; transform: translateY(8px) scale(var(--scale, 1)); }
+.card { transform: scale(var(--scale, 1)); }
+[data-theme="light"] .card { --bg: rgba(255, 250, 243, 0.95); --ink: #1c1915; --muted: #5c5348; --accent: #6b3a1f; --line: rgba(107, 58, 31, 0.3); }
+[data-theme="glass"] .card { --bg: rgba(10, 10, 12, 0.55); backdrop-filter: blur(8px); }
+.kicker { margin: 0 0 0.45rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.big { margin: 0.1rem 0; font-family: Georgia, "Iowan Old Style", serif; font-size: 1.55rem; font-weight: 600; line-height: 1.25; }
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.items li { display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline; font-size: 1.05rem; }
+.items .name { font-weight: 600; min-width: 0; }
+.items code { font-family: Consolas, "Cascadia Mono", monospace; font-weight: 700; color: var(--accent); font-size: 1rem; }
+.items .text { display: block; font-size: 0.85rem; color: var(--muted); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 19rem; }
+.items .side { flex: none; font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.foot { margin: 0.65rem 0 0; font-size: 0.82rem; color: var(--muted); }
+.foot:empty { display: none; }
+.timer { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); width: 0; }
+.timer.run { width: 100%; transition: width linear var(--every, 15s); }

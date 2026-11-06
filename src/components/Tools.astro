@@ -5,6 +5,7 @@
 import { formatBytes } from "../downloads/latest.mjs";
 import { formatStat } from "../data/stat-values.mjs";
 import { statsSnapshot } from "../data/stats-snapshot";
+import { SUBDOMAINS } from "../data/links.mjs";
 import { VARIANTS, fetchLatestRelease, releasesPage, toolsForGame } from "../downloads/tools.mjs";
 
 interface Props {
@@ -37,6 +38,7 @@ const variants = Object.entries(VARIANTS) as [keyof typeof VARIANTS, (typeof VAR
               <span data-tool-count={`tools/${tool.slug}`}>{formatStat(statsSnapshot.tools?.[`tools/${tool.slug}`]?.downloads)}</span> downloads
             </span>{" "}
             · Windows ·{" "}
+            <a href={`${SUBDOMAINS.docs.href}/${tool.slug}`}>Guide</a> ·{" "}
             <a href={release?.notes ?? releasesPage(tool)}>Release notes</a> ·{" "}
             <a href={`https://github.com/${tool.repo}`}>Source on GitHub</a>
           </p>

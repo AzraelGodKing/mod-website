@@ -7,6 +7,7 @@ import outfit from "../assets/fonts/outfit-latin-wght-normal.woff2?url";
 import redHat from "../assets/fonts/red-hat-text-latin-wght-normal.woff2?url";
 import { games } from "../data/games";
 import { gameVars, themeColor } from "../data/themes";
+import { KOFI_URL, SUBDOMAINS } from "../data/links.mjs";
 
 interface Props {
   title: string;
@@ -110,7 +111,16 @@ const preloads =
               <a href={entry.repo}>{entry.name}</a>
             ))}
           </nav>
+          <nav aria-label="More from Azrael">
+            <span>More:</span>
+            {Object.values(SUBDOMAINS).map((entry) => (
+              <a href={entry.href}>{entry.label}</a>
+            ))}
+          </nav>
           <p>Found a bug? Use “Report a problem” on any mod page.</p>
+          <p class="footer-kofi">
+            Enjoying the mods? <a href={KOFI_URL} rel="me">Support me on Ko-fi</a>
+          </p>
         </footer>
       )
     }
