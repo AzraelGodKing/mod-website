@@ -71,3 +71,39 @@ test("tool counts come from the site's clicks, with Survivor's Toolkit's test cl
   });
   assert.deepEqual(toolCounts({}), { "tools/modwright": { downloads: 0 }, "tools/survivors-toolkit": { downloads: 0 } });
 });
+
+test("GitHub counts add up the installer, exe and zip of every release", async () => {
+  const { githubDownloads } = await import("../src/downloads/tools.mjs");
+  const counts = githubDownloads([
+    {
+      tag_name: "v2.1.1",
+      assets: [
+        { name: "SteamCmdHelper-2.1.1-Setup.exe", download_count: 3 },
+        { name: "SteamCmdHelper-2.1.1-win-x64.exe", download_count: 1 },
+        { name: "SteamCmdHelper-2.1.1-win-x64-framework-dependent.zip", download_count: 1 },
+        { name: "AzraelGodKing.SteamCMDHelper-2.1.1-full.nupkg", download_count: 40 },
+        { name: "SHA256SUMS.txt", download_count: 1 },
+      ],
+    },
+    { tag_name: "v2.1.0", assets: [{ name: "SteamCmdHelper-2.1.0-Setup.exe", download_count: 7 }] },
+    { tag_name: "v9.9.9", draft: true, assets: [{ name: "x-Setup.exe", download_count: 5 }] },
+  ]);
+  assert.deepEqual(counts, { total: 12, versions: { "2.1.1": 5, "2.1.0": 7 } });
+  assert.equal(githubDownloads(null), null);
+});
+
+test("site clicks for a tool are split by version, newest first", async () => {
+  const { siteVersions } = await import("../src/downloads/tools.mjs");
+  const rows = [
+    { key: "tools/modwright", version: "2.1.0", count: 4 },
+    { key: "tools/modwright", version: "2.1.1", count: 9 },
+    { key: "tools/modwright", version: "2.0.10", count: 2 },
+    { key: "tools/survivors-toolkit", version: "0.4.0", count: 20 },
+  ];
+  assert.deepEqual(siteVersions(TOOLS[0], rows), [
+    { version: "2.1.1", count: 9 },
+    { version: "2.1.0", count: 4 },
+    { version: "2.0.10", count: 2 },
+  ]);
+  assert.equal(siteVersions(TOOLS[0], null), null);
+});

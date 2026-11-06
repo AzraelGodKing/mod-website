@@ -168,10 +168,17 @@ const links = [
                   <span class="adm-tile-note">
                     {gameNames[tool.game] ?? tool.game} · downloads from this site
                   </span>
+                  <span class="adm-tile-note" data-tool-github>GitHub: checking…</span>
                   <span class="adm-tool-release">
                     <span class="adm-pill is-muted" data-tool-version>Checking…</span>
                     <span class="adm-tile-note" data-tool-released></span>
                   </span>
+                  <table class="adm-tool-versions" data-tool-versions hidden>
+                    <thead>
+                      <tr><th scope="col">Version</th><th scope="col">This site</th><th scope="col">GitHub</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
                 </a>
               ))
             }
@@ -642,6 +649,39 @@ const links = [
           card.querySelector("[data-tool-downloads]").textContent = format(snapshot?.tools?.[`tools/${card.dataset.tool}`]?.downloads);
         }
       }
+      // GitHub counts every download of the release files, from this site or not.
+      // The table puts this site's clicks for each version next to GitHub's count.
+      function renderToolVersions(card, entry) {
+        const github = entry?.github;
+        const note = card.querySelector("[data-tool-github]");
+        note.textContent = github ? `GitHub: ${format(github.total)} downloads, every version` : "GitHub counts unavailable";
+        const site = Object.fromEntries((entry?.site ?? []).map((row) => [row.version, row.count]));
+        const versions = [...new Set([...Object.keys(site), ...Object.keys(github?.versions ?? {})])]
+          .sort((a, b) => compareVersions(b, a))
+          .slice(0, 6);
+        const table = card.querySelector("[data-tool-versions]");
+        table.hidden = versions.length === 0;
+        table.tBodies[0].replaceChildren(
+          ...versions.map((version) => {
+            const row = document.createElement("tr");
+            for (const text of [`v${version}`, format(site[version] ?? 0), github ? format(github.versions[version] ?? 0) : "—"]) {
+              const cell = document.createElement("td");
+              cell.textContent = text;
+              row.append(cell);
+            }
+            return row;
+          }),
+        );
+      }
+      function compareVersions(a, b) {
+        const pa = a.split(/[.-]/).map((part) => Number(part) || 0);
+        const pb = b.split(/[.-]/).map((part) => Number(part) || 0);
+        for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+          const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+          if (diff) return diff;
+        }
+        return 0;
+      }
       function renderToolReleases(tools) {
         let missing = 0;
         for (const card of document.querySelectorAll("[data-tool]")) {
@@ -654,6 +694,7 @@ const links = [
           released.textContent = release?.publishedAt ? `released ${ago(release.publishedAt)}` : "";
           released.title = when(release?.publishedAt);
           if (release?.notes) card.href = release.notes;
+          renderToolVersions(card, tools?.find((tool) => tool.slug === card.dataset.tool));
         }
         setCheck("tools", missing === 0, missing === 0 ? "Tool releases are on GitHub" : `${missing} tool${missing === 1 ? "" : "s"} have no GitHub release`);
       }

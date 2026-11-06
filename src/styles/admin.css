@@ -671,6 +671,25 @@
   gap: 0.35rem 0.6rem;
   margin-top: 0.3rem;
 }
+.adm-tool-versions {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.adm-tool-versions th,.adm-tool-versions td {
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  border-top: 1px solid var(--adm-line);
+  text-align: right;
+}
+.adm-tool-versions th {
+  color: var(--adm-faint);
+  font-weight: 600;
+}
+.adm-tool-versions th:first-child,.adm-tool-versions td:first-child {
+  text-align: left;
+}
 .adm-sessions-table td:last-child {
   text-align: right;
 }

@@ -90,6 +90,73 @@ export function releaseFiles(release) {
 }
 
 /**
+ * GitHub's own download counts for the three files people install (installer, exe, zip),
+ * from the API's list of releases. The app's updater files are left out.
+ * @param {{ tag_name?: string; draft?: boolean; assets?: { name: string; download_count?: number }[] }[] | null} releases
+ * @returns {{ total: number; versions: Record<string, number> } | null}
+ */
+export function githubDownloads(releases) {
+  if (!Array.isArray(releases)) return null;
+  const patterns = Object.values(VARIANTS).map((variant) => variant.pattern);
+  /** @type {Record<string, number>} */
+  const versions = {};
+  let total = 0;
+  for (const release of releases) {
+    if (!release?.tag_name || release.draft) continue;
+    let count = 0;
+    for (const asset of release.assets ?? []) {
+      if (patterns.some((pattern) => pattern.test(asset.name))) count += Number(asset.download_count ?? 0);
+    }
+    versions[release.tag_name.replace(/^v/i, "")] = count;
+    total += count;
+  }
+  return { total, versions };
+}
+
+/**
+ * Reads GitHub's download counts for every release of a tool, or null when that fails.
+ * @param {(input: string, init?: RequestInit & { cf?: unknown }) => Promise<Response>} fetcher
+ */
+export async function fetchGithubDownloads(tool, fetcher) {
+  try {
+    const response = await fetcher(`https://api.github.com/repos/${tool.repo}/releases?per_page=100`, {
+      headers: { accept: "application/vnd.github+json", "user-agent": "azraelsmods.com" },
+      cf: { cacheTtl: RELEASE_TTL_SECONDS, cacheEverything: true },
+    });
+    if (!response.ok) return null;
+    return githubDownloads(await response.json());
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * This site's clicks for one tool, split by version, newest version first.
+ * @param {{ key: string; version: string; count: number }[] | null} rows  siteDownloadLog()
+ * @returns {{ version: string; count: number }[] | null}
+ */
+export function siteVersions(tool, rows) {
+  if (!rows) return null;
+  const key = `tools/${tool.slug}`;
+  /** @type {Record<string, number>} */
+  const byVersion = {};
+  for (const row of rows) if (row.key === key) byVersion[row.version] = (byVersion[row.version] ?? 0) + row.count;
+  return Object.entries(byVersion)
+    .map(([version, count]) => ({ version, count }))
+    .sort((a, b) => compareVersionStrings(b.version, a.version));
+}
+
+function compareVersionStrings(a, b) {
+  const pa = a.split(/[.-]/).map((part) => Number(part) || 0);
+  const pb = b.split(/[.-]/).map((part) => Number(part) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff) return diff;
+  }
+  return 0;
+}
+
+/**
  * Reads a tool's latest release from GitHub, or null when that fails.
  * @param {(input: string, init?: RequestInit & { cf?: unknown }) => Promise<Response>} fetcher
  */
