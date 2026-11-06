@@ -34,6 +34,7 @@ const tabs = [
   ["releases", "Releases"],
   ["activity", "Activity"],
   ["history", "History"],
+  ["supporters", "Supporters"],
   ["signin", "Sign-in"],
 ];
 
@@ -422,6 +423,63 @@ const links = [
         </details>
       </section>
 
+      <section class="adm-panel" role="tabpanel" id="panel-supporters" aria-labelledby="tab-supporters" data-panel="supporters" hidden>
+        <div class="adm-toolbar">
+          <p class="adm-muted">
+            Everyone Ko-fi has told the site about, private ones and amounts included. The public{" "}
+            <a href="/donors">Supporters page</a> only names people who left their support public, and never shows amounts.
+          </p>
+        </div>
+        <p class="adm-warnings" id="adm-kofi-missing" hidden>
+          KOFI_VERIFICATION_TOKEN is not set, so Ko-fi's posts to /api/kofi are refused. See docs/DONORS.md.
+        </p>
+        <div class="adm-table-wrap">
+          <table class="adm-table is-left adm-donors-table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Message</th>
+                <th scope="col">Kind</th>
+                <th scope="col" class="is-num">Amount</th>
+                <th scope="col">When</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="adm-donors">
+              <tr><td colspan="6" class="adm-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="adm-status" id="adm-donor-status" role="status"></p>
+        <section class="adm-card">
+          <h2>Add a supporter by hand</h2>
+          <p class="adm-muted">For someone who gave before the Ko-fi webhook was set up, or somewhere else.</p>
+          <form class="adm-donor-add" id="adm-donor-add">
+            <label>
+              <span>Name</span>
+              <input name="name" type="text" maxlength="80" required />
+            </label>
+            <label>
+              <span>Date</span>
+              <input name="date" type="date" />
+            </label>
+            <label>
+              <span>Amount (admin only)</span>
+              <input name="amount" type="text" maxlength="20" placeholder="5.00 USD" />
+            </label>
+            <label class="adm-donor-message">
+              <span>Message (optional, shown on the page)</span>
+              <input name="message" type="text" maxlength="500" />
+            </label>
+            <label class="adm-check">
+              <input name="isPublic" type="checkbox" checked />
+              Show their name on the page
+            </label>
+            <button type="submit" class="adm-btn is-primary">Add supporter</button>
+          </form>
+        </section>
+      </section>
+
       <section class="adm-panel" role="tabpanel" id="panel-signin" aria-labelledby="tab-signin" data-panel="signin" hidden>
         <div class="adm-split">
           <section class="adm-card">
@@ -550,6 +608,7 @@ const links = [
         if (id === "releases") loadReleases();
         if (id === "activity") loadActivity();
         if (id === "history") loadHistory();
+        if (id === "supporters") loadDonors();
       }
       for (const button of tabButtons) button.addEventListener("click", () => showTab(button.dataset.tab));
       for (const card of document.querySelectorAll("[data-jump-game]")) {
@@ -922,6 +981,91 @@ const links = [
           emptyRow(tbody, 5, error.message);
         }
       }
+
+      // ---- Supporters ----
+      const donorStatus = $("#adm-donor-status");
+      const providerNames = { kofi: "Ko-fi", manual: "By hand" };
+      async function loadDonors() {
+        const tbody = $("#adm-donors");
+        try {
+          const { donors, kofiToken } = await call("/api/admin/donors");
+          $("#adm-kofi-missing").hidden = kofiToken;
+          if (donors.length === 0) return emptyRow(tbody, 6, "No supporters yet.");
+          tbody.replaceChildren(
+            ...donors.map((donor) => {
+              const row = document.createElement("tr");
+              if (donor.hidden || !donor.isPublic) row.classList.add("is-dim");
+              const name = document.createElement("th");
+              name.scope = "row";
+              name.textContent = donor.name;
+              const tags = [];
+              if (!donor.isPublic) tags.push(["Private", "is-muted"]);
+              if (donor.hidden) tags.push(["Hidden", "is-warn"]);
+              for (const [text, tone] of tags) {
+                const pill = document.createElement("span");
+                pill.className = `adm-pill ${tone}`;
+                pill.textContent = text;
+                name.append(" ", pill);
+              }
+              const kind = [providerNames[donor.provider] ?? donor.provider, donor.isSubscription ? `membership${donor.tier ? ` (${donor.tier})` : ""}` : donor.type.toLowerCase()].join(" · ");
+              const amount = donor.amount ? `${donor.amount}${donor.currency ? ` ${donor.currency}` : ""}` : "—";
+              const action = document.createElement("td");
+              const toggle = document.createElement("button");
+              toggle.type = "button";
+              toggle.className = "adm-btn is-quiet";
+              toggle.textContent = donor.hidden ? "Show" : "Hide";
+              toggle.title = donor.hidden ? "Show on the Supporters page again" : "Keep off the Supporters page";
+              toggle.addEventListener("click", () => donorAction("/api/admin/donors/hide", { id: donor.id, hidden: !donor.hidden }, donor.hidden ? "Shown again." : "Hidden from the page."));
+              action.append(toggle);
+              if (donor.provider === "manual") {
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "adm-btn is-quiet";
+                remove.textContent = "Delete";
+                remove.addEventListener("click", () => {
+                  if (confirm(`Delete ${donor.name}?`)) donorAction("/api/admin/donors/delete", { id: donor.id }, "Deleted.");
+                });
+                action.append(remove);
+              }
+              row.append(name, cell(donor.message ?? "—"), cell(kind), cell(amount, "is-num"), timeCell(donor.createdAt), action);
+              return row;
+            }),
+          );
+        } catch (error) {
+          loaded.delete("supporters");
+          if (error.status === 401) return showLogin(error.message);
+          emptyRow(tbody, 6, error.message);
+        }
+      }
+      async function donorAction(path, payload, done) {
+        try {
+          await call(path, "POST", payload);
+          donorStatus.textContent = `${done} The public page catches up within five minutes.`;
+          loadDonors();
+        } catch (error) {
+          if (error.status === 401) return showLogin(error.message);
+          donorStatus.textContent = error.message;
+        }
+      }
+      $("#adm-donor-add").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const data = new FormData(form);
+        const [amount, currency] = String(data.get("amount") ?? "").trim().split(/\s+/);
+        await donorAction(
+          "/api/admin/donors",
+          {
+            name: data.get("name"),
+            message: data.get("message"),
+            date: data.get("date") || undefined,
+            amount: amount || undefined,
+            currency: currency || undefined,
+            isPublic: data.get("isPublic") === "on",
+          },
+          "Added.",
+        );
+        form.reset();
+      });
 
       // ---- History ----
       let historyData = null;

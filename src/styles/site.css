@@ -3327,3 +3327,118 @@ details[open].zd-setting-help .zd-more {
   content: "✓ ";
   color: #4caf6a;
 }
+
+/* ---- Supporters (/donors) ---- */
+.donors-kicker {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.donors h1 {
+  margin: 0.2rem 0 0.5rem;
+}
+
+.donors-lede {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.donors-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin: 0 0 2rem;
+}
+
+.donors-cta span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.donors-button,
+.donors-button:visited {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.donors-button:hover {
+  filter: brightness(1.1);
+}
+
+.donors-state,
+.donors-more {
+  color: var(--muted);
+}
+
+.donors-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.donors-item {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.donors-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.donors-name {
+  font-size: 1.1rem;
+}
+
+.donors-badge {
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.donors-when {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.donors-message {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-style: italic;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.donors-message::before {
+  content: "“";
+}
+
+.donors-message::after {
+  content: "”";
+}
+
+.donors-more {
+  margin-top: 1rem;
+}

@@ -14,6 +14,7 @@ export const GET: APIRoute = ({ site }) => {
     { path: "/", lastmod: day(mods) },
     ...games.map((game) => ({ path: `/${game.slug}`, lastmod: day(mods.filter((mod) => mod.game === game.slug)) })),
     { path: "/rimworld/check" },
+    { path: "/donors" },
     ...mods.map((mod) => ({ path: `/${mod.game}/${mod.slug}`, lastmod: uploadedOn(mod)?.iso.slice(0, 10) })),
   ];
   const urls = entries
