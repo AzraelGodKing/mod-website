@@ -1,0 +1,24 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "azraels-status",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-10-02",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/status.json"]
+  },
+  // The latest check and a day of history. Wrangler creates the namespace on the first deploy.
+  "kv_namespaces": [{ "binding": "STATUS" }],
+  // Secret, optional: STATUS_WEBHOOK_URL (Discord webhook for down/up alerts).
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "routes": [
+    { "pattern": "status.azraelsmods.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  }
+}

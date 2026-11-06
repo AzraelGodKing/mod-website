@@ -1,0 +1,17 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "azraels-docs",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-10-02",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "routes": [
+    { "pattern": "docs.azraelsmods.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  }
+}

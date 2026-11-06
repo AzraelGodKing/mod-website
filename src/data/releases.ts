@@ -10,6 +10,8 @@ export interface Release {
   version: string;
   uploadedAt: string | null;
   path: string;
+  // Game versions the mod says it supports, e.g. ["1.5", "1.6"]. Read by status.azraelsmods.com.
+  gameVersions: string[];
   // Markdown lines for the version the site serves.
   notes: string[];
 }
@@ -27,6 +29,7 @@ export function releases(list: ModEntry[] = mods): Release[] {
       version: mod.version,
       uploadedAt: mod.uploadedAt && !Number.isNaN(Date.parse(mod.uploadedAt)) ? new Date(mod.uploadedAt).toISOString() : null,
       path: `/${mod.game}/${mod.slug}`,
+      gameVersions: mod.gameVersions ?? [],
       notes: notesFor(mod)?.notes ?? [],
     }))
     .sort((a, b) => (b.uploadedAt ?? "").localeCompare(a.uploadedAt ?? "") || a.name.localeCompare(b.name));

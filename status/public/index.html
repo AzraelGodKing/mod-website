@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Status · Azrael's Mods</title>
+    <meta name="description" content="Whether azraelsmods.com, the mod downloads, the tools, Kat's RICS and Lantern are working right now." />
+    <meta name="theme-color" content="#14110f" />
+    <link rel="icon" href="https://azraelsmods.com/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <a class="brand" href="https://azraelsmods.com">Azrael's Mods</a>
+      <span class="bar-sub">Status</span>
+    </header>
+    <main id="main">
+      <section class="overall" id="overall" data-status="unknown" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        <div>
+          <h1 id="overall-title">Checking…</h1>
+          <p id="overall-note">The page fills in once the first check has run.</p>
+        </div>
+      </section>
+      <div id="groups"></div>
+      <section class="panel" id="games-panel" hidden>
+        <h2>Mods on the newest game version</h2>
+        <p class="muted">From the game versions each mod lists. A mod that hasn't been marked for the newest version yet may still work.</p>
+        <div id="games"></div>
+      </section>
+      <p class="muted small">Checked every 5 minutes. Bars are the last 24 hours, one per hour. <a href="/api/status">Raw JSON</a></p>
+    </main>
+    <footer class="foot">
+      <nav aria-label="More from Azrael">
+        <a href="https://azraelsmods.com">Mods</a>
+        <a href="https://docs.azraelsmods.com">Tool guides</a>
+        <a href="https://live.azraelsmods.com">Stream overlay</a>
+      </nav>
+      <p>Enjoying the mods? <a href="https://ko-fi.com/azraelgodking" rel="me">Support me on Ko-fi</a></p>
+    </footer>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

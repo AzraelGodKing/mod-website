@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stream overlay · Azrael's Mods</title>
+    <meta name="description" content="A free OBS overlay that shows the mods you're playing with and Kat's RICS chat commands, one card at a time." />
+    <meta name="theme-color" content="#14110f" />
+    <link rel="icon" href="https://azraelsmods.com/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <a class="brand" href="https://azraelsmods.com">Azrael's Mods</a>
+      <span class="bar-sub">Stream overlay</span>
+    </header>
+    <main id="main">
+      <h1>Stream overlay</h1>
+      <p class="lede">Show viewers which of Azrael's mods you're playing with, and the chat commands they can use, as a small card that changes every few seconds. Pick what to show, copy the link, and add it to OBS as a Browser source.</p>
+
+      <div class="layout">
+        <form id="builder" class="panel" autocomplete="off">
+          <fieldset>
+            <legend>Cards</legend>
+            <label class="check"><input type="checkbox" name="show" value="mods" checked /> Mods on stream</label>
+            <label class="check"><input type="checkbox" name="show" value="commands" /> Chat commands <small>Kat's RICS</small></label>
+            <label class="check"><input type="checkbox" name="show" value="addon-commands" /> More commands <small>Kat's RICS</small></label>
+            <label class="check"><input type="checkbox" name="show" value="store" /> Store items and prices <small>Kat's RICS</small></label>
+            <label class="check"><input type="checkbox" name="show" value="events" /> Events <small>Kat's RICS</small></label>
+            <label class="check"><input type="checkbox" name="show" value="weather" /> Weather <small>Kat's RICS</small></label>
+            <label class="check"><input type="checkbox" name="show" value="kofi" /> Ko-fi support card</label>
+            <label class="check"><input type="checkbox" name="show" value="message" /> Your own message</label>
+          </fieldset>
+
+          <fieldset id="mods-box">
+            <legend>Mods on stream <span id="mod-count" class="muted"></span></legend>
+            <div class="row">
+              <label for="game">Game</label>
+              <select id="game"><option value="">All games</option></select>
+            </div>
+            <label for="mod-search" class="vh">Find a mod</label>
+            <input id="mod-search" type="search" placeholder="Find a mod" />
+            <div id="mods" class="mods" role="group" aria-label="Mods"><p class="muted">Loading the mod list…</p></div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Look</legend>
+            <div class="row"><label for="title">Card title</label><input id="title" maxlength="60" placeholder="Mods on stream" /></div>
+            <div class="row"><label for="msg">Your message</label><input id="msg" maxlength="160" placeholder="Mods are free at azraelsmods.com" /></div>
+            <div class="row"><label for="every">Seconds per card</label><input id="every" type="number" min="5" max="120" value="15" /></div>
+            <div class="row">
+              <label for="pos">Corner</label>
+              <select id="pos"><option value="br">Bottom right</option><option value="bl">Bottom left</option><option value="tr">Top right</option><option value="tl">Top left</option></select>
+            </div>
+            <div class="row">
+              <label for="theme">Style</label>
+              <select id="theme"><option value="dark">Dark</option><option value="glass">Glass</option><option value="light">Light</option></select>
+            </div>
+            <div class="row"><label for="scale">Size</label><input id="scale" type="range" min="0.6" max="2" step="0.1" value="1" /><output id="scale-out">100%</output></div>
+          </fieldset>
+        </form>
+
+        <section class="side">
+          <div class="panel">
+            <h2>Preview</h2>
+            <div class="preview" id="preview-box"><iframe id="preview" title="Overlay preview" src="/overlay"></iframe></div>
+          </div>
+          <div class="panel">
+            <h2>Your overlay link</h2>
+            <div class="copy">
+              <label for="link" class="vh">Overlay link</label>
+              <input id="link" readonly />
+              <button type="button" id="copy">Copy</button>
+            </div>
+            <p id="copied" class="muted small" aria-live="polite"></p>
+            <ol class="steps">
+              <li>In OBS, add a <strong>Browser</strong> source.</li>
+              <li>Paste the link as the URL. Set width <strong>1920</strong> and height <strong>1080</strong>.</li>
+              <li>The background is see-through, so put it above your game capture.</li>
+            </ol>
+            <p class="muted small">The card picks up new mod versions and Kat's RICS changes by itself every 10 minutes.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+    <footer class="foot">
+      <nav aria-label="More from Azrael">
+        <a href="https://azraelsmods.com">Mods</a>
+        <a href="https://docs.azraelsmods.com">Tool guides</a>
+        <a href="https://status.azraelsmods.com">Site status</a>
+      </nav>
+      <p>Enjoying the mods? <a href="https://ko-fi.com/azraelgodking" rel="me">Support me on Ko-fi</a></p>
+    </footer>
+    <script src="/builder.js" type="module"></script>
+  </body>
+</html>
