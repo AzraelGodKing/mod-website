@@ -30,6 +30,7 @@ import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bun
 import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
 import { BADGE_COLORS, compactNumber, downloadTotal, parseBadgePath, renderBadge } from "./badges/badge.mjs";
+import { deleteManual, listAll as listDonations, listPublic as publicDonors, manualDonation, parseKofi, recordDonation, setHidden as hideDonation, tokenMatches } from "./donors/donors.mjs";
 import { downloadHistory, isBot, recordDownload, recordStoreDay, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
@@ -48,7 +49,8 @@ interface CatalogMod {
 // ADMIN_ORIGIN is for local testing only: wrangler dev rewrites request URLs to the production
 // host, so set it to http://localhost:8787 in .dev.vars to register passkeys locally.
 // LINEAR_READ_KEY lists the open issues on mod pages; it falls back to LINEAR_API_KEY.
-type SiteEnv = Env & { LINEAR_READ_KEY?: string; LINEAR_API_KEY?: string; NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; ADMIN_ORIGIN?: string; DOWNLOADS_DB?: D1Database };
+// KOFI_VERIFICATION_TOKEN is the token from Ko-fi's webhook settings. Without it, /api/kofi refuses every post.
+type SiteEnv = Env & { KOFI_VERIFICATION_TOKEN?: string; LINEAR_READ_KEY?: string; LINEAR_API_KEY?: string; NEXUSMODS_API_KEY?: string; ADMIN_TOKEN?: string; ADMIN_ORIGIN?: string; DOWNLOADS_DB?: D1Database };
 
 type RefreshSource = "scheduled" | "manual" | "first-request";
 
@@ -344,6 +346,32 @@ async function handleToolDownload(request: Request, env: SiteEnv, ctx: Execution
   return new Response(null, { status: 302, headers: { location: file.url, "cache-control": "no-store" } });
 }
 
+// Ko-fi posts every payment here (Ko-fi settings > API > Webhook URL).
+// It retries until it gets a 200, so a repeat of the same transaction is answered 200 too.
+async function handleKofi(request: Request, env: SiteEnv): Promise<Response> {
+  if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: { allow: "POST" } });
+  const parsed = parseKofi(await request.text());
+  if (!parsed) return new Response("Not a Ko-fi payment", { status: 400 });
+  if (!(await tokenMatches(parsed.token, env.KOFI_VERIFICATION_TOKEN))) {
+    console.log(JSON.stringify({ event: "kofi", result: "denied" }));
+    return new Response("Verification token not accepted", { status: 401 });
+  }
+  if (!env.DOWNLOADS_DB) return new Response("No database", { status: 503 });
+  const added = await recordDonation(env.DOWNLOADS_DB, parsed.donation);
+  console.log(JSON.stringify({ event: "kofi", result: added ? "saved" : "repeat", type: parsed.donation.type, public: parsed.donation.isPublic }));
+  return new Response("ok");
+}
+
+async function handleDonors(request: Request, env: SiteEnv): Promise<Response> {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
+  }
+  const body = JSON.stringify(env.DOWNLOADS_DB ? await publicDonors(env.DOWNLOADS_DB) : { supporters: [], anonymous: 0, total: 0 });
+  return new Response(request.method === "HEAD" ? null : body, {
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=300" },
+  });
+}
+
 function adminJson(status: number, payload: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -466,6 +494,28 @@ const privateAdminRoutes: Record<string, AdminRoute> = {
       tools,
     });
   },
+  "GET /api/admin/donors": async (_request, env, _url, db) =>
+    db ? adminJson(200, { donors: await listDonations(db), kofiToken: !!env.KOFI_VERIFICATION_TOKEN }) : needsDb(),
+  "POST /api/admin/donors": async (request, _env, _url, db) => {
+    if (!db) return needsDb();
+    const donation = manualDonation((await readJson<Record<string, unknown>>(request)) ?? {});
+    if (!donation) return adminJson(400, { error: "Give the supporter a name." });
+    await recordDonation(db, donation);
+    return adminJson(200, { added: donation.id });
+  },
+  "POST /api/admin/donors/hide": async (request, _env, _url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ id?: string; hidden?: boolean }>(request);
+    const changed = await hideDonation(db, String(body?.id ?? ""), body?.hidden !== false);
+    return changed ? adminJson(200, { hidden: body?.hidden !== false }) : adminJson(404, { error: "That entry no longer exists." });
+  },
+  "POST /api/admin/donors/delete": async (request, _env, _url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ id?: string }>(request);
+    return (await deleteManual(db, String(body?.id ?? "")))
+      ? adminJson(200, { removed: true })
+      : adminJson(404, { error: "Only entries added by hand can be deleted. Hide Ko-fi ones instead." });
+  },
   "GET /api/admin/sessions": async (request, _env, _url, db) =>
     db ? adminJson(200, { sessions: await listSessions(db, sessionToken(request)) }) : needsDb(),
   "POST /api/admin/sessions/clear": async (_request, _env, _url, db) => {
@@ -545,6 +595,12 @@ export default {
     }
     if (url.pathname === "/api/stats") {
       return handleStats(request, env);
+    }
+    if (url.pathname === "/api/kofi") {
+      return handleKofi(request, env);
+    }
+    if (url.pathname === "/api/donors") {
+      return handleDonors(request, env);
     }
     if (url.pathname === "/api/downloads") {
       return handleDownloads(request);

@@ -805,3 +805,48 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.adm input[type="date"] {
+  box-sizing: border-box;
+  width: 100%;
+  height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--adm-line);
+  border-radius: 2px;
+  background: var(--adm-field);
+  color: var(--adm-ink);
+  font: 0.95rem "Red Hat Text", "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+.adm-donor-add {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+.adm-donor-add .adm-donor-message {
+  grid-column: 1 / -1;
+}
+.adm-donor-add .adm-btn {
+  height: 2.5rem;
+}
+.adm-check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 2.5rem;
+  color: var(--adm-muted);
+  font-size: 0.9rem;
+}
+.adm-donors-table tr.is-dim th,.adm-donors-table tr.is-dim td {
+  opacity: 0.6;
+}
+.adm-donors-table td:nth-child(2) {
+  max-width: 22rem;
+  white-space: normal;
+}
+.adm-donors-table td:last-child {
+  white-space: nowrap;
+}
+.adm-donors-table td:last-child .adm-btn + .adm-btn {
+  margin-left: 0.4rem;
+}

@@ -1,0 +1,76 @@
+---
+import Base from "../layouts/Base.astro";
+import { KOFI_URL } from "../data/links.mjs";
+---
+
+<Base title="Supporters" description="The people who have supported Azrael's mods on Ko-fi.">
+  <section class="plain-page donors">
+    <p class="donors-kicker">Thank you</p>
+    <h1>Supporters</h1>
+    <p class="donors-lede">
+      These mods are free, and they stay that way. The people below chipped in anyway, and it keeps the updates coming.
+    </p>
+    <p class="donors-cta">
+      <a class="donors-button" href={KOFI_URL} rel="me">Support me on Ko-fi</a>
+      <span>Tick “make private” on Ko-fi if you'd rather not be listed here.</span>
+    </p>
+
+    <p class="donors-state" id="donors-state" role="status">Loading supporters…</p>
+    <ol class="donors-list" id="donors-list" hidden></ol>
+    <p class="donors-more" id="donors-more" hidden></p>
+  </section>
+</Base>
+
+<script is:inline>
+  (() => {
+    const list = document.getElementById("donors-list");
+    const state = document.getElementById("donors-state");
+    const more = document.getElementById("donors-more");
+    const month = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+    const since = (iso) => {
+      const date = new Date(iso);
+      return Number.isNaN(date.getTime()) ? "" : month.format(date);
+    };
+    const el = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    fetch("/api/donors")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then(({ supporters = [], anonymous = 0 }) => {
+        if (supporters.length === 0 && anonymous === 0) {
+          state.textContent = "Nobody yet. You could be the first.";
+          return;
+        }
+        state.hidden = true;
+        list.replaceChildren(
+          ...supporters.map((person) => {
+            const item = el("li", "donors-item");
+            const head = el("div", "donors-head");
+            head.append(el("strong", "donors-name", person.name));
+            if (person.member) head.append(el("span", "donors-badge", person.tier ? `${person.tier} member` : "Member"));
+            const when = since(person.first);
+            const detail = [when && `Since ${when}`, person.times > 1 && `${person.times} times`].filter(Boolean).join(" · ");
+            if (detail) head.append(el("span", "donors-when", detail));
+            item.append(head);
+            if (person.message) item.append(el("blockquote", "donors-message", person.message));
+            return item;
+          }),
+        );
+        list.hidden = supporters.length === 0;
+        if (anonymous > 0) {
+          more.hidden = false;
+          more.textContent =
+            supporters.length === 0
+              ? `${anonymous} private ${anonymous === 1 ? "contribution" : "contributions"} so far. Thank you.`
+              : `…and ${anonymous} more private ${anonymous === 1 ? "contribution" : "contributions"}. Thank you too.`;
+        }
+      })
+      .catch(() => {
+        state.textContent = "The list could not be loaded right now. Try again in a minute.";
+      });
+  })();
+</script>
