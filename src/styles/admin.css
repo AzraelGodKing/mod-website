@@ -609,6 +609,9 @@
 .adm-pill.is-warn {
   color: var(--adm-warn);
 }
+.adm-pill.is-bad {
+  color: var(--adm-bad);
+}
 .adm-pill.is-muted {
   color: var(--adm-faint);
 }
@@ -772,4 +775,14 @@
 }
 #adm-session-status:empty {
   display: none;
+}
+.adm-sites .adm-games {
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+.adm-site-host {
+  color: var(--adm-soft);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
