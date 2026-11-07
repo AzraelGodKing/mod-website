@@ -254,5 +254,18 @@
         ]
       }
     ]
+  },
+  "turret-claim-guard": {
+    "intro": "Server console commands. turretguard works in place of tcg.",
+    "groups": [
+      {
+        "title": "Server: console",
+        "aliases": "turretguard",
+        "rows": [
+          { "cmd": "tcg", "does": "Show the settings: which claims and which turrets are protected.", "admin": true },
+          { "cmd": "tcg reload", "does": "Re-read settings.txt. Takes effect right away.", "admin": true }
+        ]
+      }
+    ]
   }
 }

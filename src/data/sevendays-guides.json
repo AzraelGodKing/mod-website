@@ -282,6 +282,61 @@
     "avoid": [],
     "compatNotes": []
   },
+  "turret-claim-guard": {
+    "overview": [
+      "Your own turrets no longer chip away at your base. In vanilla every turret shot that hits a block damages it, so misses and shotgun spread slowly wear down the walls zombies stand against.",
+      "With this mod a player's turret does no block damage inside a protected land claim. Zombies still take full damage, and outside claims turrets work as in vanilla."
+    ],
+    "badges": ["Server only"],
+    "sections": [
+      {
+        "id": "install",
+        "label": "Install",
+        "features": [
+          {
+            "title": "On the server",
+            "body": "Unzip AzraelTurretClaimGuard into the server's Mods folder and restart the server. Players install nothing and can leave EasyAntiCheat on."
+          },
+          {
+            "title": "Which turrets",
+            "body": "The placed auto turret, shotgun turret and M60 turret, plus the robotics junk turret and junk sledge. In vanilla the auto, shotgun and M60 turrets do 1 block damage per hit (x2 on wood), the junk turret 1 and the junk sledge 17 and up."
+          }
+        ]
+      },
+      {
+        "id": "settings",
+        "label": "Settings",
+        "features": [
+          {
+            "title": "Protect",
+            "body": "Which land claims stop a turret from damaging blocks: own (the turret owner's claim), allies (the owner's claim plus their allies', the default), any (every active claim) or off (vanilla everywhere)."
+          },
+          {
+            "title": "BlockTurrets",
+            "body": "on or off, default on. Covers the auto, shotgun and M60 turrets."
+          },
+          {
+            "title": "JunkTurrets",
+            "body": "on or off, default on. Covers the junk turret and junk sledge."
+          },
+          {
+            "title": "LogBlocked",
+            "body": "on or off, default off. Writes a server log line for every blocked hit, for testing."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Server only (Harmony code). Players install nothing and can leave EasyAntiCheat on.",
+      "The settings are in settings.txt in the mod folder. Type  tcg reload  in the server console and a change takes effect right away.",
+      "A claim only counts while it's active, under the vanilla expiry rules. Allies are the game's allies (friends list), the same ones a land claim already trusts.",
+      "Turrets can't set off explosive barrels inside a protected claim, since shooting the barrel is a block hit.",
+      "A placed turret that a player steers by hand fires from that player's game, so those manual shots aren't covered. Automatic fire always is."
+    ],
+    "worksWith": [],
+    "avoid": [],
+    "compatNotes": []
+  },
   "quest-disconnect-fix": {
     "overview": [
       "Stops a quest logout crash that leaves a player in the world after they disconnect. Rejoining then fails until the server restarts.",
