@@ -33,6 +33,7 @@ const icons = {
   speedometer: "gauge",
   "stained-glass": "church",
   "storage-backpack": "package",
+  "turret-claim-guard": "shield-half",
   "upgrade-bench": "anvil",
   "zombie-and-animal-bait": "beef",
   "zombie-and-animal-bait-ui": "paw-print",

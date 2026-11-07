@@ -100,6 +100,11 @@ const known: Record<string, IndexInfo> = {
     installs: "optional",
     short: "A placeable backpack that packs up with everything still inside.",
   },
+  "turret-claim-guard": {
+    category: "Gameplay",
+    installs: "server",
+    short: "Your turrets stop chewing up the blocks inside your land claim.",
+  },
   "upgrade-bench": {
     category: "Crafting",
     installs: "both",

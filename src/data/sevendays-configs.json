@@ -116,5 +116,19 @@
         "after": "Put it in the mod folder on the server (never in a zip you give players), then restart the server."
       }
     }
-  ]
+  ],
+  "turret-claim-guard": {
+    "file": "mod/settings.txt",
+    "kind": "settings",
+    "after": "Put it in the mod folder on the server, then type  tcg reload  in the server console.",
+    "options": {
+      "Protect": ["own", "allies", "any", "off"]
+    },
+    "hints": {
+      "Protect": "Which land claims stop turrets damaging blocks: own (the turret owner's), allies (owner's plus their allies'), any (every active claim) or off (vanilla)",
+      "BlockTurrets": "The placed auto turret, shotgun turret and M60 turret",
+      "JunkTurrets": "The robotics junk turret and junk sledge",
+      "LogBlocked": "Write a server log line for every blocked hit. For testing only"
+    }
+  }
 }

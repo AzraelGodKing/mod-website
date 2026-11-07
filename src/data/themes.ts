@@ -208,6 +208,14 @@ const looks: Record<string, ModLook> = {
     accent: "#f9a825",
     accentInk: "#1a1408",
   },
+  "turret-claim-guard": {
+    mark: "Shoot zombies, not walls",
+    wash: "#14201c",
+    heroInk: "#ecf6f1",
+    heroMuted: "#b4cdc2",
+    accent: "#3fbf8f",
+    accentInk: "#08140f",
+  },
   "upgrade-bench": {
     mark: "Two mods, one step up",
     wash: "#14181c",
