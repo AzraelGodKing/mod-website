@@ -267,5 +267,18 @@
         ]
       }
     ]
+  },
+  "repair-pad": {
+    "intro": "Server console commands. repairpad works in place of rpad.",
+    "groups": [
+      {
+        "title": "Server: console",
+        "aliases": "repairpad",
+        "rows": [
+          { "cmd": "rpad", "does": "Show how the Repair Pad is set up.", "admin": true },
+          { "cmd": "rpad reload", "does": "Re-read settings.txt. Takes effect right away.", "admin": true }
+        ]
+      }
+    ]
   }
 }

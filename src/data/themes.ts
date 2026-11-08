@@ -216,6 +216,22 @@ const looks: Record<string, ModLook> = {
     accent: "#3fbf8f",
     accentInk: "#08140f",
   },
+  "repair-pad": {
+    mark: "One step fixes the whole base",
+    wash: "#201a12",
+    heroInk: "#f6efe4",
+    heroMuted: "#d2c3ab",
+    accent: "#e8913a",
+    accentInk: "#1a1006",
+  },
+  "drag-spread": {
+    mark: "Sweep a stack across the slots",
+    wash: "#161a24",
+    heroInk: "#edf0f8",
+    heroMuted: "#b6bfd6",
+    accent: "#6f9cf0",
+    accentInk: "#0a1020",
+  },
   "upgrade-bench": {
     mark: "Two mods, one step up",
     wash: "#14181c",

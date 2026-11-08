@@ -40,6 +40,11 @@ const known: Record<string, IndexInfo> = {
     installs: "server",
     short: "Craft the POI picture signs and draw on them.",
   },
+  "drag-spread": {
+    category: "Gameplay",
+    installs: "client",
+    short: "Drag a held stack across slots to split it evenly or drop 1 in each.",
+  },
   "drone-loot-filter": {
     category: "Gameplay",
     installs: "server",
@@ -74,6 +79,11 @@ const known: Record<string, IndexInfo> = {
     category: "Server admin",
     installs: "server",
     short: "Stop or swap any zombie or animal spawn, everywhere or per biome.",
+  },
+  "repair-pad": {
+    category: "Gameplay",
+    installs: "server",
+    short: "Step on a powered pad and every damaged block in your land claim gets repaired.",
   },
   "slot-lock-fix": {
     category: "Fixes",

@@ -130,5 +130,22 @@
       "JunkTurrets": "The robotics junk turret and junk sledge",
       "LogBlocked": "Write a server log line for every blocked hit. For testing only"
     }
+  },
+  "repair-pad": {
+    "file": "mod/settings.txt",
+    "kind": "settings",
+    "after": "Put it in the mod folder on the server, then type  rpad reload  in the server console.",
+    "options": {
+      "CostMode": ["materials", "kits"]
+    },
+    "hints": {
+      "CostMode": "materials: each block costs what a repair hammer would (concrete mix for concrete, forged iron for steel). kits: repair kits",
+      "HpPerKit": "Kits mode only: hit points one repair kit restores, spread over as many blocks as it covers",
+      "KitItem": "Kits mode only: the item that counts as a repair kit",
+      "CooldownSeconds": "Seconds before the same pad can run again",
+      "RequirePower": "The pad only works while it has electrical power",
+      "RepairsPerFrame": "Blocks repaired per frame. Lower it if a big repair causes a hitch on your server",
+      "LogRuns": "Write a server log line for every pad run"
+    }
   }
 }
