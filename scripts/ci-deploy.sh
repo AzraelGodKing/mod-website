@@ -57,9 +57,17 @@ fi
 
 # The other subdomains are small Workers of their own. Each failure is reported and
 # leaves everything else live.
-for site in docs live status; do
+for site in docs live status poi; do
   if ! npm run "deploy:$site"; then
     echo "The $site.azraelsmods.com deploy failed. The main site is already live."
+  fi
+done
+# The POI page's tokens. Without POI_INGEST_TOKEN the page refuses every report from the
+# game server; without POI_VIEW_TOKEN the page is public. Set once with wrangler instead if
+# they are not on the deploy agent.
+for secret in POI_INGEST_TOKEN POI_VIEW_TOKEN; do
+  if [[ -n "${!secret:-}" ]]; then
+    printf '%s' "${!secret}" | npx wrangler secret put "$secret" --config poi/wrangler.jsonc || echo "$secret was not updated on poi.azraelsmods.com."
   fi
 done
 if [[ -n "${STATUS_WEBHOOK_URL:-}" ]]; then

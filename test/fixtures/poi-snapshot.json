@@ -1,0 +1,641 @@
+{
+  "schema": 1,
+  "server": {
+    "name": "Azrael's server",
+    "world": "Navezgane",
+    "seed": null,
+    "gameVersion": "V3.4 (b6)",
+    "day": 42
+  },
+  "generatedAt": "2026-11-09T20:00:00Z",
+  "settings": {
+    "landClaimSize": 41,
+    "showNames": true,
+    "showCoordinates": true
+  },
+  "pois": [
+    {
+      "id": "farm_01@1234,567",
+      "name": "farm_01",
+      "displayName": "Old farm",
+      "tier": 2,
+      "x": 1234,
+      "z": 567,
+      "sizeX": 60,
+      "sizeZ": 55,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_ab12cd",
+        "name": "PlayerOne"
+      },
+      "coOwners": [
+        {
+          "id": "p_ef34gh",
+          "name": "PlayerTwo"
+        }
+      ],
+      "contested": [],
+      "claims": 2,
+      "claimedSince": "2026-11-07T18:21:00Z"
+    },
+    {
+      "id": "trader_jen@820,-410",
+      "name": "trader_jen",
+      "displayName": "Trader Jen",
+      "tier": 0,
+      "x": 820,
+      "z": -410,
+      "sizeX": 70,
+      "sizeZ": 70,
+      "trader": true,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "trader_rekt@-1520,1180",
+      "name": "trader_rekt",
+      "displayName": "Trader Rekt",
+      "tier": 0,
+      "x": -1520,
+      "z": 1180,
+      "sizeX": 70,
+      "sizeZ": 70,
+      "trader": true,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "house_modern_03@1310,640",
+      "name": "house_modern_03",
+      "displayName": "Modern house",
+      "tier": 1,
+      "x": 1310,
+      "z": 640,
+      "sizeX": 30,
+      "sizeZ": 32,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_ab12cd",
+        "name": "PlayerOne"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-08T09:10:00Z"
+    },
+    {
+      "id": "store_gun_02@410,120",
+      "name": "store_gun_02",
+      "displayName": "Gun store",
+      "tier": 3,
+      "x": 410,
+      "z": 120,
+      "sizeX": 45,
+      "sizeZ": 50,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "factory_lg_01@-620,-880",
+      "name": "factory_lg_01",
+      "displayName": "Shamway factory",
+      "tier": 5,
+      "x": -620,
+      "z": -880,
+      "sizeX": 140,
+      "sizeZ": 120,
+      "trader": false,
+      "status": "contested",
+      "owner": null,
+      "coOwners": [],
+      "contested": [
+        {
+          "id": "p_k9m2q1",
+          "name": "Wolfie"
+        },
+        {
+          "id": "p_x7v3n8",
+          "name": "Vickra"
+        }
+      ],
+      "claims": 3,
+      "claimedSince": null
+    },
+    {
+      "id": "skyscraper_04@150,-1500",
+      "name": "skyscraper_04",
+      "displayName": "Crack-a-Book tower",
+      "tier": 5,
+      "x": 150,
+      "z": -1500,
+      "sizeX": 90,
+      "sizeZ": 90,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "hospital_01@-240,300",
+      "name": "hospital_01",
+      "displayName": "Hospital",
+      "tier": 4,
+      "x": -240,
+      "z": 300,
+      "sizeX": 110,
+      "sizeZ": 95,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_r5t6y7",
+        "name": "Lucid"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 2,
+      "claimedSince": "2026-11-05T20:00:00Z"
+    },
+    {
+      "id": "cabin_05@2210,1740",
+      "name": "cabin_05",
+      "displayName": "Lakeside cabin",
+      "tier": 1,
+      "x": 2210,
+      "z": 1740,
+      "sizeX": 25,
+      "sizeZ": 25,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_k9m2q1",
+        "name": "Wolfie"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-02T14:44:00Z"
+    },
+    {
+      "id": "cabin_09@2350,1660",
+      "name": "cabin_09",
+      "displayName": "Hunting cabin",
+      "tier": 1,
+      "x": 2350,
+      "z": 1660,
+      "sizeX": 22,
+      "sizeZ": 24,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "gas_station_02@600,700",
+      "name": "gas_station_02",
+      "displayName": "Gas station",
+      "tier": 1,
+      "x": 600,
+      "z": 700,
+      "sizeX": 35,
+      "sizeZ": 30,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_x7v3n8",
+        "name": "Vickra"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-09T11:30:00Z"
+    },
+    {
+      "id": "school_01@-900,400",
+      "name": "school_01",
+      "displayName": "Elementary school",
+      "tier": 3,
+      "x": -900,
+      "z": 400,
+      "sizeX": 80,
+      "sizeZ": 70,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "army_camp_01@-2100,-1200",
+      "name": "army_camp_01",
+      "displayName": "Army camp",
+      "tier": 3,
+      "x": -2100,
+      "z": -1200,
+      "sizeX": 75,
+      "sizeZ": 75,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_x7v3n8",
+        "name": "Vickra"
+      },
+      "coOwners": [
+        {
+          "id": "p_r5t6y7",
+          "name": "Lucid"
+        }
+      ],
+      "contested": [],
+      "claims": 4,
+      "claimedSince": "2026-11-04T16:00:00Z"
+    },
+    {
+      "id": "fire_station_01@300,-200",
+      "name": "fire_station_01",
+      "displayName": "Fire station",
+      "tier": 2,
+      "x": 300,
+      "z": -200,
+      "sizeX": 50,
+      "sizeZ": 45,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "police_station_01@340,-60",
+      "name": "police_station_01",
+      "displayName": "Police station",
+      "tier": 2,
+      "x": 340,
+      "z": -60,
+      "sizeX": 55,
+      "sizeZ": 50,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_ef34gh",
+        "name": "PlayerTwo"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-08T23:05:00Z"
+    },
+    {
+      "id": "water_tower_01@1800,-300",
+      "name": "water_tower_01",
+      "displayName": "Water works",
+      "tier": 2,
+      "x": 1800,
+      "z": -300,
+      "sizeX": 60,
+      "sizeZ": 60,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "bank_01@520,40",
+      "name": "bank_01",
+      "displayName": "Bank",
+      "tier": 3,
+      "x": 520,
+      "z": 40,
+      "sizeX": 40,
+      "sizeZ": 40,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "church_01@-400,1100",
+      "name": "church_01",
+      "displayName": "Church",
+      "tier": 2,
+      "x": -400,
+      "z": 1100,
+      "sizeX": 50,
+      "sizeZ": 70,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_r5t6y7",
+        "name": "Lucid"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-06T12:00:00Z"
+    },
+    {
+      "id": "junkyard_01@-1200,-300",
+      "name": "junkyard_01",
+      "displayName": "Junkyard",
+      "tier": 2,
+      "x": -1200,
+      "z": -300,
+      "sizeX": 90,
+      "sizeZ": 90,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "mine_01@-2600,2100",
+      "name": "mine_01",
+      "displayName": "Copper mine",
+      "tier": 4,
+      "x": -2600,
+      "z": 2100,
+      "sizeX": 100,
+      "sizeZ": 80,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_z0w1e2",
+        "name": "NightOwl"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 2,
+      "claimedSince": "2026-10-30T19:00:00Z"
+    },
+    {
+      "id": "motel_01@1500,120",
+      "name": "motel_01",
+      "displayName": "Roadside motel",
+      "tier": 2,
+      "x": 1500,
+      "z": 120,
+      "sizeX": 70,
+      "sizeZ": 40,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "office_01@200,-800",
+      "name": "office_01",
+      "displayName": "Office block",
+      "tier": 3,
+      "x": 200,
+      "z": -800,
+      "sizeX": 60,
+      "sizeZ": 60,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "prison_01@-1800,2500",
+      "name": "prison_01",
+      "displayName": "Prison",
+      "tier": 5,
+      "x": -1800,
+      "z": 2500,
+      "sizeX": 150,
+      "sizeZ": 140,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "ranch_01@2600,-1100",
+      "name": "ranch_01",
+      "displayName": "Horse ranch",
+      "tier": 2,
+      "x": 2600,
+      "z": -1100,
+      "sizeX": 80,
+      "sizeZ": 70,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_k9m2q1",
+        "name": "Wolfie"
+      },
+      "coOwners": [
+        {
+          "id": "p_ab12cd",
+          "name": "PlayerOne"
+        }
+      ],
+      "contested": [],
+      "claims": 2,
+      "claimedSince": "2026-11-03T08:00:00Z"
+    },
+    {
+      "id": "bridge_01@0,900",
+      "name": "bridge_01",
+      "displayName": "Collapsed bridge",
+      "tier": 1,
+      "x": 0,
+      "z": 900,
+      "sizeX": 120,
+      "sizeZ": 30,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "cave_01@?,?",
+      "name": "cave_01",
+      "displayName": "Hidden cave",
+      "tier": 2,
+      "x": null,
+      "z": null,
+      "sizeX": null,
+      "sizeZ": null,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_ef34gh",
+        "name": "PlayerTwo"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-09T18:02:00Z"
+    },
+    {
+      "id": "diner_01@700,760",
+      "name": "diner_01",
+      "displayName": "Diner",
+      "tier": 1,
+      "x": 700,
+      "z": 760,
+      "sizeX": 30,
+      "sizeZ": 25,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "warehouse_02@-700,-1100",
+      "name": "warehouse_02",
+      "displayName": "Warehouse",
+      "tier": 3,
+      "x": -700,
+      "z": -1100,
+      "sizeX": 80,
+      "sizeZ": 60,
+      "trader": false,
+      "status": "claimed",
+      "owner": {
+        "id": "p_ab12cd",
+        "name": "PlayerOne"
+      },
+      "coOwners": [],
+      "contested": [],
+      "claims": 1,
+      "claimedSince": "2026-11-09T19:20:00Z"
+    },
+    {
+      "id": "radio_tower_01@2900,2900",
+      "name": "radio_tower_01",
+      "displayName": "Radio tower",
+      "tier": 2,
+      "x": 2900,
+      "z": 2900,
+      "sizeX": 40,
+      "sizeZ": 40,
+      "trader": false,
+      "status": "unclaimed",
+      "owner": null,
+      "coOwners": [],
+      "contested": [],
+      "claims": 0,
+      "claimedSince": null
+    },
+    {
+      "id": "apartment_02@900,-900",
+      "name": "apartment_02",
+      "displayName": "Apartments",
+      "tier": 3,
+      "x": 900,
+      "z": -900,
+      "sizeX": 50,
+      "sizeZ": 60,
+      "trader": false,
+      "status": "contested",
+      "owner": null,
+      "coOwners": [],
+      "contested": [
+        {
+          "id": "p_ab12cd",
+          "name": "PlayerOne"
+        },
+        {
+          "id": "p_r5t6y7",
+          "name": "Lucid"
+        }
+      ],
+      "claims": 2,
+      "claimedSince": null
+    }
+  ],
+  "players": [
+    {
+      "id": "p_ab12cd",
+      "name": "PlayerOne",
+      "online": true,
+      "lastSeen": "2026-11-09T19:58:00Z",
+      "claimedPois": 4
+    },
+    {
+      "id": "p_ef34gh",
+      "name": "PlayerTwo",
+      "online": true,
+      "lastSeen": "2026-11-09T19:57:00Z",
+      "claimedPois": 3
+    },
+    {
+      "id": "p_k9m2q1",
+      "name": "Wolfie",
+      "online": false,
+      "lastSeen": "2026-11-09T03:12:00Z",
+      "claimedPois": 2
+    },
+    {
+      "id": "p_x7v3n8",
+      "name": "Vickra",
+      "online": false,
+      "lastSeen": "2026-11-08T22:40:00Z",
+      "claimedPois": 2
+    },
+    {
+      "id": "p_r5t6y7",
+      "name": "Lucid",
+      "online": true,
+      "lastSeen": "2026-11-09T19:59:00Z",
+      "claimedPois": 3
+    },
+    {
+      "id": "p_z0w1e2",
+      "name": "NightOwl",
+      "online": false,
+      "lastSeen": "2026-11-06T01:05:00Z",
+      "claimedPois": 1
+    }
+  ]
+}

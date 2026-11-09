@@ -14,6 +14,10 @@ export const SERVICES = [
   { id: "kats", name: "Kat's RICS", group: "Other sites", url: "https://kats.azraelsmods.com/data/meta.json", expect: "json" },
   { id: "lantern", name: "Lantern", group: "Other sites", url: "https://lantern.azraelsmods.com/", expect: "html" },
   { id: "live", name: "Stream overlay", group: "Other sites", url: "https://live.azraelsmods.com/", expect: "html" },
+  // The private POI page for the game server. Checked and alerted, but left off the public
+  // status page (`private`). A stale report only means the game server is off, so it shows
+  // as degraded and does not ping Discord (`quiet`); only down and back up do.
+  { id: "poi", name: "POI owners", group: "Other sites", kind: "poi", origin: "https://poi.azraelsmods.com", private: true, quiet: true },
 ];
 
 // A service has to fail this many runs in a row before it shows as down and pings Discord,
@@ -61,6 +65,31 @@ export async function checkUrl(fetchImpl, service) {
       }
     }
     await response.body?.cancel?.();
+    return { ok: true, ms, slow: ms > SLOW_MS };
+  } catch (error) {
+    return { ok: false, ms: null, detail: error?.name === "AbortError" ? "No answer in 10 s" : "Could not connect" };
+  }
+}
+
+/**
+ * The POI page answers (a 401 or the password form counts, when it is locked) and its
+ * health endpoint says whether the game server has reported in the last 30 minutes.
+ */
+export async function checkPoi(fetchImpl, service) {
+  try {
+    const { response: page, ms } = await timed(fetchImpl, `${service.origin}/`);
+    await page.body?.cancel?.();
+    if (!page.ok && page.status !== 401) return { ok: false, ms, detail: `HTTP ${page.status}` };
+    const { response } = await timed(fetchImpl, `${service.origin}/api/poi/health`);
+    if (!response.ok) return { ok: false, ms, detail: `Health check answered HTTP ${response.status}` };
+    const health = await response.json().catch(() => null);
+    if (!health || typeof health.stale !== "boolean") return { ok: false, ms, detail: "Health check did not answer with JSON" };
+    if (health.stale) {
+      const detail = health.minutesSinceReport === null || health.minutesSinceReport === undefined
+        ? "The game server has not reported yet"
+        : `The game server has not reported for ${health.minutesSinceReport} minutes`;
+      return { ok: true, degraded: true, ms, detail };
+    }
     return { ok: true, ms, slow: ms > SLOW_MS };
   } catch (error) {
     return { ok: false, ms: null, detail: error?.name === "AbortError" ? "No answer in 10 s" : "Could not connect" };
@@ -171,7 +200,9 @@ export function applyResult(previous, service, result, now = new Date()) {
     checkedAt: now.toISOString(),
   };
   let alert = null;
-  if (changed) {
+  // A quiet service only pings when it goes down or comes back from down.
+  const loud = !service.quiet || status === "down" || previous?.status === "down";
+  if (changed && loud) {
     if (status === "up") {
       const minutes = Math.max(1, Math.round((now - new Date(previous.since)) / 60_000));
       alert = `🟢 **${service.name}** is back up (was ${previous.status} for ${minutes} min).`;
@@ -198,6 +229,13 @@ export async function runChecks(fetchImpl, previousState, { now = new Date(), to
     bodies[service.id] = result.body;
     const { entry, alert } = applyResult(services[service.id], service, result, now);
     services[service.id] = entry;
+    if (alert) alerts.push(alert);
+  }
+
+  const poiService = SERVICES.find((service) => service.id === "poi");
+  if (poiService) {
+    const { entry, alert } = applyResult(services.poi, poiService, await checkPoi(fetchImpl, poiService), now);
+    services.poi = entry;
     if (alert) alerts.push(alert);
   }
 
@@ -234,7 +272,7 @@ export function uptime(history, id) {
 
 /** The public JSON the page reads. */
 export function publicStatus(state) {
-  const services = SERVICES.map((service) => {
+  const services = SERVICES.filter((service) => !service.private).map((service) => {
     const entry = state.services?.[service.id];
     return {
       id: service.id,

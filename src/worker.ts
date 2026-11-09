@@ -24,7 +24,7 @@ import {
   verifyPasskey,
 } from "./admin/passkeys";
 import { collectStats, rosterFromCatalog, type Snapshot } from "./stats/collect.mjs";
-import { NOT_READY, compareVersions, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
+import { NOT_READY, compareVersions, isPrivateMod, fetchManifestFiles, latestDownloads, parseDownloadPath, releaseStatus, zipFor } from "./downloads/latest.mjs";
 import { TOOLS, fetchGithubDownloads, fetchLatestRelease, parseToolPath, releasesPage, siteVersions, toolCounts } from "./downloads/tools.mjs";
 import { belongsOn, bundleReadme, mergeZips, pickedSlugs } from "./downloads/bundle.mjs";
 import { indexInfo, installLabels } from "./data/sevendays-index";
@@ -68,7 +68,8 @@ interface ReportMod {
   gameLabelId: string;
 }
 
-const catalogMods = (catalogFile as { mods: CatalogMod[] }).mods;
+// collect-mods.mjs already leaves private mods out; this keeps a stale catalog.json honest too.
+const catalogMods = (catalogFile as { mods: CatalogMod[] }).mods.filter((mod) => !isPrivateMod(mod));
 
 function reportCatalog() {
   const mods: Record<string, ReportMod> = {};

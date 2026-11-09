@@ -1,5 +1,5 @@
 import catalog from "./catalog.json";
-import { NOT_READY, formatBytes, zipFor } from "../downloads/latest.mjs";
+import { NOT_READY, formatBytes, isPrivateMod, zipFor } from "../downloads/latest.mjs";
 
 export interface ModLinks {
   steam: string | null;
@@ -109,7 +109,8 @@ export interface LoadRules {
   loadBefore: string[];
 }
 
-export const mods = catalog.mods as ModEntry[];
+// collect-mods.mjs already leaves private mods out; this keeps a stale catalog.json honest too.
+export const mods = (catalog.mods as ModEntry[]).filter((mod) => !isPrivateMod(mod));
 
 export function modsForGame(game: string): ModEntry[] {
   return mods.filter((mod) => mod.game === game);
