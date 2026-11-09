@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { NOT_READY, compareVersions } from "../src/downloads/latest.mjs";
+import { NOT_READY, compareVersions, isPrivateMod } from "../src/downloads/latest.mjs";
 import { releaseNotesReader } from "./release-notes.mjs";
 import { parseSettings } from "../src/data/config-builder.mjs";
 
@@ -34,8 +34,14 @@ function namedNotes(entries) {
 }
 
 // A mod's shipped folder can hold its own mod.json (7 Days Bait has the game's
-// XML there). Only a JSON entry with a game and slug is a catalog entry.
+// XML there). Only a JSON entry with a game and slug is a catalog entry, and one
+// marked `"private": true` is left out of the site entirely (see isPrivateMod).
 export function parseCatalogEntry(text) {
+  const mod = parseModJson(text);
+  return mod && !isPrivateMod(mod) ? mod : null;
+}
+
+function parseModJson(text) {
   try {
     // Some mod.json files are saved with a byte order mark (7 Days Gyro Safe).
     const mod = JSON.parse(text.replace(/^\uFEFF/, ""));
@@ -46,9 +52,21 @@ export function parseCatalogEntry(text) {
 }
 
 function readCatalogEntry(file) {
-  const mod = parseCatalogEntry(readFileSync(file, "utf8"));
-  if (!mod) console.warn(`Skipping ${file}: not a catalog mod.json`);
+  const text = readFileSync(file, "utf8");
+  const mod = parseCatalogEntry(text);
+  if (!mod) {
+    const raw = parseModJson(text);
+    if (raw && isPrivateMod(raw)) console.log(`Skipping ${raw.game}/${raw.slug}: marked private`);
+    else console.warn(`Skipping ${file}: not a catalog mod.json`);
+  }
   return mod;
+}
+
+/** Every listed mod.json under a repo folder, with its folder. Private mods are left out. */
+export function catalogEntries(root) {
+  const files = [];
+  walk(root, files);
+  return files.map((file) => ({ file, mod: readCatalogEntry(file) })).filter((entry) => entry.mod);
 }
 
 export function guideFromSiteMod(mod) {
@@ -349,12 +367,8 @@ async function main() {
 
   const mods = [];
   for (const root of roots) {
-    const files = [];
-    walk(root, files);
     const entries = [];
-    for (const file of files) {
-      const mod = readCatalogEntry(file);
-      if (!mod) continue;
+    for (const { file, mod } of catalogEntries(root)) {
       const modDir = path.dirname(file);
       const destDir = path.join(catalogDir, mod.game, mod.slug);
       const images = [];

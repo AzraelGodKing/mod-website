@@ -4,6 +4,16 @@ export const MANIFEST_URL = `${DOWNLOAD_ORIGIN}/downloads.json`;
 // These mods have no public zip yet. Download goes to /not-ready.
 export const NOT_READY = new Set(["rimworld/azrael", "rimworld/living-world"]);
 
+/**
+ * A mod.json with `"private": true` (or `"hidden": true`) is never listed on the site: no
+ * page, no catalog entry or count, no download link, release, feed item, sitemap entry,
+ * badge, stat or status check. Used for server-only tools like the POI Registry mod.
+ * @param {any} mod
+ */
+export function isPrivateMod(mod) {
+  return mod?.private === true || mod?.hidden === true;
+}
+
 const MANIFEST_TTL_SECONDS = 300;
 
 export function compareVersions(a, b) {
@@ -61,7 +71,7 @@ export function latestDownloads(mods, files) {
   const latest = {};
   for (const mod of mods) {
     const key = `${mod.game}/${mod.slug}`;
-    if (NOT_READY.has(key)) continue;
+    if (NOT_READY.has(key) || isPrivateMod(mod)) continue;
     const hosted = files?.[key];
     const newer = hosted?.version && compareVersions(hosted.version, mod.version) > 0;
     const version = String(newer ? hosted.version : mod.version);

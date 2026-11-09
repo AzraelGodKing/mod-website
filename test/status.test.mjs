@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { FAILS_BEFORE_DOWN, SERVICES, applyResult, checkFiles, gameSupport, publicStatus, runChecks } from "../status/src/checks.mjs";
+import { FAILS_BEFORE_DOWN, SERVICES, applyResult, checkFiles, checkPoi, gameSupport, publicStatus, runChecks } from "../status/src/checks.mjs";
 
 const releasesBody = {
   releases: [
@@ -10,7 +10,7 @@ const releasesBody = {
   ],
 };
 
-function fakeFetch({ broken = new Set(), down = new Set() } = {}) {
+function fakeFetch({ broken = new Set(), down = new Set(), poiMinutes = 1 } = {}) {
   return async (url, init = {}) => {
     const href = String(url);
     if ([...down].some((host) => href.includes(host))) throw new TypeError("connect failed");
@@ -33,6 +33,7 @@ function fakeFetch({ broken = new Set(), down = new Set() } = {}) {
       });
     }
     if (href.includes("/api/stats") || href.includes("meta.json")) return Response.json({ ok: true });
+    if (href.endsWith("/api/poi/health")) return Response.json({ ok: true, receivedAt: "2026-11-06T11:59:00Z", minutesSinceReport: poiMinutes, stale: poiMinutes > 30 });
     return new Response("<html></html>", { headers: { "content-type": "text/html" } });
   };
 }
@@ -42,7 +43,7 @@ test("everything up gives an all-clear and no alerts", async () => {
   assert.deepEqual(alerts, []);
   const status = publicStatus(state);
   assert.equal(status.overall, "up");
-  assert.equal(status.services.length, SERVICES.length);
+  assert.equal(status.services.length, SERVICES.filter((service) => !service.private).length);
   assert.ok(status.services.every((service) => service.status === "up"));
   assert.equal(status.services[0].hours.length, 24);
 });
@@ -90,4 +91,42 @@ test("degraded state alerts once", () => {
   assert.match(first.alert, /has a problem/);
   const again = applyResult(first.entry, service, { ok: true, degraded: true, detail: "1 broken" });
   assert.equal(again.alert, null);
+});
+
+test("the POI page is checked but kept off the public status page", async () => {
+  const { state } = await runChecks(fakeFetch(), null, { now: new Date("2026-11-06T12:00:00Z"), tools: false });
+  assert.equal(state.services.poi.status, "up");
+  const status = publicStatus(state);
+  assert.ok(!status.services.some((service) => service.id === "poi"));
+  assert.ok(!JSON.stringify(status).includes("poi.azraelsmods.com"));
+});
+
+test("a stale POI report is degraded without a Discord ping, a dead POI page is down", async () => {
+  const service = SERVICES.find((entry) => entry.id === "poi");
+  const stale = await checkPoi(fakeFetch({ poiMinutes: 95 }), service);
+  assert.equal(stale.ok, true);
+  assert.equal(stale.degraded, true);
+  assert.match(stale.detail, /95 minutes/);
+  const first = await runChecks(fakeFetch(), null, { now: new Date("2026-11-06T12:00:00Z"), tools: false });
+  const degraded = await runChecks(fakeFetch({ poiMinutes: 95 }), first.state, { now: new Date("2026-11-06T12:05:00Z"), tools: false });
+  assert.equal(degraded.state.services.poi.status, "degraded");
+  assert.deepEqual(degraded.alerts, []);
+  let state = degraded.state;
+  const alerts = [];
+  for (let i = 0; i < FAILS_BEFORE_DOWN; i += 1) {
+    const run = await runChecks(fakeFetch({ down: new Set(["poi."]) }), state, { now: new Date(Date.UTC(2026, 10, 6, 12, 10 + 5 * i)), tools: false });
+    state = run.state;
+    alerts.push(...run.alerts);
+  }
+  assert.equal(state.services.poi.status, "down");
+  assert.equal(alerts.length, 1);
+  assert.match(alerts[0], /POI owners\*\* is down/);
+});
+
+test("a locked POI page (401) still counts as up", async () => {
+  const service = SERVICES.find((entry) => entry.id === "poi");
+  const locked = async (url) => (String(url).endsWith("/api/poi/health") ? Response.json({ ok: true, stale: false, minutesSinceReport: 2 }) : new Response("locked", { status: 401 }));
+  const result = await checkPoi(locked, service);
+  assert.equal(result.ok, true);
+  assert.equal(result.degraded, undefined);
 });

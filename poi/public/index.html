@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>POI owners · Azrael's server</title>
+    <meta name="theme-color" content="#100e0c" />
+    <link rel="icon" href="https://azraelsmods.com/favicon.svg" type="image/svg+xml" />
+    <script>
+      // Before the stylesheet paints: the saved theme, or the system setting.
+      try {
+        const saved = localStorage.getItem("poi-theme");
+        if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+      } catch {}
+    </script>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="bar">
+      <a class="brand" href="https://azraelsmods.com">Azrael's Mods</a>
+      <span class="bar-sub">POI owners</span>
+      <span class="bar-gap"></span>
+      <button type="button" class="ghost" id="theme" aria-label="Switch to light theme">☀ Light</button>
+    </header>
+
+    <main id="main">
+      <section class="login" id="login" hidden>
+        <h1>POI owners</h1>
+        <p class="muted">This page is private. Enter the password Azrael gave you.</p>
+        <form id="login-form">
+          <label for="password">Password</label>
+          <div class="login-row">
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+            <button type="submit" class="primary">Open</button>
+          </div>
+          <p class="error" id="login-error" role="alert" hidden></p>
+        </form>
+      </section>
+
+      <section class="empty" id="empty" hidden>
+        <h1>No report yet</h1>
+        <p class="muted">The game server has not sent anything yet. The page fills in once the POI Registry mod reports.</p>
+      </section>
+
+      <div id="app" hidden>
+        <section class="head" aria-labelledby="server-name">
+          <div class="head-main">
+            <p class="kicker">7 Days to Die server</p>
+            <h1 id="server-name">…</h1>
+            <p class="head-meta" id="server-meta"></p>
+          </div>
+          <div class="head-side">
+            <p class="updated" aria-live="polite"><span id="updated">…</span></p>
+            <button type="button" class="ghost small" id="pause" aria-pressed="false">⏸ Pause updates</button>
+          </div>
+        </section>
+        <p class="stale" id="stale" role="alert" hidden></p>
+
+        <section class="totals" aria-label="Totals">
+          <div class="total"><span class="total-n" id="t-total">0</span><span class="total-l">POIs</span></div>
+          <div class="total"><span class="total-n" id="t-claimed">0</span><span class="total-l">Claimed</span></div>
+          <div class="total" data-tone="contested"><span class="total-n" id="t-contested">0</span><span class="total-l">Contested</span></div>
+          <div class="total"><span class="total-n" id="t-unclaimed">0</span><span class="total-l">Unclaimed</span></div>
+          <div class="total"><span class="total-n" id="t-players">0</span><span class="total-l">Players with claims</span></div>
+        </section>
+
+        <div class="tabs" role="tablist" aria-label="Views">
+          <button type="button" role="tab" id="tab-pois" aria-controls="view-pois" aria-selected="true">POIs</button>
+          <button type="button" role="tab" id="tab-players" aria-controls="view-players" aria-selected="false" tabindex="-1">Players</button>
+          <button type="button" role="tab" id="tab-map" aria-controls="view-map" aria-selected="false" tabindex="-1">Map</button>
+          <button type="button" role="tab" id="tab-activity" aria-controls="view-activity" aria-selected="false" tabindex="-1">Activity</button>
+        </div>
+
+        <section class="view" id="view-pois" role="tabpanel" aria-labelledby="tab-pois">
+          <div class="filters">
+            <label class="search">
+              <span class="sr-only">Search POIs</span>
+              <input type="search" id="q" placeholder="Search POIs or players" />
+            </label>
+            <label>
+              <span>Status</span>
+              <select id="f-status">
+                <option value="">Any</option>
+                <option value="claimed">Claimed</option>
+                <option value="contested">Contested</option>
+                <option value="unclaimed">Unclaimed</option>
+              </select>
+            </label>
+            <label>
+              <span>Tier</span>
+              <select id="f-tier"><option value="">Any</option></select>
+            </label>
+            <label>
+              <span>Owner</span>
+              <select id="f-owner"><option value="">Anyone</option></select>
+            </label>
+            <label class="check"><input type="checkbox" id="f-traders" /> Hide traders</label>
+            <button type="button" class="ghost small" id="f-clear" hidden>Clear filters</button>
+          </div>
+          <p class="muted small" id="count" aria-live="polite"></p>
+          <div class="table-wrap">
+            <table class="pois">
+              <caption class="sr-only">POIs and who holds them. Pick a row for its history.</caption>
+              <thead>
+                <tr>
+                  <th scope="col" data-sort="name" aria-sort="ascending"><button type="button">POI</button></th>
+                  <th scope="col" data-sort="tier"><button type="button">Tier</button></th>
+                  <th scope="col" data-sort="status"><button type="button">Status</button></th>
+                  <th scope="col" data-sort="owner"><button type="button">Owner</button></th>
+                  <th scope="col">Co-owners</th>
+                  <th scope="col" data-sort="claims" class="num"><button type="button">Claims</button></th>
+                  <th scope="col" data-sort="since"><button type="button">Claimed since</button></th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="view-players" role="tabpanel" aria-labelledby="tab-players" hidden>
+          <p class="muted small">Pick a player to see only their POIs on the POIs tab.</p>
+          <ul class="players" id="players"></ul>
+        </section>
+
+        <section class="view" id="view-map" role="tabpanel" aria-labelledby="tab-map" hidden>
+          <p class="muted small" id="map-note">Drag to move, scroll or use the buttons to zoom, and pick a POI for its history. The POIs tab lists the same thing for keyboards and screen readers.</p>
+          <div class="map-wrap">
+            <canvas id="map" aria-label="Map of POIs coloured by owner" role="img"></canvas>
+            <div class="map-tools">
+              <button type="button" class="ghost" id="zoom-in" aria-label="Zoom in">+</button>
+              <button type="button" class="ghost" id="zoom-out" aria-label="Zoom out">−</button>
+              <button type="button" class="ghost small" id="zoom-reset">Fit</button>
+            </div>
+            <div class="map-tip" id="map-tip" hidden></div>
+          </div>
+          <ul class="legend" id="legend" aria-label="Map legend"></ul>
+        </section>
+
+        <section class="view" id="view-activity" role="tabpanel" aria-labelledby="tab-activity" hidden>
+          <ol class="feed" id="feed"></ol>
+        </section>
+      </div>
+    </main>
+
+    <dialog class="detail" id="detail" aria-labelledby="detail-title">
+      <div class="detail-head">
+        <h2 id="detail-title"></h2>
+        <button type="button" class="ghost" id="detail-close" aria-label="Close">✕</button>
+      </div>
+      <dl class="detail-facts" id="detail-facts"></dl>
+      <h3>Recent changes</h3>
+      <ol class="feed" id="detail-history"></ol>
+    </dialog>
+
+    <footer class="foot">
+      <p>Updated by the POI Registry server mod. Player names are the ones the mod chooses to send.</p>
+      <button type="button" class="ghost small" id="logout" hidden>Sign out</button>
+    </footer>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

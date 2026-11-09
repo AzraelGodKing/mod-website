@@ -1,0 +1,28 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  // poi.azraelsmods.com: who owns which POI on Azrael's 7 Days to Die server.
+  // Secrets (wrangler secret put <NAME> --config poi/wrangler.jsonc, or from the deploy agent):
+  //   POI_INGEST_TOKEN  required. The game server's POI Registry mod sends it as a Bearer token.
+  //                     Without it /api/poi/ingest refuses every post.
+  //   POI_VIEW_TOKEN    optional. When set, the page asks for it before showing anything and
+  //                     /api/poi* needs the cookie or a Bearer header. Unset = public page.
+  // See poi/README.md.
+  "name": "azraels-poi",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-10-02",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "run_worker_first": ["/api/*"]
+  },
+  // The latest snapshot and the event history. Wrangler creates the namespace on the first deploy.
+  "kv_namespaces": [{ "binding": "POI" }],
+  "routes": [
+    { "pattern": "poi.azraelsmods.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 }
+  }
+}
