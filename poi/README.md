@@ -27,7 +27,7 @@ time, and the login cookie holds a hash of the password, not the password.
 
 | Route | Who | What |
 | --- | --- | --- |
-| `POST /api/poi/ingest` | Game server | Stores a snapshot. JSON, at most 512 KB, one post per 5 seconds (429 otherwise). Answers `{ "ok": true, "stored": "<ISO time>", "pois": <n> }`; a repeat of the stored snapshot within 5 minutes also has `"unchanged": true` and is not written again. |
+| `POST /api/poi/ingest` | Game server | Stores a snapshot. JSON, at most 512 KB, one post per 5 seconds (429 otherwise). Answers `{ "ok": true, "stored": "<ISO time>", "pois": <n> }`; a snapshot that only differs in `generatedAt`, the game day or players' online and last-seen times, within 20 minutes of the stored one, also has `"unchanged": true` and is not written again. |
 | `GET /api/poi` | Page | The snapshot plus `receivedAt` and `stale` (no report for 30 minutes). 404 with `"empty": true` before the first report. |
 | `GET /api/poi/events?limit=50` | Page | The latest ownership changes across all POIs, newest first (up to 500). |
 | `GET /api/poi/history?poi=<id>` | Page | The last 20 changes for one POI. |
@@ -43,7 +43,7 @@ snapshot ever stored is the starting point and writes none. Heartbeats and repea
 
 Everything lives in one KV value (`state` in the `POI` namespace): the snapshot, the last 500
 events, and the last 20 per POI. That is one KV write per changed snapshot and none for a
-repeat within 5 minutes, which keeps a mod that posts every minute well inside KV's limits.
+repeat within 20 minutes (players coming and going and the game day don't count as a change), so a running server costs about 3 writes an hour plus one per real ownership change. That stays inside the free plan's 1,000 writes a day, which every Worker on the account shares.
 
 ## Snapshot
 

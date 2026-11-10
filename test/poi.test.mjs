@@ -385,3 +385,34 @@ test("with a view token the map images need the login too", async () => {
   assert.equal((await get(e, "/api/poi/map/biomes", { headers: { authorization: "Bearer view-secret" } })).status, 200);
   assert.equal((await get(e, "/api/poi/map/status", { headers: { authorization: "Bearer ingest-secret" } })).status, 200);
 });
+
+test("players coming and going or a new game day do not cost a KV write until the copy is 20 minutes old", async () => {
+  const e = env();
+  const start = tick();
+  assert.equal((await ingest(e, fixture, { now: start })).status, 200);
+  const writes = e.POI.writes;
+  const later = (minutes) => new Date(start.getTime() + minutes * 60_000);
+
+  const moved = clone();
+  moved.server.day += 1;
+  moved.players[0].online = !moved.players[0].online;
+  moved.players[1].lastSeen = "2026-11-09T21:00:00Z";
+  const quiet = await (await ingest(e, moved, { now: later(10) })).json();
+  assert.equal(quiet.unchanged, true);
+  assert.equal(e.POI.writes, writes);
+
+  // At 20 minutes the heartbeat is saved, players and day included, with no events.
+  const saved = await (await ingest(e, moved, { now: later(20) })).json();
+  assert.equal(saved.unchanged, undefined);
+  assert.equal(e.POI.writes, writes + 1);
+  const data = await (await get(e, "/api/poi", { now: later(21) })).json();
+  assert.equal(data.server.day, fixture.server.day + 1);
+  assert.equal(data.stale, false);
+  assert.deepEqual((await (await get(e, "/api/poi/events", { now: later(21) })).json()).events, []);
+
+  // A real ownership change is saved straight away.
+  const claimed = structuredClone(moved);
+  Object.assign(claimed.pois.find((poi) => poi.name === "bank_01"), { status: "claimed", owner: { id: "p_ab12cd", name: "PlayerOne" }, claims: 1 });
+  assert.equal((await (await ingest(e, claimed, { now: later(22) })).json()).unchanged, undefined);
+  assert.equal(e.POI.writes, writes + 2);
+});

@@ -13,7 +13,11 @@ export const STALE_MINUTES = 30;
 export const MIN_POST_SECONDS = 5;
 // A snapshot identical to the stored one is not written again until the stored one is
 // this old, so heartbeats keep the "updated" time fresh without a KV write each time.
-export const REWRITE_SAME_MINUTES = 5;
+// A snapshot that matches the stored one in everything that matters (POIs, owners, claims,
+// settings) is not written again until the stored one is this old. Heartbeats come every 10
+// minutes, so the stored copy is never much older than this, well inside STALE_MINUTES,
+// while a running server costs about 3 KV writes an hour instead of 6 or more.
+export const REWRITE_SAME_MINUTES = 20;
 export const EVENTS_KEPT = 500;
 export const EVENTS_PER_POI = 20;
 
@@ -228,10 +232,21 @@ export function emptyState() {
   return { snapshot: null, receivedAt: null, events: [], byPoi: {} };
 }
 
-// Everything but the time the mod stamped on it, to tell a heartbeat from a change.
+// What is compared to tell a heartbeat from a change. Left out: the time the mod stamped on
+// it, the game day, and who is online or when they were last seen, so players coming and
+// going do not cost a KV write on their own (they are saved with the next write).
+function significant(snapshot) {
+  return JSON.stringify({
+    ...snapshot,
+    generatedAt: null,
+    server: { ...snapshot.server, day: null },
+    players: snapshot.players.map((player) => ({ id: player.id, name: player.name, claimedPois: player.claimedPois })),
+  });
+}
+
 function sameContent(a, b) {
   if (!a || !b) return false;
-  return JSON.stringify({ ...a, generatedAt: null }) === JSON.stringify({ ...b, generatedAt: null });
+  return significant(a) === significant(b);
 }
 
 /**
