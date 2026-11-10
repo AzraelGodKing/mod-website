@@ -80,3 +80,12 @@ h1 { font-size: 2rem; margin: 0.25rem 0 0.75rem; }
   .with-nav { grid-template-columns: 1fr; gap: 1rem; }
   .side { position: static; max-height: none; border: 1px solid var(--line); border-radius: var(--radius); padding: 0.75rem; }
 }
+.search.top { flex: 0 1 15rem; }
+.search.top input { margin-bottom: 0; }
+.bar nav { flex-wrap: wrap; row-gap: 0.25rem; }
+.plain > main > h2 { margin-top: 2rem; }
+.where { margin-left: 0.4rem; padding: 0.05rem 0.45rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 0.78rem; }
+.prose p, .prose li, .prose td { overflow-wrap: anywhere; }
+@media (max-width: 52rem) {
+  .search.top { flex-basis: 100%; }
+}

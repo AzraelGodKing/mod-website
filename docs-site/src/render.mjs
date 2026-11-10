@@ -74,8 +74,9 @@ export function splitReadme(markdown) {
 }
 
 /** Where a link in the README should point on the docs site. */
-export function rewriteHref(href, { tool, page, anchors, image = false }) {
-  if (!href) return href;
+export function rewriteHref(href, { tool, page, anchors, image = false, site = false }) {
+  // Pages this site writes itself already link where they mean to.
+  if (!href || site) return href;
   if (href.startsWith("#")) {
     const anchor = href.slice(1);
     const target = anchors[anchor];
@@ -112,6 +113,15 @@ function markedFor(context) {
       },
     },
   });
+}
+
+/** Markdown written by this site (mod guides), with heading anchors and no link rewriting. */
+export function renderMarkdown(markdown) {
+  const slug = slugger();
+  const tokens = new Marked({ gfm: true }).lexer(markdown);
+  for (const token of tokens) if (token.type === "heading") token.anchor = slug(plainHeading(token));
+  tokens.links ??= {};
+  return markedFor({ tool: { slug: "", repo: "" }, page: "", anchors: {}, site: true }).parser(tokens);
 }
 
 /** One page's HTML. */
