@@ -835,13 +835,14 @@ function setupMap() {
     canvas.style.cursor = poi ? "pointer" : "";
     if (poi) {
       const box = canvas.getBoundingClientRect();
-      tip.replaceChildren(
+      // replaceChildren writes a null out as the text "null", so leave the co-owner line out instead.
+      const lines = [
         el("strong", { text: poiName(poi) }),
         el("br"),
         `${STATUS[poi.status]?.label ?? poi.status}${poi.owner ? ` · ${nameOf(poi.owner)}` : ""}`,
-        poi.coOwners?.length ? el("br") : null,
-        poi.coOwners?.length ? `With ${poi.coOwners.map(nameOf).join(", ")}` : null,
-      );
+      ];
+      if (poi.coOwners?.length) lines.push(el("br"), `With ${poi.coOwners.map(nameOf).join(", ")}`);
+      tip.replaceChildren(...lines);
       tip.style.left = `${Math.min(box.width - 200, event.clientX - box.left + 14)}px`;
       tip.style.top = `${event.clientY - box.top + 14}px`;
       tip.hidden = false;
