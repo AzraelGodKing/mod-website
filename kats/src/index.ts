@@ -43,6 +43,17 @@ export const PUBLIC = new Set([
 const MAX_BYTES = 8_000_000;
 const MAX_COMMIT_BYTES = 1_000_000;
 const CURRENT = "meta/current.json";
+// Price changes of the last uploads, newest last, for the price history in the details popup.
+const HISTORY = "meta/history.json";
+const HISTORY_UPLOADS = 40;
+const HISTORY_ROWS = 3000;
+
+interface HistoryEntry {
+  id: string;
+  at: string;
+  // list name -> [label, from, to]
+  prices: Record<string, [string, number, number][]>;
+}
 const REVISION_ID = /^\d{8}T\d{6}Z-[a-z0-9]{6}$/;
 
 function log(result: string, name: string) {
@@ -74,6 +85,42 @@ async function writeManifest(env: Env, manifest: Manifest) {
   await env.CATALOG.put(CURRENT, JSON.stringify(manifest), {
     httpMetadata: { contentType: "application/json; charset=utf-8" },
   });
+}
+
+async function readHistory(env: Env): Promise<HistoryEntry[]> {
+  const object = await env.CATALOG.get(HISTORY);
+  if (!object) return [];
+  try {
+    const list = await object.json();
+    return Array.isArray(list) ? (list as HistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeHistory(env: Env, list: HistoryEntry[]) {
+  await env.CATALOG.put(HISTORY, JSON.stringify(list.slice(-HISTORY_UPLOADS)), {
+    httpMetadata: { contentType: "application/json; charset=utf-8" },
+  });
+}
+
+/** Keeps only well-formed [label, from, to] rows of the lists that have prices. */
+export function cleanPriceLog(input: unknown): HistoryEntry["prices"] {
+  const out: HistoryEntry["prices"] = {};
+  if (!input || typeof input !== "object") return out;
+  for (const [name, rows] of Object.entries(input as Record<string, unknown>)) {
+    if (!WRITABLE.has(name) || !Array.isArray(rows)) continue;
+    const kept: [string, number, number][] = [];
+    for (const row of rows.slice(0, HISTORY_ROWS)) {
+      if (!Array.isArray(row)) continue;
+      const [label, from, to] = row;
+      if (typeof label === "string" && label.length <= 200 && Number.isFinite(from) && Number.isFinite(to) && from !== to) {
+        kept.push([label, Number(from), Number(to)]);
+      }
+    }
+    if (kept.length) out[name] = kept;
+  }
+  return out;
 }
 
 function withoutPrevious(manifest: Manifest | null): Manifest {
@@ -151,7 +198,7 @@ async function putFile(request: Request, env: Env, id: string, name: string): Pr
 
 async function commitRevision(request: Request, env: Env, id: string): Promise<Response> {
   const body = await readLimited(request, MAX_COMMIT_BYTES);
-  let details: { counts?: Record<string, number>; changes?: unknown; geneRates?: unknown } = {};
+  let details: { counts?: Record<string, number>; changes?: unknown; geneRates?: unknown; priceLog?: unknown } = {};
   try {
     details = body ? JSON.parse(body) : {};
   } catch {
@@ -181,6 +228,15 @@ async function commitRevision(request: Request, env: Env, id: string): Promise<R
     previous: withoutPrevious(current),
   };
   await writeManifest(env, manifest);
+  const prices = cleanPriceLog(details.priceLog);
+  if (Object.keys(prices).length) {
+    // The catalog is already live; a history that fails to save must not fail the upload.
+    try {
+      await writeHistory(env, [...(await readHistory(env)), { id, at: manifest.updatedAt as string, prices }]);
+    } catch (error) {
+      console.warn(`[kats] price history not saved: ${error}`);
+    }
+  }
   log("committed", id);
   return Response.json({ ok: true, ...publicMeta(manifest) });
 }
@@ -190,6 +246,9 @@ async function rollBack(env: Env): Promise<Response> {
   if (!current?.previous) return text("There is no earlier revision to go back to.", 409);
   const restored: Manifest = { ...current.previous, previous: null };
   await writeManifest(env, restored);
+  // The prices of the upload that was undone never happened.
+  const history = await readHistory(env);
+  if (history.some((entry) => entry.id === current.id)) await writeHistory(env, history.filter((entry) => entry.id !== current.id));
   log("rolled-back", current.id ?? "none");
   return Response.json({ ok: true, ...publicMeta(restored) });
 }
@@ -216,6 +275,11 @@ async function readCatalog(request: Request, env: Env, name: string): Promise<Re
     const manifest = await readManifest(env);
     if (!manifest?.id) return staticJson(request, env);
     return jsonResponse(JSON.stringify(publicMeta(manifest)));
+  }
+  if (name === "history") {
+    // Storage ids stay private: only the date and the prices are public.
+    const history = (await readHistory(env)).map(({ at, prices }) => ({ at, prices }));
+    return jsonResponse(JSON.stringify(history));
   }
   if (!PUBLIC.has(name)) return text("Not found", 404);
   const manifest = await readManifest(env);

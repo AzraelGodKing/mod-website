@@ -3,6 +3,7 @@ import AppSidebar from "./components/AppSidebar.vue";
 import AppFooter from "./components/AppFooter.vue";
 import AppToast from "./components/AppToast.vue";
 import BackToTop from "./components/BackToTop.vue";
+import CompareBar from "./components/CompareBar.vue";
 import { onBeforeUnmount, onMounted } from "vue";
 import { useStickyOffsets } from "./composables/useStickyOffsets";
 
@@ -35,6 +36,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
       <AppFooter />
     </div>
   </div>
+  <CompareBar />
   <AppToast />
   <BackToTop />
 </template>

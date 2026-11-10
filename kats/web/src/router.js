@@ -11,6 +11,8 @@ export const routes = [
   { path: "/isekai", name: "isekai", component: () => import("./views/IsekaiView.vue"), meta: { title: "Isekai" } },
   { path: "/genes", name: "genes", component: () => import("./views/GenesView.vue"), meta: { title: "Genes" } },
   { path: "/changes", name: "changes", component: () => import("./views/ChangesView.vue"), meta: { title: "What changed" } },
+  { path: "/cart", name: "cart", component: () => import("./views/CartView.vue"), meta: { title: "Cart" } },
+  { path: "/wishlist", name: "wishlist", component: () => import("./views/WishlistView.vue"), meta: { title: "Wishlist" } },
   { path: "/search", name: "search", component: () => import("./views/SearchView.vue"), meta: { title: "Search" } },
   {
     path: `/:page(${LEGACY_PAGES.join("|")}).html`,
