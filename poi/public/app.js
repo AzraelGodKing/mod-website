@@ -656,9 +656,12 @@ function drawMap() {
   const contested = css.getPropertyValue("--contested").trim();
   const unclaimed = css.getPropertyValue("--unclaimed").trim();
   const ink = css.getPropertyValue("--ink").trim();
+  const labels = [];
+  const boxes = [];
   for (const poi of mapPois()) {
     const r = poiRect(poi);
     if (r.x + r.w < 0 || r.y + r.h < 0 || r.x > width || r.y > height) continue;
+    boxes.push({ ...r, id: poi.id });
     const dim = state.filters.owner && ![poi.owner, ...(poi.coOwners ?? [])].some((ref) => ref?.id === state.filters.owner);
     ctx.globalAlpha = dim ? 0.25 : 1;
     if (poi.status === "claimed" && poi.owner) {
@@ -708,14 +711,56 @@ function drawMap() {
       ctx.lineWidth = 2;
       ctx.strokeRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
     }
-    if (map.scale > 0.6 || poi.status !== "unclaimed") {
-      ctx.globalAlpha = dim ? 0.3 : 1;
-      ctx.fillStyle = ink;
-      ctx.font = `600 11px ${css.getPropertyValue("--font")}`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText(poiName(poi), r.x + r.w / 2, r.y + r.h + 3, Math.max(60, r.w * 1.6));
-    }
+    if (map.scale > 0.6 || poi.status !== "unclaimed" || map.hover === poi.id) labels.push({ poi, r, dim });
+  }
+  ctx.globalAlpha = 1;
+  drawLabels(ctx, labels, boxes, css, width, height);
+}
+
+const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+// Names go on after every box, so no box is drawn over a name. Each name tries below its
+// box, then inside it, then above it, and is left off when every spot would cover another
+// name or another POI; hovering or the detail panel still shows it. The hovered POI and
+// owned ones are placed first.
+function drawLabels(ctx, labels, boxes, css, width, height) {
+  const font = css.getPropertyValue("--font");
+  const paper = css.getPropertyValue("--map-bg").trim() || "#000";
+  const ink = css.getPropertyValue("--ink").trim();
+  ctx.font = `600 11px ${font}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  const rank = (label) => (map.hover === label.poi.id ? 0 : label.poi.status === "unclaimed" ? 2 : 1);
+  labels.sort((a, b) => rank(a) - rank(b) || b.r.w * b.r.h - a.r.w * a.r.h);
+  const placed = [];
+  for (const { poi, r, dim } of labels) {
+    const text = poiName(poi);
+    const max = Math.max(60, r.w * 1.6);
+    const w = Math.min(ctx.measureText(text).width, max) + 4;
+    const h = 14;
+    const cx = r.x + r.w / 2;
+    const spots = [
+      { x: cx - w / 2, y: r.y + r.h + 2, w, h, inside: false },
+      ...(r.h >= h + 6 && w <= r.w - 4 ? [{ x: cx - w / 2, y: r.y + (r.h - h) / 2, w, h, inside: true }] : []),
+      { x: cx - w / 2, y: r.y - h - 2, w, h, inside: false },
+    ];
+    const hovered = map.hover === poi.id;
+    const spot = spots.find(
+      (box) =>
+        box.y >= 0 && box.y + box.h <= height && box.x + box.w >= 0 && box.x <= width &&
+        !placed.some((other) => overlaps(box, other)) &&
+        !boxes.some((other) => other.id !== poi.id && overlaps(box, other)),
+    ) ?? (hovered ? spots[0] : null);
+    if (!spot) continue;
+    placed.push(spot);
+    ctx.globalAlpha = dim ? 0.3 : 1;
+    // A halo in the map colour keeps the name readable over roads, biomes and box edges.
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = spot.inside ? "rgba(0, 0, 0, 0.55)" : paper;
+    ctx.fillStyle = spot.inside ? "#fff" : ink;
+    ctx.strokeText(text, cx, spot.y + 1, max);
+    ctx.fillText(text, cx, spot.y + 1, max);
   }
   ctx.globalAlpha = 1;
 }
