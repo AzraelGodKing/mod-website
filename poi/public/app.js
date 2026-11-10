@@ -166,6 +166,7 @@ async function load() {
     state.labels = buildLabels(data);
     show("app");
     render();
+    syncTerrain();
   } catch (error) {
     if (error.locked) show("login");
     else if (error.empty) show("empty");
@@ -450,6 +451,136 @@ async function openDetail(id) {
 
 const map = { scale: 1, x: 0, y: 0, fitted: false, hover: null, drag: null };
 
+// ---------- terrain (the world's biomes.png and splat3.png, uploaded by the mod) ----------
+
+// biomes.png uses these colours; each is drawn in a muted shade that suits the page.
+const BIOMES = [
+  { name: "Forest", from: [0, 64, 0], to: [46, 74, 42] },
+  { name: "Burnt forest", from: [186, 0, 255], to: [74, 58, 51] },
+  { name: "Desert", from: [255, 228, 119], to: [168, 140, 84] },
+  { name: "Snow", from: [255, 255, 255], to: [178, 190, 196] },
+  { name: "Wasteland", from: [255, 168, 0], to: [120, 90, 58] },
+];
+const ROAD = [222, 212, 196];
+const terrain = { key: null, canvas: null, size: 0, show: localStorage.getItem("poi-terrain") !== "off", loading: false };
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`could not load ${src}`));
+    image.src = src;
+  });
+}
+
+function nearestBiome(r, g, b) {
+  let best = BIOMES[0];
+  let bestDistance = Infinity;
+  for (const biome of BIOMES) {
+    const [fr, fg, fb] = biome.from;
+    const distance = (r - fr) ** 2 + (g - fg) ** 2 + (b - fb) ** 2;
+    if (distance < bestDistance) [best, bestDistance] = [biome, distance];
+  }
+  return best.to;
+}
+
+// Draws both layers once into one canvas, a few thousand pixels across, recoloured.
+async function buildTerrain(info) {
+  const px = Math.min(info.size, window.innerWidth < 800 ? 2048 : 3072);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = px;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const [biomes, roads] = await Promise.all(
+    ["biomes", "roads"].map((layer) =>
+      info.layers[layer] ? loadImage(`/api/poi/map/${layer}?v=${info.layers[layer].hash}`).catch(() => null) : null,
+    ),
+  );
+  if (!biomes && !roads) return null;
+  const pixels = ctx.createImageData(px, px);
+  const out = pixels.data;
+  if (biomes) {
+    ctx.drawImage(biomes, 0, 0, px, px);
+    const src = ctx.getImageData(0, 0, px, px).data;
+    const cache = new Map();
+    for (let i = 0; i < src.length; i += 4) {
+      const key = (src[i] << 16) | (src[i + 1] << 8) | src[i + 2];
+      let to = cache.get(key);
+      if (!to) cache.set(key, (to = nearestBiome(src[i], src[i + 1], src[i + 2])));
+      out[i] = to[0];
+      out[i + 1] = to[1];
+      out[i + 2] = to[2];
+      out[i + 3] = 255;
+    }
+  }
+  if (roads) {
+    ctx.clearRect(0, 0, px, px);
+    ctx.drawImage(roads, 0, 0, px, px);
+    const src = ctx.getImageData(0, 0, px, px).data;
+    for (let i = 0; i < src.length; i += 4) {
+      // splat3.png is empty (black or clear) except where roads are.
+      if (src[i + 3] < 40 || Math.max(src[i], src[i + 1], src[i + 2]) < 40) continue;
+      out[i] = ROAD[0];
+      out[i + 1] = ROAD[1];
+      out[i + 2] = ROAD[2];
+      out[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(pixels, 0, 0);
+  return canvas;
+}
+
+async function syncTerrain() {
+  const info = state.data?.map;
+  const key = info ? `${info.size}:${Object.values(info.layers).map((layer) => layer.hash).join(",")}` : null;
+  $("terrain-toggle").hidden = !info;
+  renderTerrainLegend();
+  if (key === terrain.key || terrain.loading) return;
+  if (!info) {
+    Object.assign(terrain, { key: null, canvas: null, size: 0 });
+    drawMap();
+    return;
+  }
+  terrain.loading = true;
+  try {
+    terrain.canvas = await buildTerrain(info);
+    terrain.size = info.size;
+    terrain.key = key;
+  } catch {
+    terrain.canvas = null;
+  } finally {
+    terrain.loading = false;
+  }
+  renderTerrainLegend();
+  drawMap();
+}
+
+function renderTerrainLegend() {
+  const list = $("terrain-legend");
+  const on = Boolean(state.data?.map) && terrain.show;
+  list.hidden = !on;
+  if (!on) return;
+  const swatch = (rgb, text) =>
+    el("li", {}, el("span", { class: "swatch", style: `background: rgb(${rgb.join(",")})`, "aria-hidden": "true" }), el("span", { text }));
+  list.replaceChildren(
+    ...BIOMES.map((biome) => swatch(biome.to, biome.name)),
+    ...(state.data.map.layers.roads ? [swatch(ROAD, "Road")] : []),
+  );
+  $("terrain-toggle").setAttribute("aria-pressed", String(terrain.show));
+}
+
+function drawTerrain(ctx) {
+  if (!terrain.canvas || !terrain.show) return;
+  // The image's top-left corner is the world's north-west corner; 0,0 is the middle.
+  const half = terrain.size / 2;
+  const [left, top] = toScreen(-half, half);
+  const side = terrain.size * map.scale;
+  ctx.save();
+  ctx.globalAlpha = 0.75;
+  ctx.imageSmoothingEnabled = side < terrain.canvas.width * 2;
+  ctx.drawImage(terrain.canvas, left, top, side, side);
+  ctx.restore();
+}
+
 function mapPois() {
   return state.data.pois.filter((poi) => Number.isFinite(poi.x) && Number.isFinite(poi.z) && !(state.filters.hideTraders && poi.trader));
 }
@@ -460,12 +591,10 @@ function fitMap() {
   if (!pois.length) return;
   let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
   for (const poi of pois) {
-    const w = (poi.sizeX ?? 30) / 2;
-    const h = (poi.sizeZ ?? 30) / 2;
-    minX = Math.min(minX, poi.x - w);
-    maxX = Math.max(maxX, poi.x + w);
-    minZ = Math.min(minZ, poi.z - h);
-    maxZ = Math.max(maxZ, poi.z + h);
+    minX = Math.min(minX, poi.x);
+    maxX = Math.max(maxX, poi.x + (poi.sizeX ?? 30));
+    minZ = Math.min(minZ, poi.z);
+    maxZ = Math.max(maxZ, poi.z + (poi.sizeZ ?? 30));
   }
   const { width, height } = canvas.getBoundingClientRect();
   const pad = 40;
@@ -484,7 +613,8 @@ function poiRect(poi) {
   // Never smaller than 12 px, so a zoomed-out map of a big world is still readable.
   const w = Math.max(12, (poi.sizeX ?? 30) * map.scale);
   const h = Math.max(12, (poi.sizeZ ?? 30) * map.scale);
-  const [cx, cy] = toScreen(poi.x, poi.z);
+  // x and z are the POI's south-west corner (its lowest x and z), as the mod sends them.
+  const [cx, cy] = toScreen(poi.x + (poi.sizeX ?? 30) / 2, poi.z + (poi.sizeZ ?? 30) / 2);
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
 
@@ -502,6 +632,7 @@ function drawMap() {
   const ctx = canvas.getContext("2d");
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, width, height);
+  drawTerrain(ctx);
 
   // A 500 m grid with the 0,0 lines a little stronger.
   ctx.strokeStyle = css.getPropertyValue("--map-grid");
@@ -699,6 +830,12 @@ function setupMap() {
     },
     { passive: false },
   );
+  $("terrain-toggle").addEventListener("click", () => {
+    terrain.show = !terrain.show;
+    localStorage.setItem("poi-terrain", terrain.show ? "on" : "off");
+    renderTerrainLegend();
+    drawMap();
+  });
   $("zoom-in").addEventListener("click", () => zoom(1.4));
   $("zoom-out").addEventListener("click", () => zoom(1 / 1.4));
   $("zoom-reset").addEventListener("click", () => {

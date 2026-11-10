@@ -305,3 +305,83 @@ test("the day endpoint is open and gives only the in-game day", async () => {
   assert.equal(body.fresh, true);
   assert.deepEqual(Object.keys(body).sort(), ["day", "fresh", "receivedAt"]);
 });
+
+// ---------- world map ----------
+
+// A real 1x1 PNG with the IHDR width and height swapped for the size the test wants.
+function png(width = 4096, height = width, extra = 0) {
+  const base = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const bytes = new Uint8Array(base.length + extra);
+  bytes.set(base);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
+
+function putMap(e, layer, body, { token = "ingest-secret", query = "world=Old%20Honihebu%20County&size=4096" } = {}) {
+  const request = new Request(`https://poi.test/api/poi/map/${layer}?${query}`, {
+    method: "PUT",
+    headers: { "content-type": "image/png", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body,
+  });
+  return handleApi(request, e, tick());
+}
+
+test("map upload needs the ingest token and a PNG", async () => {
+  const e = env();
+  assert.equal((await putMap(e, "biomes", png(), { token: "" })).status, 401);
+  assert.equal((await putMap(e, "biomes", png(), { token: "wrong" })).status, 401);
+  assert.equal((await putMap(e, "biomes", new TextEncoder().encode("not a png"))).status, 400);
+  assert.equal((await putMap(e, "water", png())).status, 404);
+  assert.equal((await putMap(e, "biomes", png(), { query: "world=x&size=12" })).status, 400);
+  assert.equal(e.POI.writes, 0);
+});
+
+test("a map upload is stored once, and the page gets it with the snapshot", async () => {
+  const e = env();
+  assert.equal((await ingest(e, clone())).status, 200);
+  const first = await putMap(e, "biomes", png());
+  assert.equal(first.status, 200);
+  const { hash } = await first.json();
+  const writes = e.POI.writes;
+  const again = await (await putMap(e, "biomes", png())).json();
+  assert.equal(again.unchanged, true);
+  assert.equal(e.POI.writes, writes, "the same image is not written again");
+
+  const data = await (await get(e, "/api/poi")).json();
+  assert.deepEqual(data.map, { world: "Old Honihebu County", size: 4096, layers: { biomes: { hash: hash.slice(0, 16), width: 4096, height: 4096 } } });
+
+  const image = await get(e, `/api/poi/map/biomes?v=${hash.slice(0, 16)}`);
+  assert.equal(image.status, 200);
+  assert.equal(image.headers.get("content-type"), "image/png");
+  assert.match(image.headers.get("cache-control"), /immutable/);
+  assert.deepEqual(new Uint8Array(await image.arrayBuffer()), png());
+  assert.equal((await get(e, "/api/poi/map/roads")).status, 404);
+
+  const status = await (await get(e, "/api/poi/map/status", { headers: { authorization: "Bearer ingest-secret" } })).json();
+  assert.equal(status.layers.biomes.hash, hash);
+});
+
+test("the size defaults to the image width, and a new world drops the old world's layers", async () => {
+  const e = env();
+  await putMap(e, "biomes", png(6144), { query: "world=Navezgane" });
+  await putMap(e, "roads", png(6144, 6144, 1), { query: "world=Navezgane" });
+  let status = await (await get(e, "/api/poi/map/status")).json();
+  assert.equal(status.size, 6144);
+  assert.deepEqual(Object.keys(status.layers).sort(), ["biomes", "roads"]);
+
+  await putMap(e, "biomes", png(8192), { query: "world=New%20World&size=8192" });
+  status = await (await get(e, "/api/poi/map/status")).json();
+  assert.equal(status.world, "New World");
+  assert.deepEqual(Object.keys(status.layers), ["biomes"]);
+});
+
+test("with a view token the map images need the login too", async () => {
+  const e = env({ POI_VIEW_TOKEN: "view-secret" });
+  await putMap(e, "biomes", png());
+  assert.equal((await get(e, "/api/poi/map/biomes")).status, 401);
+  assert.equal((await get(e, "/api/poi/map/status")).status, 401);
+  assert.equal((await get(e, "/api/poi/map/biomes", { headers: { authorization: "Bearer view-secret" } })).status, 200);
+  assert.equal((await get(e, "/api/poi/map/status", { headers: { authorization: "Bearer ingest-secret" } })).status, 200);
+});

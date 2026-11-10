@@ -33,6 +33,9 @@ time, and the login cookie holds a hash of the password, not the password.
 | `GET /api/poi/history?poi=<id>` | Page | The last 20 changes for one POI. |
 | `GET /api/poi/health` | Status page | `{ ok, receivedAt, minutesSinceReport, stale }`. Open even when the page is locked; it has no POI data. |
 | `POST /api/poi/login`, `POST /api/poi/logout` | Page | Sets or clears the login cookie (30 days). |
+| `PUT /api/poi/map/biomes`, `PUT /api/poi/map/roads` | Game server | Stores the world's `biomes.png` or `splat3.png` (PNG, at most 24 MB, ingest token). `?world=<name>&size=<metres>`; without `size` the image width is used. The same image is not written again; a layer from another world is dropped. |
+| `GET /api/poi/map/status` | Game server or page | `{ world, size, layers: { biomes: { hash, bytes, width, height, uploadedAt }, roads: … } }`. The mod compares the full SHA-256 `hash` before uploading. |
+| `GET /api/poi/map/biomes?v=<hash>`, `GET /api/poi/map/roads?v=<hash>` | Page | The PNG. With the current hash (first 16 characters, from `map` in `GET /api/poi`) it is cached for a year. |
 
 An event is written when a POI's `status` or `owner.id` changes:
 `{ at, poi: { id, name }, from: { status, owner }, to: { status, owner } }`. The first
@@ -52,6 +55,7 @@ traders, and one without coordinates).
   `contested` lists the players whose claims overlap it.
 - Player ids are opaque hashes from the mod. A payload with anything that looks like a Steam,
   Epic, Xbox or PlayStation id, or an IP address, is refused with a 400.
+- `x` and `z` are the POI's south-west corner (lowest x and z); the POI covers `x .. x + sizeX` and `z .. z + sizeZ`.
 - `x`, `z`, `sizeX`, `sizeZ` can be `null` (`settings.showCoordinates: false`); the map tab
   is hidden then. `owner.name` can be `null` (`settings.showNames: false`); the page shows
   "Player 1", "Player 2" and so on, numbered by id.
@@ -81,3 +85,10 @@ again, and its changes go into the activity feed, so use it before the mod is ru
 `status.azraelsmods.com` checks the page and `/api/poi/health` every 5 minutes. The POI page
 is left off the public status page. A stale report shows as degraded (the game server is just
 off) and does not ping Discord; the page not answering is down and does.
+
+## World map
+
+The Map tab draws the world under the POIs once the mod has uploaded it (POI Registry 1.1.0 and later,
+with `ShowCoordinates=on` and `UploadMap=on`). The page recolours `biomes.png` (forest, burnt forest, desert,
+snow, wasteland) and lays the roads from `splat3.png` on top, in one canvas of up to 3072 px (2048 on phones).
+The image's top-left corner is the world's north-west corner and 0,0 is the middle. The Terrain button hides it.
