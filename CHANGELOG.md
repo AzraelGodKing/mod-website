@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- POI page uses fewer KV writes: a heartbeat is saved only when the stored snapshot is 20 minutes old (was 5), and players joining, leaving or being seen, or a new game day, no longer count as a change on their own. About 72 writes a day for a server that runs all day, plus one per ownership change.
 - POI map: the hover box no longer ends in "nullnull" for a POI without co-owners.
 - POI map: names are drawn after every box, so a box never covers a name and a name never sits on another POI. Each name goes below its box, inside it, or above it, whichever is free, and is left off when none is (hover or the details still show it). Names have a dark outline so they stay readable over roads and biomes.
 - poi.azraelsmods.com: a private page showing which player holds which POI on Azrael's 7 Days to Die server. The POI Registry server mod posts a snapshot to `/api/poi/ingest` (Bearer `POI_INGEST_TOKEN`, refused without it); the page has totals, a sortable and filterable POI table, a players view, a map coloured by owner (hidden when the mod sends no coordinates), an activity feed of ownership changes, and a history per POI. It refreshes every 30 seconds with a pause button, works in dark and light, and asks for `POI_VIEW_TOKEN` first when that is set. Snapshots with anything that looks like a Steam or platform id or an IP address are refused. Deployed with the other subdomains; the status worker checks it without listing it publicly, and a stale report shows as degraded without a Discord ping. Setup in `poi/README.md`.
