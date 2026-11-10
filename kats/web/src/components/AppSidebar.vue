@@ -4,6 +4,9 @@ import { useRoute, useRouter } from "vue-router";
 import { currentTheme, toggleTheme } from "../composables/useTheme";
 import { loadMeta, longDate, relativeTime } from "../lib/data";
 import { links } from "../lib/nav";
+import { useCart } from "../composables/useCart";
+
+const cart = useCart();
 
 const route = useRoute();
 const router = useRouter();
@@ -65,6 +68,7 @@ const updatedOn = computed(() => longDate(meta.value?.updatedAt));
       >
         <span class="nav-code" aria-hidden="true">{{ link.code }}</span>
         <span class="nav-label">{{ link.label }}</span>
+        <span v-if="link.match === 'cart' && cart.count.value" class="nav-count" :aria-label="`${cart.count.value} in the cart`">{{ cart.count.value }}</span>
       </router-link>
     </nav>
 

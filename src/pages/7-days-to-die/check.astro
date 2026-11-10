@@ -1,0 +1,137 @@
+---
+import Base from "../../layouts/Base.astro";
+import { isNotReady, modsForGame } from "../../data/mods";
+
+// Azrael's 7 Days mods, with the folder each one unpacks to.
+const checked = modsForGame("7-days-to-die")
+  .filter((mod) => !isNotReady(mod))
+  .map((mod) => ({ slug: mod.slug, name: mod.name, folder: mod.folder, version: mod.version }));
+const data = JSON.stringify(checked).replace(/</g, "\\u003c");
+---
+
+<Base
+  title="7 Days to Die mod update checker"
+  description="Pick your 7 Days to Die Mods folder, or paste a list, to see which of Azrael's mods have a newer version."
+  game="7-days-to-die"
+>
+  <div class="zd-hub">
+    <header class="zd-hero">
+      <p class="zd-kicker"><a href="/7-days-to-die">7 Days to Die</a></p>
+      <h1>Are my mods up to date?</h1>
+      <p>
+        Pick your Mods folder to check {checked.length} of Azrael's mods against the newest versions. Other mods in the folder are
+        left alone.
+      </p>
+    </header>
+    <div class="zd-hazard" aria-hidden="true"></div>
+    <section class="lo-check">
+      <p class="lo-where">
+        Your mods are in the <code>Mods</code> folder of the game or the dedicated server, or in
+        <code>%APPDATA%\7DaysToDie\Mods</code> on Windows. The page only reads each mod's <code>ModInfo.xml</code>, and nothing you
+        pick or paste leaves your browser.
+      </p>
+      <label class="lo-file">
+        Pick your Mods folder <input type="file" id="uc-folder" webkitdirectory multiple />
+      </label>
+      <label class="lo-paste">
+        <span>Or paste a list, one mod per line, with the version after the name:</span>
+        <textarea id="uc-input" rows="8" spellcheck="false" placeholder="AzraelBloodMoonSound 1.4.0&#10;Craft From Chests 1.2.0&#10;keep-backpacks-1.2.0.zip"></textarea>
+      </label>
+      <button type="button" id="lo-run">Check my mods</button>
+      <div id="uc-results" aria-live="polite"></div>
+    </section>
+    <p class="zd-back"><a href="/7-days-to-die">← Back to all 7 Days to Die mods</a></p>
+  </div>
+  <script type="application/json" id="uc-data" set:html={data} />
+</Base>
+
+<script>
+  import { checkUpdates, parseInstalled, parseModInfo } from "../../data/update-check.mjs";
+
+  const mods = JSON.parse(document.querySelector("#uc-data")!.textContent ?? "[]");
+  const input = document.querySelector<HTMLTextAreaElement>("#uc-input")!;
+  const out = document.querySelector<HTMLElement>("#uc-results")!;
+  // The newest versions, read live so a release since the last site build still counts.
+  const latest: Record<string, string> = {};
+  const live = fetch("/api/downloads")
+    .then((res) => (res.ok ? res.json() : {}))
+    .then((list: Record<string, { version?: string }>) => {
+      for (const [key, entry] of Object.entries(list)) {
+        if (key.startsWith("7-days-to-die/") && entry?.version) latest[key.slice("7-days-to-die/".length)] = entry.version;
+      }
+    })
+    .catch(() => {});
+
+  const el = (tag: string, text?: string, className?: string) => {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+
+  async function show(installed: { name: string; displayName: string; version: string }[]) {
+    await live;
+    out.replaceChildren();
+    if (installed.length === 0) {
+      out.append(el("p", "Pick your Mods folder or paste a list first.", "lo-note"));
+      return;
+    }
+    const { results, others } = checkUpdates(installed, mods, latest);
+    if (results.length === 0) {
+      out.append(el("p", `None of Azrael's mods are among these ${installed.length} mods.`, "lo-note"));
+      return;
+    }
+    const behind = results.filter((result) => result.state === "behind");
+    const unknown = results.filter((result) => result.state === "unknown").length;
+    const summary =
+      behind.length > 0
+        ? `${behind.length} of ${results.length} ${results.length === 1 ? "mod has" : "mods have"} a newer version.`
+        : unknown > 0
+          ? `Found ${results.length} of Azrael's mods. ${unknown} had no version to compare.`
+          : `All ${results.length} of Azrael's mods here are up to date.`;
+    out.append(el("p", summary, behind.length ? "lo-summary is-warn" : unknown ? "lo-summary" : "lo-summary is-good"));
+    const list = el("ul", undefined, "lo-list");
+    for (const result of results) {
+      const item = el("li");
+      const head = el("a", result.name, "lo-mod") as HTMLAnchorElement;
+      head.href = `/7-days-to-die/${result.slug}`;
+      item.append(head);
+      if (result.state === "behind") {
+        const line = el("p", `You have v${result.have}. The newest is v${result.latest}. `, "lo-warn");
+        const get = el("a", `Download v${result.latest}`) as HTMLAnchorElement;
+        get.href = `/download/7-days-to-die/${result.slug}`;
+        const notes = el("a", "what changed") as HTMLAnchorElement;
+        notes.href = `/7-days-to-die/${result.slug}?from=${encodeURIComponent(result.have)}#changelog`;
+        line.append(get, " · ", notes);
+        item.append(line);
+      } else if (result.state === "unknown") {
+        item.append(el("p", `No version given. The newest is v${result.latest}.`, "lo-note"));
+      } else if (result.state === "ahead") {
+        item.append(el("p", `You have v${result.have}, which is newer than the v${result.latest} hosted here.`, "lo-ok"));
+      } else {
+        item.append(el("p", `v${result.have} is the newest.`, "lo-ok"));
+      }
+      list.append(item);
+    }
+    out.append(list);
+    if (behind.length > 1) {
+      const all = el("a", `Download all ${behind.length} updates as one zip`, "uc-bundle") as HTMLAnchorElement;
+      all.href = `/download/7-days-to-die/bundle?side=server&mods=${behind.map((result) => result.slug).join(",")}`;
+      out.append(el("p", undefined, "lo-note"));
+      out.lastElementChild!.append(all, " (the server and both-sides mods; player-only mods are left out).");
+    }
+    if (others > 0) out.append(el("p", `${others} other ${others === 1 ? "mod" : "mods"} in the list ${others === 1 ? "is" : "are"} not Azrael's and ${others === 1 ? "was" : "were"} not checked.`, "lo-note"));
+  }
+
+  document.querySelector("#lo-run")!.addEventListener("click", () => show(parseInstalled(input.value)));
+  document.querySelector<HTMLInputElement>("#uc-folder")!.addEventListener("change", async (event) => {
+    const files = [...((event.target as HTMLInputElement).files ?? [])].filter((file) => /(^|\/)ModInfo\.xml$/i.test(file.webkitRelativePath || file.name));
+    const found = [];
+    for (const file of files) {
+      const info = parseModInfo(await file.text());
+      if (info) found.push(info);
+    }
+    input.value = found.map((info) => `${info.name || info.displayName} ${info.version}`.trim()).join("\n");
+    show(found);
+  });
+</script>

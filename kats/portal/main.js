@@ -1,5 +1,5 @@
 import { createExtractorFromData } from "node-unrar-js";
-import { buildCatalog, diffCatalog, hasChanges } from "./catalog.mjs";
+import { buildCatalog, diffCatalog, priceChanges, hasChanges } from "./catalog.mjs";
 
 const form = document.querySelector("#upload-form");
 const fields = document.querySelector("#upload-fields");
@@ -115,13 +115,20 @@ async function readEntries(files) {
   return entries;
 }
 
+// Every price that changed in this upload, kept by the Worker as the price history.
+let priceLog = {};
+
 async function changesFor(files) {
   const changes = {};
+  priceLog = {};
   for (const [name, json] of Object.entries(files)) {
     try {
       const response = await fetch(`/data/${name}.json`, { cache: "no-store" });
       const before = response.ok ? await response.json() : null;
-      changes[name] = diffCatalog(name, before, JSON.parse(json));
+      const after = JSON.parse(json);
+      changes[name] = diffCatalog(name, before, after);
+      const prices = priceChanges(name, before, after);
+      if (prices.length) priceLog[name] = prices;
     } catch {
       changes[name] = null;
     }
@@ -187,7 +194,7 @@ form.addEventListener("submit", async (event) => {
       password,
       "POST",
       `/api/revisions/${id}/commit`,
-      JSON.stringify({ counts: built.counts, changes, geneRates: built.geneRates }),
+      JSON.stringify({ counts: built.counts, changes, geneRates: built.geneRates, priceLog }),
     );
     const withheld = built.skipped.length ? "\nPrivate records were not filed." : "";
     setStatus(`FILE STATUS: Active. Revision filed.\n${summary(built.counts, changes)}${withheld}`);

@@ -321,3 +321,81 @@ export function toCsv(columns, rows) {
   const body = rows.map((row) => columns.map((col) => cell(col.csv ? col.csv(row) : row[col.key])).join(","));
   return [head, ...body].join("\r\n") + "\r\n";
 }
+
+/** The key each catalog's rows are starred under (the same as the table's row key). */
+export const STAR_KEY = {
+  items: (r) => r.defName,
+  traits: (r) => `${r.defName}-${r.degree}`,
+  xenotypes: (r) => `${r.raceDef}-${r.xenotype}`,
+  incidents: (r) => r.defName,
+  weather: (r) => r.defName,
+  commands: (r) => r.key,
+  "addon-commands": (r) => r.key,
+  genes: (r) => r.defName,
+  backstories: (r) => r.defName,
+  "isekai-keystones": (r) => r.nodeId,
+};
+
+/**
+ * What a row costs and the command that buys it, for the cart. `history` is the label
+ * the upload page files price changes under. null when chat can't buy the row.
+ */
+export const tradeOf = {
+  items: (r) => (r.enabled ? { label: r.name, price: r.price, command: `!buy ${r.name}`, max: r.qty || 0, many: true, history: r.name } : { history: r.name }),
+  traits: (r) => (r.canAdd ? { label: r.name, price: r.addPrice, command: `!addtrait ${r.name}`, history: r.name } : { history: r.name }),
+  xenotypes: (r) => ({ history: `${r.xenotype} (${r.race})` }),
+  incidents: (r) => (r.enabled ? { label: r.label, price: r.cost, command: `!event ${r.label}`, history: r.label } : { history: r.label }),
+  weather: (r) => (r.enabled ? { label: r.label, price: r.cost, command: `!weather ${r.label}`, history: r.label } : { history: r.label }),
+  commands: (r) => (r.enabled && r.supportsCost && r.cost > 0 ? { label: `!${r.key}`, price: r.cost, command: `!${r.key}`, history: `!${r.key}` } : { history: `!${r.key}` }),
+};
+
+// Every details popup also knows which catalog and row it is, for the cart, compare and price history.
+for (const name of Object.keys(detailsOf)) {
+  const base = detailsOf[name];
+  detailsOf[name] = (row) => ({
+    ...base(row),
+    catalog: name,
+    key: STAR_KEY[name]?.(row) ?? "",
+    trade: tradeOf[name]?.(row) ?? null,
+  });
+}
+
+/**
+ * The price of one label after each upload that changed it, oldest first.
+ * `history` is /data/history.json: [{ at, prices: { catalog: [[label, from, to]] } }].
+ */
+export function priceTimeline(history, catalog, label) {
+  const points = [];
+  for (const upload of history ?? []) {
+    const row = upload?.prices?.[catalog]?.find((entry) => entry[0] === label);
+    if (!row) continue;
+    if (points.length === 0) points.push({ at: null, price: row[1] });
+    points.push({ at: upload.at, price: row[2] });
+  }
+  return points;
+}
+
+/** Packs starred keys into a link: { items: ["Thrumbo"] } <-> "items,Thrumbo". Lists are split by ";". */
+export function encodeWishlist(lists) {
+  return Object.entries(lists)
+    .filter(([name, keys]) => STAR_KEY[name] && keys.length)
+    .map(([name, keys]) => [name, ...keys].map(encodeURIComponent).join(","))
+    .join(";");
+}
+
+export function decodeWishlist(text) {
+  const out = {};
+  for (const part of String(text ?? "").split(";")) {
+    let name;
+    let keys;
+    try {
+      [name, ...keys] = part.split(",").map(decodeURIComponent);
+    } catch {
+      continue;
+    }
+    if (!STAR_KEY[name]) continue;
+    const clean = [...new Set(keys.filter((key) => key && key.length <= 200))].slice(0, 200);
+    if (clean.length) out[name] = clean;
+  }
+  return out;
+}

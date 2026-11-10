@@ -32,7 +32,7 @@ export function stripHtml(value) {
  * @param {number} max
  * @returns {{ ok: true, value: string } | { ok: false, error: "short" | "long" }}
  */
-function cleanField(value, min, max) {
+export function cleanField(value, min, max) {
   if (typeof value !== "string" || value.length > max * 4) {
     return { ok: false, error: typeof value === "string" ? "long" : "short" };
   }
@@ -43,7 +43,7 @@ function cleanField(value, min, max) {
 }
 
 /** @param {Request} request @param {number} max */
-async function readLimited(request, max) {
+export async function readLimited(request, max) {
   const declared = request.headers.get("content-length");
   if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > max)) {
     return null;
@@ -133,13 +133,53 @@ export function modKeyFromPage(referer, originHost) {
   return `${parts[0]}/${parts[1]}`;
 }
 
-function hostnameSet(raw) {
+export function hostnameSet(raw) {
   return new Set(
     String(raw ?? "")
       .split(",")
       .map((host) => host.trim())
       .filter(Boolean),
   );
+}
+
+/**
+ * Asks Cloudflare whether a Turnstile token is real, was made for this action, and came
+ * from one of the site's own hostnames. Shared by the report form and the request board.
+ * @param {Request} request
+ * @param {{ TURNSTILE_SECRET?: string }} env
+ * @param {string} token
+ * @param {string} action
+ * @param {string} originHost
+ * @param {Set<string>} hostnames
+ * @param {typeof fetch} [fetchImpl]
+ * @returns {Promise<"ok" | "rejected" | "unreachable">}
+ */
+export async function turnstileCheck(request, env, token, action, originHost, hostnames, fetchImpl = fetch) {
+  /** @type {{ success?: boolean, action?: string, hostname?: string }} */
+  let verified;
+  try {
+    const params = new URLSearchParams({
+      secret: env.TURNSTILE_SECRET ?? "",
+      response: token,
+    });
+    const ip = request.headers.get("cf-connecting-ip");
+    if (ip) params.set("remoteip", ip);
+    const response = await fetchImpl(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: params,
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (!response.ok) throw new Error("siteverify");
+    verified = await response.json();
+  } catch {
+    return "unreachable";
+  }
+  const ok = verified.success === true && verified.action === action && verified.hostname === originHost && hostnames.has(verified.hostname);
+  return ok ? "ok" : "rejected";
 }
 
 /**
@@ -222,38 +262,10 @@ export async function handleReport(request, env, catalog, fetchImpl = fetch) {
     return json(403, { error: CHECK_FAILED });
   }
 
-  /** @type {{ success?: boolean, action?: string, hostname?: string }} */
-  let verified;
-  try {
-    const params = new URLSearchParams({
-      secret: env.TURNSTILE_SECRET ?? "",
-      response: token,
-    });
-    const ip = request.headers.get("cf-connecting-ip");
-    if (ip) params.set("remoteip", ip);
-    const response = await fetchImpl(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: params,
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-    if (!response.ok) throw new Error("siteverify");
-    verified = await response.json();
-  } catch {
-    console.error(JSON.stringify({ event: "report", result: "turnstile_unreachable" }));
-    return json(403, { error: CHECK_FAILED });
-  }
-
-  if (
-    verified.success !== true ||
-    verified.action !== "report" ||
-    verified.hostname !== originHost ||
-    !hostnames.has(verified.hostname)
-  ) {
-    console.log(JSON.stringify({ event: "report", result: "turnstile_rejected" }));
+  const check = await turnstileCheck(request, env, token, "report", originHost, hostnames, fetchImpl);
+  if (check !== "ok") {
+    if (check === "unreachable") console.error(JSON.stringify({ event: "report", result: "turnstile_unreachable" }));
+    else console.log(JSON.stringify({ event: "report", result: "turnstile_rejected" }));
     return json(403, { error: CHECK_FAILED });
   }
 

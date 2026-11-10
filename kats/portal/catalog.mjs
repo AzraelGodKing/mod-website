@@ -266,6 +266,27 @@ export function diffCatalog(name, before, after) {
   };
 }
 
+export const PRICE_LOG_LIMIT = 3000;
+
+/**
+ * Every price that changed between two copies of a list, as [label, from, to] rows, for the
+ * price history kept by the Worker. Unlike diffCatalog this is not cut to the Changes page's size.
+ */
+export function priceChanges(name, before, after) {
+  const spec = DIFF[name];
+  if (!spec?.price || !Array.isArray(before) || !Array.isArray(after)) return [];
+  const old = new Map(before.map((row) => [spec.key(row), row]));
+  const out = [];
+  for (const row of after) {
+    const was = old.get(spec.key(row));
+    if (!was) continue;
+    const from = Number(spec.price(was));
+    const to = Number(spec.price(row));
+    if (from !== to && Number.isFinite(from) && Number.isFinite(to)) out.push([spec.label(row), from, to]);
+  }
+  return out.slice(0, PRICE_LOG_LIMIT);
+}
+
 export function hasChanges(diff) {
   if (!diff) return false;
   return ["added", "removed", "prices", "enabled", "disabled"].some((part) => diff[part].total > 0);

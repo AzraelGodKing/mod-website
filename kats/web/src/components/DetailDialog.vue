@@ -1,6 +1,9 @@
 <script setup>
 import { computed, nextTick, ref, watch } from "vue";
-import { copyText } from "../composables/useCopy";
+import { copyText, toast } from "../composables/useCopy";
+import { useCart } from "../composables/useCart";
+import { useCompare, COMPARE_MAX } from "../composables/useCompare";
+import PriceHistory from "./PriceHistory.vue";
 
 const props = defineProps({ details: { type: Object, default: null } });
 const emit = defineEmits(["close"]);
@@ -27,6 +30,16 @@ const buyCommand = computed(() => {
   return safeQty.value > 1 ? `${q.command} ${safeQty.value}` : q.command;
 });
 const total = computed(() => (props.details?.quantity ? props.details.quantity.price * safeQty.value : 0));
+
+const cart = useCart();
+const compare = useCompare();
+const trade = computed(() => (props.details?.trade?.command ? props.details.trade : null));
+const inCart = computed(() => trade.value && cart.has(props.details.catalog, trade.value.label));
+function addToCart() {
+  cart.add(props.details.catalog, trade.value, trade.value.many ? safeQty.value : 1);
+  toast.value = `Added ${trade.value.label} to the cart`;
+  setTimeout(() => (toast.value = ""), 2200);
+}
 
 function onClick(event) {
   if (event.target === dialog.value) dialog.value.close();
@@ -58,6 +71,15 @@ function onClick(event) {
         <span>Total <b>{{ total.toLocaleString() }}</b> coins</span>
         <button type="button" class="copy-btn" @click="copyText(buyCommand)">Copy {{ buyCommand }}</button>
       </div>
+      <div v-if="details.catalog" class="detail-actions">
+        <button v-if="trade" type="button" class="action-btn primary" @click="addToCart">
+          {{ inCart ? (trade.many ? "Add more to cart" : "In the cart") : "Add to cart" }}
+        </button>
+        <button type="button" class="action-btn" :aria-pressed="compare.has(details) ? 'true' : 'false'" @click="compare.toggle(details)">
+          {{ compare.has(details) ? "Remove from compare" : `Compare (up to ${COMPARE_MAX})` }}
+        </button>
+      </div>
+      <PriceHistory v-if="details.trade?.history" :catalog="details.catalog" :label="details.trade.history" />
       <div v-if="details.commands?.length" class="detail-commands">
         <h3>Chat commands</h3>
         <button v-for="cmd in details.commands" :key="cmd" type="button" class="command-chip" @click="copyText(cmd)">

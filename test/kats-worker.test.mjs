@@ -127,3 +127,20 @@ test("missing data files are a 404, not the app page, and cached copies pass thr
   assert.equal(cached.status, 304);
   assert.equal((await handle(new Request("https://kats.example/data/secrets.json"), env)).status, 404);
 });
+
+test("price changes are kept as history, cleaned, and dropped again on rollback", async () => {
+  const { call } = setup();
+  assert.deepEqual(await (await call("GET", "/data/history.json")).json(), []);
+  const { id } = await (await call("POST", "/api/revisions")).json();
+  await call("PUT", `/api/revisions/${id}/items`, '[["new"]]');
+  const priceLog = { items: [["Thrumbo", 5000, 4500], ["Bad row"], ["Same", 10, 10]], viewers: [["x", 1, 2]], genes: "nope" };
+  assert.equal((await call("POST", `/api/revisions/${id}/commit`, JSON.stringify({ counts: { items: 1 }, priceLog }))).status, 200);
+  const history = await (await call("GET", "/data/history.json")).json();
+  assert.equal(history.length, 1);
+  assert.deepEqual(history[0].prices, { items: [["Thrumbo", 5000, 4500]] });
+  assert.ok(!JSON.stringify(history).includes(id), "the public history does not expose storage keys");
+  assert.ok(!Number.isNaN(Date.parse(history[0].at)));
+
+  assert.equal((await call("POST", "/api/rollback")).status, 200);
+  assert.deepEqual(await (await call("GET", "/data/history.json")).json(), []);
+});

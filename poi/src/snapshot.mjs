@@ -278,6 +278,16 @@ export function poiHistory(state, id) {
 }
 
 /** For the status page: no POI data, only whether reports are arriving. */
+/**
+ * The in-game day and nothing else, for the blood moon countdown on the stream overlay.
+ * No POI, player or server name is in it, so it is readable without the view token.
+ */
+export function serverDay(state, now = new Date()) {
+  const day = state?.snapshot?.server?.day;
+  const fresh = !isStale(state?.receivedAt ?? null, now);
+  return { day: Number.isInteger(day) ? day : null, fresh, receivedAt: state?.receivedAt ?? null };
+}
+
 export function health(state, now = new Date()) {
   const receivedAt = state?.receivedAt ?? null;
   const minutes = receivedAt ? Math.floor((now - new Date(receivedAt)) / 60_000) : null;

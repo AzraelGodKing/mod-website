@@ -295,3 +295,13 @@ test("the page loads nothing from other sites", () => {
     assert.ok(!/@import|fonts\.googleapis|cdn\.|unpkg|jsdelivr|analytics|gtag/.test(text), `${file} pulls in something external`);
   }
 });
+
+test("the day endpoint is open and gives only the in-game day", async () => {
+  const e = env({ POI_VIEW_TOKEN: "view-secret" });
+  assert.deepEqual(await (await get(e, "/api/poi/day")).json(), { day: null, fresh: false, receivedAt: null });
+  await ingest(e, fixture);
+  const body = await (await get(e, "/api/poi/day")).json();
+  assert.equal(body.day, fixture.server.day);
+  assert.equal(body.fresh, true);
+  assert.deepEqual(Object.keys(body).sort(), ["day", "fresh", "receivedAt"]);
+});

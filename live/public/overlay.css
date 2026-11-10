@@ -29,3 +29,7 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
 .foot:empty { display: none; }
 .timer { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); width: 0; }
 .timer.run { width: 100%; transition: width linear var(--every, 15s); }
+.card.alert { --line: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 10px 30px rgba(0, 0, 0, 0.35); animation: cheer 0.9s ease 0.45s 2; }
+.card.moon { --accent: #ff6b5c; --line: rgba(255, 107, 92, 0.6); }
+@keyframes cheer { 50% { box-shadow: 0 0 0 6px var(--accent), 0 10px 30px rgba(0, 0, 0, 0.35); } }
+@media (prefers-reduced-motion: reduce) { .card.alert { animation: none; } }

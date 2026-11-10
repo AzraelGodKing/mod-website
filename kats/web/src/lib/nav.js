@@ -7,4 +7,6 @@ export const links = [
   { to: "/isekai", label: "Isekai", code: "06", match: "isekai" },
   { to: "/genes", label: "Genes", code: "07", match: "genes" },
   { to: "/changes", label: "Changes", code: "08", match: "changes" },
+  { to: "/cart", label: "Cart", code: "09", match: "cart" },
+  { to: "/wishlist", label: "Wishlist", code: "10", match: "wishlist" },
 ];

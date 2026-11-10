@@ -3,6 +3,7 @@
 
 export const SITE = "https://azraelsmods.com";
 export const KATS = "https://kats.azraelsmods.com";
+export const POI = "https://poi.azraelsmods.com";
 
 // Kat's RICS lists the overlay can show, and how a row becomes one card line.
 export const KATS_LISTS = {
@@ -71,7 +72,55 @@ export function katsLines(name, rows) {
 
 const POSITIONS = new Set(["tl", "tr", "bl", "br"]);
 const THEMES = new Set(["dark", "light", "glass"]);
-export const CARD_TYPES = new Set(["mods", "kofi", "message", ...Object.keys(KATS_LISTS)]);
+export const CARD_TYPES = new Set(["mods", "milestones", "bloodmoon", "kofi", "message", ...Object.keys(KATS_LISTS)]);
+
+// Download counts worth a cheer: 100, 250, 500, then 1, 2.5 and 5 times each power of ten.
+export function milestoneSteps(upTo) {
+  const steps = [100, 250, 500];
+  for (let base = 1000; steps.at(-1) <= upTo; base *= 10) steps.push(base, base * 2.5, base * 5);
+  return steps;
+}
+
+/** The last milestone a count passed, the next one, and how far away it is. */
+export function milestoneFor(count) {
+  const value = Math.max(0, Math.floor(Number(count) || 0));
+  const steps = milestoneSteps(value);
+  const next = steps.find((step) => step > value);
+  const reached = steps.filter((step) => step <= value).at(-1) ?? null;
+  return { reached, next, toGo: next - value };
+}
+
+/** The milestone a count went past between two readings, or null. */
+export function milestoneCrossed(before, after) {
+  if (typeof before !== "number" || typeof after !== "number" || after <= before) return null;
+  const passed = milestoneSteps(after).filter((step) => step > before && step <= after);
+  return passed.at(-1) ?? null;
+}
+
+/**
+ * /api/stats -> download totals for the mods a card can cheer for.
+ * `total` is the function the README badges use, so the overlay and the badge agree.
+ */
+export function countsFrom(statsJson, total) {
+  const counts = {};
+  for (const [key, stats] of Object.entries(statsJson?.mods ?? {})) {
+    const sum = total(stats);
+    if (sum && sum.label === "downloads" && sum.value > 0) counts[key] = sum.value;
+  }
+  return counts;
+}
+
+/**
+ * Days until the next blood moon when the horde comes every `every` days (7 unless the
+ * server changed it): 0 means tonight. A server with a random range can be off by that range.
+ */
+export function bloodMoonIn(day, every = 7) {
+  const d = Math.floor(Number(day));
+  const n = Math.floor(Number(every));
+  if (!Number.isFinite(d) || d < 1 || !Number.isFinite(n) || n < 1) return null;
+  const left = (n - (d % n)) % n;
+  return { day: d, every: n, daysLeft: left, nextDay: d + left };
+}
 
 /** Reads the overlay's URL settings, with safe defaults for anything missing or odd. */
 export function overlaySettings(searchParams) {
@@ -97,5 +146,6 @@ export function overlaySettings(searchParams) {
     scale: number("scale", 1, 0.6, 2),
     title: get("title").slice(0, 60),
     msg: get("msg").slice(0, 160),
+    moon: number("moon", 7, 1, 30),
   };
 }

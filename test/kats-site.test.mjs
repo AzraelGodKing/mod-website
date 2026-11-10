@@ -122,3 +122,39 @@ test("every detail popup builds a title and fields from real rows", () => {
     assert.ok(Array.isArray(out.fields) && out.fields.length > 0, `${name} has fields`);
   }
 });
+
+test("price history, wishlist links and cart details", async () => {
+  const { decodeWishlist, detailsOf, encodeWishlist, priceTimeline, rowsOf } = await import("../kats/web/src/lib/catalogs.js");
+  const history = [
+    { at: "2026-10-01T00:00:00Z", prices: { items: [["Thrumbo", 3000, 3275]] } },
+    { at: "2026-10-08T00:00:00Z", prices: { traits: [["Tough", 500, 600]] } },
+    { at: "2026-10-15T00:00:00Z", prices: { items: [["Thrumbo", 3275, 2900], ["Beer", 12, 14]] } },
+  ];
+  assert.deepEqual(
+    priceTimeline(history, "items", "Thrumbo").map((point) => point.price),
+    [3000, 3275, 2900],
+  );
+  assert.equal(priceTimeline(history, "items", "Thrumbo")[2].at, "2026-10-15T00:00:00Z");
+  assert.deepEqual(priceTimeline(history, "items", "Nothing"), []);
+  assert.deepEqual(priceTimeline(null, "items", "Thrumbo"), []);
+
+  const lists = { items: ["Thrumbo", "A,B;C"], traits: ["Tough-0"], nonsense: ["x"], genes: [] };
+  const packed = encodeWishlist(lists);
+  assert.deepEqual(decodeWishlist(packed), { items: ["Thrumbo", "A,B;C"], traits: ["Tough-0"] });
+  assert.deepEqual(decodeWishlist("viewers,x;%E0%A4%A;items,Beer,Beer"), { items: ["Beer"] });
+  assert.deepEqual(decodeWishlist(""), {});
+
+  const thrumbo = detailsOf.items(rowsOf.items(["Animals", "Thrumbo", "Thrumbo", 3000, 2, 0, 0, 0, "Core", 1]));
+  assert.equal(thrumbo.catalog, "items");
+  assert.equal(thrumbo.key, "Thrumbo");
+  assert.deepEqual(thrumbo.trade, { label: "Thrumbo", price: 3000, command: "!buy Thrumbo", max: 2, many: true, history: "Thrumbo" });
+  const off = detailsOf.items(rowsOf.items(["Animals", "Thrumbo", "Thrumbo", 3000, 2, 0, 0, 0, "Core", 0]));
+  assert.equal(off.trade.command, undefined);
+
+  const { priceChanges } = await import("../kats/portal/catalog.mjs");
+  const before = [["Animals", "Thrumbo", "Thrumbo", 3000], ["Food", "Beer", "Beer", 12]];
+  const after = [["Animals", "Thrumbo", "Thrumbo", 3275], ["Food", "Beer", "Beer", 12], ["New", "Thing", "Thing", 5]];
+  assert.deepEqual(priceChanges("items", before, after), [["Thrumbo", 3000, 3275]]);
+  assert.deepEqual(priceChanges("genes", before, after), []);
+  assert.deepEqual(priceChanges("items", null, after), []);
+});
