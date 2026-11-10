@@ -35,6 +35,7 @@ const tabs = [
   ["activity", "Activity"],
   ["history", "History"],
   ["supporters", "Supporters"],
+  ["requests", "Requests"],
   ["signin", "Sign-in"],
 ];
 
@@ -480,6 +481,34 @@ const links = [
         </section>
       </section>
 
+      <section class="adm-panel" role="tabpanel" id="panel-requests" aria-labelledby="tab-requests" data-panel="requests" hidden>
+        <div class="adm-toolbar">
+          <p class="adm-muted">
+            What visitors asked for on the <a href="/requests">Mod requests page</a>. A new request stays off that page until you
+            set it to Open. Declined ones stay hidden. The note shows under the request as your reply.
+          </p>
+        </div>
+        <div class="adm-table-wrap">
+          <table class="adm-table is-left adm-requests-table">
+            <thead>
+              <tr>
+                <th scope="col">Request</th>
+                <th scope="col">Game</th>
+                <th scope="col" class="is-num">Votes</th>
+                <th scope="col">When</th>
+                <th scope="col">Status</th>
+                <th scope="col">Your note</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="adm-requests">
+              <tr><td colspan="7" class="adm-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="adm-status" id="adm-request-status" role="status"></p>
+      </section>
+
       <section class="adm-panel" role="tabpanel" id="panel-signin" aria-labelledby="tab-signin" data-panel="signin" hidden>
         <div class="adm-split">
           <section class="adm-card">
@@ -609,6 +638,7 @@ const links = [
         if (id === "activity") loadActivity();
         if (id === "history") loadHistory();
         if (id === "supporters") loadDonors();
+        if (id === "requests") loadRequests();
       }
       for (const button of tabButtons) button.addEventListener("click", () => showTab(button.dataset.tab));
       for (const card of document.querySelectorAll("[data-jump-game]")) {
@@ -1066,6 +1096,80 @@ const links = [
         );
         form.reset();
       });
+
+      // ---- Requests ----
+      const requestStatus = $("#adm-request-status");
+      const requestStates = [["pending", "Waiting"], ["open", "Open"], ["planned", "Planned"], ["done", "Done"], ["declined", "Declined"]];
+      async function loadRequests() {
+        const tbody = $("#adm-requests");
+        try {
+          const { requests } = await call("/api/admin/requests");
+          if (requests.length === 0) return emptyRow(tbody, 7, "No requests yet.");
+          tbody.replaceChildren(
+            ...requests.map((request) => {
+              const row = document.createElement("tr");
+              if (request.status === "declined") row.classList.add("is-dim");
+              const title = document.createElement("th");
+              title.scope = "row";
+              title.textContent = request.title;
+              if (request.status === "pending") {
+                const pill = document.createElement("span");
+                pill.className = "adm-pill is-warn";
+                pill.textContent = "New";
+                title.append(" ", pill);
+              }
+              if (request.details) {
+                const details = document.createElement("p");
+                details.className = "adm-muted adm-request-details";
+                details.textContent = request.details;
+                title.append(details);
+              }
+              const pick = document.createElement("select");
+              pick.setAttribute("aria-label", `Status of ${request.title}`);
+              for (const [value, label] of requestStates) pick.append(new Option(label, value, false, value === request.status));
+              const note = document.createElement("input");
+              note.type = "text";
+              note.maxLength = 300;
+              note.value = request.note ?? "";
+              note.setAttribute("aria-label", `Note on ${request.title}`);
+              const stateCell = document.createElement("td");
+              stateCell.append(pick);
+              const noteCell = document.createElement("td");
+              noteCell.append(note);
+              const action = document.createElement("td");
+              const save = document.createElement("button");
+              save.type = "button";
+              save.className = "adm-btn is-quiet";
+              save.textContent = "Save";
+              save.addEventListener("click", () => requestAction("/api/admin/requests", { id: request.id, status: pick.value, note: note.value }, "Saved."));
+              const remove = document.createElement("button");
+              remove.type = "button";
+              remove.className = "adm-btn is-quiet";
+              remove.textContent = "Delete";
+              remove.addEventListener("click", () => {
+                if (confirm(`Delete "${request.title}"?`)) requestAction("/api/admin/requests/delete", { id: request.id }, "Deleted.");
+              });
+              action.append(save, remove);
+              row.append(title, cell(gameNames[request.game] ?? "Other"), cell(format(request.votes), "is-num"), timeCell(request.createdAt), stateCell, noteCell, action);
+              return row;
+            }),
+          );
+        } catch (error) {
+          loaded.delete("requests");
+          if (error.status === 401) return showLogin(error.message);
+          emptyRow(tbody, 7, error.message);
+        }
+      }
+      async function requestAction(path, payload, done) {
+        try {
+          await call(path, "POST", payload);
+          requestStatus.textContent = done;
+          loadRequests();
+        } catch (error) {
+          if (error.status === 401) return showLogin(error.message);
+          requestStatus.textContent = error.message;
+        }
+      }
 
       // ---- History ----
       let historyData = null;

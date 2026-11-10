@@ -850,3 +850,33 @@
 .adm-donors-table td:last-child .adm-btn + .adm-btn {
   margin-left: 0.4rem;
 }
+.adm-requests-table th[scope="row"] {
+  max-width: 24rem;
+  white-space: normal;
+}
+.adm-requests-table tr.is-dim th,.adm-requests-table tr.is-dim td {
+  opacity: 0.6;
+}
+.adm-request-details {
+  margin: 0.25rem 0 0;
+  font-weight: 400;
+  white-space: pre-line;
+}
+.adm-requests-table select,
+.adm-requests-table input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--adm-line);
+  border-radius: 2px;
+  background: var(--adm-field);
+  color: var(--adm-ink);
+  font: inherit;
+}
+.adm-requests-table input {
+  width: 14rem;
+}
+.adm-requests-table td:last-child {
+  white-space: nowrap;
+}
+.adm-requests-table td:last-child .adm-btn + .adm-btn {
+  margin-left: 0.4rem;
+}

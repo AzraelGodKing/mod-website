@@ -129,6 +129,31 @@ export async function downloadHistory(db, days, now = new Date()) {
 }
 
 /**
+ * One mod's last `days` days for the public trend chart on its page: this site's
+ * clicks and the store gain per day, and the two added together.
+ *
+ * @param {D1Database} db
+ * @param {string} key  "<game>/<mod>"
+ * @param {number} [days]
+ * @param {Date} [now]
+ */
+export async function modTrend(db, key, days = 30, now = new Date()) {
+  await ensureTable(db);
+  const span = Math.min(Math.max(Math.trunc(days) || 30, 7), 90);
+  const dayList = [];
+  for (let back = span - 1; back >= 0; back -= 1) dayList.push(utcDay(new Date(now.getTime() - back * 86400000)));
+  const first = dayList[0];
+  const before = utcDay(new Date(Date.parse(`${first}T00:00:00Z`) - 86400000));
+  const [clicks, stores] = await Promise.all([
+    db.prepare("SELECT key, day, count FROM site_downloads_daily WHERE key = ?1 AND day >= ?2").bind(key, first).all(),
+    db.prepare("SELECT key, day, thunderstore, nexus, steam FROM store_daily WHERE key = ?1 AND day >= ?2 ORDER BY day").bind(key, before).all(),
+  ]);
+  const series = historySeries(dayList, clicks.results ?? [], stores.results ?? []).mods[key] ?? { site: dayList.map(() => 0), store: dayList.map(() => null) };
+  const total = series.site.map((value, at) => value + (series.store[at] ?? 0));
+  return { days: dayList, site: series.site, store: series.store, total };
+}
+
+/**
  * @param {string[]} dayList
  * @param {{ key: string, day: string, count: number }[]} clickRows
  * @param {{ key: string, day: string, thunderstore: number | null, nexus: number | null, steam: number | null }[]} storeRows

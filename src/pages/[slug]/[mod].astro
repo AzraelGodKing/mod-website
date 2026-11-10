@@ -361,8 +361,22 @@ const storeLinks = [
                     </a>
                   )}
                 </div>
+                {changelog.length > 1 && (
+                  <div class="zd-since">
+                    <label>
+                      <span>Updating? I have</span>
+                      <select id="since-version" aria-controls="since-box">
+                        <option value="">pick your version</option>
+                        {changelog.slice(1).map((entry) => (
+                          <option value={entry.version}>v{entry.version}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <div class="zd-since-box" id="since-box" aria-live="polite" hidden></div>
+                  </div>
+                )}
                 {changelog.slice(0, 1).map((entry) => (
-                  <article class="zd-change">
+                  <article class="zd-change" data-version={entry.version}>
                     <h3>
                       <span class="zd-change-version">v{entry.version}</span>
                       {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
@@ -392,7 +406,7 @@ const storeLinks = [
                         Older versions <span class="zd-dim">({changelog.slice(1).map((entry) => `v${entry.version}`).join(", ")})</span>
                       </summary>
                       {changelog.slice(1).map((entry) => (
-                        <article class="zd-change">
+                        <article class="zd-change" data-version={entry.version}>
                           <h3>
                             <span class="zd-change-version">v{entry.version}</span>
                             {entry.date && <time datetime={entry.date}>{changeLabel(entry.date)}</time>}
@@ -412,6 +426,18 @@ const storeLinks = [
                     </details>
                   )
                 }
+              </section>
+            )
+          }
+          {
+            !notReady && (
+              <section class="rw-section zd-trend" id="trend" data-trend={`${mod.game}/${mod.slug}`} aria-labelledby="trend-title" hidden>
+                <div class="zd-changelog-head">
+                  <h2 id="trend-title">Downloads, last 30 days</h2>
+                  <p class="zd-trend-total" data-trend-total></p>
+                </div>
+                <div class="zd-trend-plot" data-trend-plot></div>
+                <p class="zd-trend-note">Downloads from this site plus the daily gain on Thunderstore and Nexus, in UTC days.</p>
               </section>
             )
           }
@@ -484,6 +510,113 @@ const storeLinks = [
               setTimeout(() => (button.textContent = "Copy"), 2000);
             });
           }
+        </script>
+        <script is:inline>
+          // "I have vX": every change between that version and the newest, in one list.
+          (() => {
+            const pick = document.querySelector("#since-version");
+            const box = document.querySelector("#since-box");
+            if (!pick || !box) return;
+            const entries = [...document.querySelectorAll("#changelog .zd-change[data-version]")];
+            const show = (version) => {
+              const at = entries.findIndex((entry) => entry.dataset.version === version);
+              box.replaceChildren();
+              box.hidden = at < 1;
+              if (at < 1) return;
+              const newer = entries.slice(0, at);
+              const head = document.createElement("p");
+              head.className = "zd-since-head";
+              const count = newer.reduce((total, entry) => total + entry.querySelectorAll(".rw-notes li").length, 0);
+              head.textContent = `Since v${version}: ${newer.length} ${newer.length === 1 ? "version" : "versions"}, ${count} ${count === 1 ? "change" : "changes"}.`;
+              box.append(head);
+              for (const entry of newer) {
+                const label = document.createElement("h4");
+                label.textContent = `v${entry.dataset.version}`;
+                const list = document.createElement("ul");
+                list.className = "rw-notes";
+                for (const note of entry.querySelectorAll(".rw-notes li")) list.append(note.cloneNode(true));
+                box.append(label, list);
+              }
+            };
+            pick.addEventListener("change", () => show(pick.value));
+            // The update checker links here with ?from=<version>.
+            const from = new URLSearchParams(location.search).get("from");
+            if (from && [...pick.options].some((option) => option.value === from)) {
+              pick.value = from;
+              show(from);
+            }
+          })();
+          // The 30-day download chart. Left hidden when there is nothing to draw yet.
+          (() => {
+            const section = document.querySelector("[data-trend]");
+            if (!section) return;
+            const svgEl = (tag, attrs = {}) => {
+              const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+              for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, String(value));
+              return el;
+            };
+            const number = new Intl.NumberFormat("en-US");
+            const shortDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+            const dayLabel = (day) => shortDay.format(new Date(`${day}T00:00:00Z`));
+            fetch(`/api/trends?mod=${encodeURIComponent(section.dataset.trend)}`)
+              .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+              .then(({ days = [], total = [] }) => {
+                const sum = total.reduce((all, value) => all + value, 0);
+                if (days.length === 0 || sum === 0) return;
+                const width = 640;
+                const height = 180;
+                const pad = { top: 10, right: 8, bottom: 24, left: 36 };
+                const innerW = width - pad.left - pad.right;
+                const innerH = height - pad.top - pad.bottom;
+                // Four whole-number gridline steps: 1, 2 or 5 times a power of ten.
+                const raw = Math.max(1, Math.max(...total) / 4);
+                const mag = 10 ** Math.floor(Math.log10(raw));
+                const step = [1, 2, 5, 10].map((mult) => mult * mag).find((candidate) => candidate >= raw);
+                const max = Math.max(4, Math.ceil(step) * 4);
+                const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `${number.format(sum)} downloads in the last ${days.length} days` });
+                for (let tick = 0; tick <= 4; tick += 1) {
+                  const value = (max / 4) * tick;
+                  const y = pad.top + innerH - (value / max) * innerH;
+                  svg.append(svgEl("line", { x1: pad.left, x2: width - pad.right, y1: y, y2: y, class: tick === 0 ? "zd-trend-axis" : "zd-trend-grid" }));
+                  const label = svgEl("text", { x: pad.left - 6, y: y + 4, "text-anchor": "end", class: "zd-trend-tick" });
+                  label.textContent = number.format(Math.round(value));
+                  svg.append(label);
+                }
+                const slot = innerW / days.length;
+                const barW = Math.max(2, Math.min(16, slot - 2));
+                const labelEvery = Math.ceil(days.length / 6);
+                total.forEach((value, at) => {
+                  const x = pad.left + at * slot + (slot - barW) / 2;
+                  const group = svgEl("g", { class: "zd-trend-bar" });
+                  group.append(svgEl("rect", { x: pad.left + at * slot, y: pad.top, width: slot, height: innerH, class: "zd-trend-hit" }));
+                  if (value > 0) {
+                    const h = Math.max(1, (value / max) * innerH);
+                    const r = Math.min(3, barW / 2, h);
+                    const top = pad.top + innerH - h;
+                    group.append(
+                      svgEl("path", {
+                        d: `M${x},${pad.top + innerH}V${top + r}Q${x},${top} ${x + r},${top}H${x + barW - r}Q${x + barW},${top} ${x + barW},${top + r}V${pad.top + innerH}Z`,
+                        class: "zd-trend-fill",
+                      }),
+                    );
+                  }
+                  const tip = svgEl("title");
+                  tip.textContent = `${dayLabel(days[at])}: ${number.format(value)}`;
+                  group.append(tip);
+                  svg.append(group);
+                  if (at % labelEvery === 0 || at === days.length - 1) {
+                    const label = svgEl("text", { x: pad.left + at * slot + slot / 2, y: height - 7, "text-anchor": at === days.length - 1 ? "end" : "middle", class: "zd-trend-tick" });
+                    if (at === days.length - 1) label.setAttribute("x", String(width - pad.right));
+                    label.textContent = dayLabel(days[at]);
+                    svg.append(label);
+                  }
+                });
+                section.querySelector("[data-trend-plot]").replaceChildren(svg);
+                section.querySelector("[data-trend-total]").textContent = `${number.format(sum)} downloads`;
+                section.hidden = false;
+              })
+              .catch(() => {});
+          })();
         </script>
         <script is:inline>
           const root = document.querySelector("[data-feature-tabs]");

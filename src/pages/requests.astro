@@ -1,0 +1,219 @@
+---
+import Base from "../layouts/Base.astro";
+import { games } from "../data/games";
+import { turnstileSitekey } from "../data/turnstile-sitekey";
+
+const gameNames = Object.fromEntries(games.map((game) => [game.slug, game.name]));
+---
+
+<Base title="Mod requests" description="Suggest a new mod or a feature for one of Azrael's mods, and vote on what others asked for.">
+  <section class="plain-page donors requests">
+    <p class="donors-kicker">Ideas</p>
+    <h1>Mod requests</h1>
+    <p class="donors-lede">
+      Ask for a new mod or a feature, and vote for the ones you want most. I read all of them, and the votes help me pick what
+      to build next.
+    </p>
+    <p class="donors-cta">
+      <button type="button" class="donors-button req-open" id="req-open" aria-haspopup="dialog" aria-controls="req-dialog">Suggest something</button>
+      <span>Found a bug instead? Use “Report a problem” on the mod's page.</span>
+    </p>
+
+    <div class="req-filters" role="group" aria-label="Show requests for">
+      <button type="button" class="req-chip is-on" data-req-game="" aria-pressed="true">All</button>
+      {games.map((game) => (
+        <button type="button" class="req-chip" data-req-game={game.slug} aria-pressed="false">{game.name}</button>
+      ))}
+      <button type="button" class="req-chip" data-req-game="other" aria-pressed="false">Other</button>
+    </div>
+
+    <p class="donors-state" id="req-state" role="status">Loading requests…</p>
+    <ol class="req-list" id="req-list" hidden></ol>
+  </section>
+
+  <dialog class="zd-config-dialog report-dialog" id="req-dialog" aria-labelledby="req-title">
+    <div class="zd-config-dialog-head">
+      <h2 id="req-title">Suggest a mod or feature</h2>
+      <button type="button" class="zd-config-close" data-close-req aria-label="Close the request form">&times;</button>
+    </div>
+    <section class="report">
+      <p>It shows on this page once I have looked at it, usually within a day.</p>
+      <form id="req-form" data-sitekey={turnstileSitekey}>
+        <label>
+          Game
+          <select name="game" required>
+            {games.map((game) => (
+              <option value={game.slug}>{game.name}</option>
+            ))}
+            <option value="other">Another game or something else</option>
+          </select>
+        </label>
+        <label>
+          What would you like?
+          <input name="title" required minlength="8" maxlength="100" autocomplete="off" placeholder="A mod that…" />
+        </label>
+        <label>
+          Details (optional)
+          <textarea name="details" maxlength="1000" rows="5"></textarea>
+        </label>
+        <div id="req-turnstile"></div>
+        <p id="req-status" role="status"></p>
+        <button type="submit">Send request</button>
+      </form>
+    </section>
+  </dialog>
+  <script type="application/json" id="req-games" set:html={JSON.stringify(gameNames)} />
+</Base>
+
+<script is:inline>
+  (() => {
+    const gameNames = { ...JSON.parse(document.getElementById("req-games").textContent), other: "Other" };
+    const statusNames = { planned: "Planned", done: "Done" };
+    const list = document.getElementById("req-list");
+    const state = document.getElementById("req-state");
+    const chips = [...document.querySelectorAll("[data-req-game]")];
+    let requests = [];
+    let voted = new Set();
+    let game = "";
+
+    const el = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    function render() {
+      const shown = requests.filter((request) => !game || request.game === game);
+      list.hidden = shown.length === 0;
+      state.hidden = shown.length > 0;
+      if (shown.length === 0) state.textContent = requests.length === 0 ? "No requests yet. Yours could be the first." : "Nothing for this game yet.";
+      list.replaceChildren(
+        ...shown.map((request) => {
+          const item = el("li", `req-item${request.status === "done" ? " is-done" : ""}`);
+          const vote = el("button", "req-vote");
+          vote.type = "button";
+          const on = voted.has(request.id);
+          vote.setAttribute("aria-pressed", String(on));
+          vote.setAttribute("aria-label", `${on ? "Remove your vote from" : "Vote for"} ${request.title}. ${request.votes} ${request.votes === 1 ? "vote" : "votes"}.`);
+          vote.append(el("span", "req-arrow", "▲"), el("span", "req-count", String(request.votes)));
+          vote.addEventListener("click", () => toggleVote(request, vote));
+          const body = el("div", "req-body");
+          const head = el("div", "donors-head");
+          head.append(el("strong", "req-title", request.title));
+          if (statusNames[request.status]) head.append(el("span", `donors-badge req-status-${request.status}`, statusNames[request.status]));
+          head.append(el("span", "donors-when", gameNames[request.game] ?? request.game));
+          body.append(head);
+          if (request.details) body.append(el("p", "req-details", request.details));
+          if (request.note) body.append(el("p", "req-note", `Azrael: ${request.note}`));
+          item.append(vote, body);
+          return item;
+        }),
+      );
+    }
+
+    async function toggleVote(request, button) {
+      const on = !voted.has(request.id);
+      button.disabled = true;
+      try {
+        const response = await fetch("/api/requests/vote", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: request.id, on }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error ?? "The vote was not saved.");
+        request.votes = payload.votes;
+        if (on) voted.add(request.id);
+        else voted.delete(request.id);
+        requests.sort((a, b) => b.votes - a.votes || b.createdAt.localeCompare(a.createdAt));
+        render();
+      } catch (error) {
+        button.disabled = false;
+        button.title = error.message;
+      }
+    }
+
+    for (const chip of chips) {
+      chip.addEventListener("click", () => {
+        game = chip.dataset.reqGame;
+        for (const other of chips) {
+          const on = other === chip;
+          other.classList.toggle("is-on", on);
+          other.setAttribute("aria-pressed", String(on));
+        }
+        render();
+      });
+    }
+
+    fetch("/api/requests")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then((payload) => {
+        requests = payload.requests ?? [];
+        voted = new Set(payload.voted ?? []);
+        render();
+      })
+      .catch(() => {
+        state.textContent = "The requests could not be loaded right now. Try again in a minute.";
+      });
+
+    // ---- The form, behind the same check as the report form ----
+    const dialog = document.getElementById("req-dialog");
+    const form = document.getElementById("req-form");
+    const status = document.getElementById("req-status");
+    const opener = document.getElementById("req-open");
+    window.onAzraelRequestTurnstile = () => {
+      form.dataset.widgetId = String(turnstile.render("#req-turnstile", { sitekey: form.dataset.sitekey, action: "request" }));
+    };
+    let requested = false;
+    opener.addEventListener("click", () => {
+      if (!dialog.open) dialog.showModal();
+      if (game && form.elements.game.querySelector(`[value="${game}"]`)) form.elements.game.value = game;
+      if (!requested) {
+        requested = true;
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onAzraelRequestTurnstile";
+        script.async = true;
+        document.head.append(script);
+      }
+    });
+    dialog.querySelector("[data-close-req]").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target !== dialog) return;
+      const box = dialog.getBoundingClientRect();
+      const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+      if (!inside) dialog.close();
+    });
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = form.querySelector("button[type=submit]");
+      const token = window.turnstile?.getResponse(form.dataset.widgetId);
+      if (!token) {
+        status.textContent = "Finish the check, then submit.";
+        return;
+      }
+      button.disabled = true;
+      status.textContent = "Sending…";
+      const data = new FormData(form);
+      try {
+        const response = await fetch("/api/requests", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ game: data.get("game"), title: data.get("title"), details: data.get("details"), turnstileToken: token }),
+        });
+        const payload = await response.json();
+        if (response.ok && payload.ok === true) {
+          form.replaceWith(el("p", "", "Request sent. It will show here once it has been looked at. Thank you."));
+          return;
+        }
+        status.textContent = typeof payload.error === "string" ? payload.error : "The request could not be sent. Try again.";
+        window.turnstile?.reset(form.dataset.widgetId);
+      } catch {
+        status.textContent = "The request could not be sent. Try again.";
+        window.turnstile?.reset(form.dataset.widgetId);
+      } finally {
+        if (form.isConnected) button.disabled = false;
+      }
+    });
+  })();
+</script>

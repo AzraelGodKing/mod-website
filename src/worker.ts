@@ -31,7 +31,8 @@ import { indexInfo, installLabels } from "./data/sevendays-index";
 import type { ModEntry } from "./data/mods";
 import { BADGE_COLORS, compactNumber, downloadTotal, parseBadgePath, renderBadge } from "./badges/badge.mjs";
 import { deleteManual, listAll as listDonations, listPublic as publicDonors, manualDonation, parseKofi, recordDonation, setHidden as hideDonation, tokenMatches } from "./donors/donors.mjs";
-import { downloadHistory, isBot, recordDownload, recordStoreDay, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
+import { deleteRequest, handleRequests, listAll as listRequests, updateRequest } from "./requests/requests.mjs";
+import { downloadHistory, isBot, modTrend, recordDownload, recordStoreDay, siteCounts, siteDownloadLog, withSiteCounts } from "./downloads/count.mjs";
 
 interface CatalogMod {
   slug: string;
@@ -373,6 +374,20 @@ async function handleDonors(request: Request, env: SiteEnv): Promise<Response> {
   });
 }
 
+// /api/trends?mod=<game>/<mod>: the last 30 days of downloads for the chart on a mod page.
+async function handleTrends(request: Request, env: SiteEnv, url: URL): Promise<Response> {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
+  }
+  const key = url.searchParams.get("mod") ?? "";
+  if (!catalogMods.some((mod) => `${mod.game}/${mod.slug}` === key)) return new Response("Not found", { status: 404 });
+  const empty = { days: [], site: [], store: [], total: [] };
+  const trend = env.DOWNLOADS_DB ? await modTrend(env.DOWNLOADS_DB, key).catch(() => empty) : empty;
+  return new Response(request.method === "HEAD" ? null : JSON.stringify(trend), {
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=3600" },
+  });
+}
+
 function adminJson(status: number, payload: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -517,6 +532,19 @@ const privateAdminRoutes: Record<string, AdminRoute> = {
       ? adminJson(200, { removed: true })
       : adminJson(404, { error: "Only entries added by hand can be deleted. Hide Ko-fi ones instead." });
   },
+  "GET /api/admin/requests": async (_request, _env, _url, db) => (db ? adminJson(200, { requests: await listRequests(db) }) : needsDb()),
+  "POST /api/admin/requests": async (request, _env, _url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ id?: string; status?: string; note?: string }>(request);
+    return (await updateRequest(db, String(body?.id ?? ""), { status: String(body?.status ?? ""), note: body?.note }))
+      ? adminJson(200, { saved: true })
+      : adminJson(404, { error: "That request no longer exists." });
+  },
+  "POST /api/admin/requests/delete": async (request, _env, _url, db) => {
+    if (!db) return needsDb();
+    const body = await readJson<{ id?: string }>(request);
+    return (await deleteRequest(db, String(body?.id ?? ""))) ? adminJson(200, { removed: true }) : adminJson(404, { error: "That request no longer exists." });
+  },
   "GET /api/admin/sessions": async (request, _env, _url, db) =>
     db ? adminJson(200, { sessions: await listSessions(db, sessionToken(request)) }) : needsDb(),
   "POST /api/admin/sessions/clear": async (_request, _env, _url, db) => {
@@ -602,6 +630,12 @@ export default {
     }
     if (url.pathname === "/api/donors") {
       return handleDonors(request, env);
+    }
+    if (url.pathname === "/api/trends") {
+      return handleTrends(request, env, url);
+    }
+    if (url.pathname === "/api/requests" || url.pathname === "/api/requests/vote") {
+      return handleRequests(request, env, url.pathname, games.map((game) => game.slug));
     }
     if (url.pathname === "/api/downloads") {
       return handleDownloads(request);

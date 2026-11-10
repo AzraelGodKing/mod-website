@@ -70,6 +70,8 @@ export interface ModEntry {
   olderDownloads?: string[];
   // 7 Days: the shipped config files, one builder each (src/data/sevendays-configs.json).
   configs?: ModConfig[];
+  // 7 Days: the Mods folder name the zip unpacks to (its ModInfo.xml Name).
+  folder?: string;
   // RimWorld: About.xml rules for the mod list checker.
   loadRules?: LoadRules;
 }

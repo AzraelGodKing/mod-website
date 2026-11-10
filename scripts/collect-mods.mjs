@@ -401,7 +401,9 @@ async function main() {
           poster && size && size.width > 640 && (await writePoster(found.source, smallFile, 640)) ? `/catalog/${mod.game}/${mod.slug}/poster-640.webp` : undefined;
         preview = { src, ...(size ?? {}), ...(thumb ? { thumb } : {}), ...(poster ? { poster } : {}), ...(posterSmall ? { posterSmall } : {}) };
       }
-      entries.push({ mod: attachConfig({ ...mod, images, ...(preview ? { preview } : {}) }, modDir, sevendaysConfigs), dir: modDir });
+      // 7 Days: the folder the zip unpacks to, so the update checker can match a Mods folder.
+      const folder = mod.game === "7-days-to-die" ? { folder: installFolder(modDir) } : {};
+      entries.push({ mod: attachConfig({ ...mod, ...folder, images, ...(preview ? { preview } : {}) }, modDir, sevendaysConfigs), dir: modDir });
     }
     if (entries.length) mods.push(...releaseNotesReader(root, entries[0].mod.game)(entries));
   }

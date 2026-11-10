@@ -3442,3 +3442,217 @@ details[open].zd-setting-help .zd-more {
 .donors-more {
   margin-top: 1rem;
 }
+
+/* ---- Mod page: "I have vX" notes and the 30-day download chart ---- */
+.zd-since {
+  margin: 0.25rem 0 1rem;
+  font-size: 0.9rem;
+}
+
+.zd-since label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.zd-since select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.zd-since select option {
+  color: #1a140c;
+  background: #fff;
+}
+
+.zd-since-box {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+
+.zd-since-head {
+  margin: 0;
+  font-weight: 700;
+}
+
+.zd-since-box h4 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.9rem;
+}
+
+.zd-trend-total {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.zd-trend-plot svg {
+  display: block;
+  width: 100%;
+  max-width: 44rem;
+  height: auto;
+}
+
+.zd-trend-grid {
+  stroke: currentColor;
+  stroke-opacity: 0.12;
+}
+
+.zd-trend-axis {
+  stroke: currentColor;
+  stroke-opacity: 0.4;
+}
+
+.zd-trend-tick {
+  fill: currentColor;
+  fill-opacity: 0.7;
+  font-size: 11px;
+}
+
+.zd-trend-hit {
+  fill: transparent;
+}
+
+.zd-trend-fill {
+  fill: var(--accent);
+}
+
+.zd-trend-bar:hover .zd-trend-hit {
+  fill: currentColor;
+  fill-opacity: 0.06;
+}
+
+.zd-trend-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+/* ---- Request board (/requests) ---- */
+.requests {
+  max-width: 44rem;
+}
+
+button.req-open {
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.req-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.req-chip {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.req-chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.req-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.req-item {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.req-item.is-done {
+  opacity: 0.75;
+}
+
+.req-vote {
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  min-height: 3.25rem;
+  padding: 0.35rem 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.req-vote:hover,
+.req-vote[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.req-vote[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.req-arrow {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.req-count {
+  font-weight: 700;
+}
+
+.req-title {
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.req-details,
+.req-note {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.req-details {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.req-note {
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--accent);
+  font-size: 0.95rem;
+}
+
+.req-chip:focus-visible,
+.req-vote:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
