@@ -6,8 +6,8 @@ Each is its own small Worker, deployed by `scripts/ci-deploy.sh` after the main 
 | --- | --- | --- |
 | kats.azraelsmods.com | `kats/` | Kat's RICS chat coin catalog (see `kats/README.md`). |
 | docs.azraelsmods.com | `docs-site/` | Guides for Modwright and Survivor's Toolkit, built on request from each repo's `README.md` (one page per `##` section) and `CHANGELOG.md`. GitHub copies are cached 10 minutes; the last good copy is kept a week in case GitHub is down. |
-| live.azraelsmods.com | `live/` | OBS overlay. `/` builds an `/overlay?...` link; the overlay cycles through picked mods (from `/releases.json`) and Kat's RICS lists (from `kats.azraelsmods.com/data/*.json`). |
-| poi.azraelsmods.com | `poi/` | Private. Which player holds which POI on Azrael's 7 Days to Die server, posted by the POI Registry server mod. Password-protected with `POI_VIEW_TOKEN`; not linked from the main site or the public status page. See `poi/README.md`. |
+| live.azraelsmods.com | `live/` | OBS overlay. `/` builds an `/overlay?...` link; the overlay cycles through picked mods (from `/releases.json`) and Kat's RICS lists (from `kats.azraelsmods.com/data/*.json`). A milestones card counts downloads from `/api/stats` and alerts when a picked mod passes one; a blood moon card counts down from the in-game day at `poi.azraelsmods.com/api/poi/day`. |
+| poi.azraelsmods.com | `poi/` | Private. Which player holds which POI on Azrael's 7 Days to Die server, posted by the POI Registry server mod. Password-protected with `POI_VIEW_TOKEN`; not linked from the main site or the public status page. One endpoint is open: `/api/poi/day` gives only the in-game day number, for the overlay's blood moon countdown. See `poi/README.md`. |
 | status.azraelsmods.com | `status/` | Cron every 5 minutes checks each site, the download list, a few mod files per run (round robin), and the tool releases (every 30 min). A day of history is kept in KV. A service is down after 2 failed runs in a row. |
 
 - Local: `npm run dev:docs`, `npm run dev:live`, `npm run dev:status`, `npm run dev:poi`.
