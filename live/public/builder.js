@@ -15,7 +15,7 @@ if (start.get("show")) {
   const show = new Set(start.get("show").split(","));
   for (const box of form.querySelectorAll('input[name="show"]')) box.checked = show.has(box.value);
 }
-for (const id of ["title", "msg", "every", "pos", "theme", "scale"]) {
+for (const id of ["title", "msg", "every", "pos", "theme", "scale", "moon"]) {
   if (start.get(id) !== null) document.getElementById(id).value = start.get(id);
 }
 
@@ -23,7 +23,9 @@ function overlayUrl() {
   const params = new URLSearchParams();
   const show = [...form.querySelectorAll('input[name="show"]:checked')].map((box) => box.value);
   params.set("show", show.join(","));
-  if (show.includes("mods") && picked.size) params.set("mods", [...picked].join(","));
+  if ((show.includes("mods") || show.includes("milestones")) && picked.size) params.set("mods", [...picked].join(","));
+  const moon = document.getElementById("moon").value;
+  if (show.includes("bloodmoon") && moon && moon !== "7") params.set("moon", moon);
   for (const id of ["title", "msg"]) {
     const value = document.getElementById(id).value.trim();
     if (value) params.set(id, value);
@@ -43,10 +45,12 @@ function update() {
   link.value = url;
   document.getElementById("scale-out").textContent = `${Math.round(Number(document.getElementById("scale").value) * 100)}%`;
   document.getElementById("mod-count").textContent = picked.size ? `(${picked.size} picked)` : "";
-  document.getElementById("mods-box").hidden = !form.querySelector('input[value="mods"]').checked;
+  document.getElementById("mods-box").hidden = !form.querySelector('input[value="mods"]').checked && !form.querySelector('input[value="milestones"]').checked;
+  document.getElementById("moon-row").hidden = !form.querySelector('input[value="bloodmoon"]').checked;
   history.replaceState(null, "", `?${new URL(url).searchParams}`);
   clearTimeout(previewTimer);
-  previewTimer = setTimeout(() => (preview.src = url), 300);
+  // The preview adds demo=1 so the alert and the countdown show an example straight away.
+  previewTimer = setTimeout(() => (preview.src = `${url}&demo=1`), 300);
 }
 
 function renderMods() {

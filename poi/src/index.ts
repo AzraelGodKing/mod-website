@@ -12,6 +12,7 @@ import {
   parseSnapshot,
   poiHistory,
   publicSnapshot,
+  serverDay,
 } from "./snapshot.mjs";
 
 export interface Env {
@@ -161,6 +162,11 @@ export async function handleApi(request: Request, env: Env, now = new Date()): P
 
   // No POI data, so the status page can read it without the view token.
   if (path === "/api/poi/health") return json(health(await readState(env), now), 200, { "cache-control": "public, max-age=30" });
+
+  // Only the in-game day, for the stream overlay's blood moon countdown (live.azraelsmods.com).
+  if (path === "/api/poi/day") {
+    return json(serverDay(await readState(env), now), 200, { "cache-control": "public, max-age=60", "access-control-allow-origin": "*" });
+  }
 
   const routes = ["/api/poi", "/api/poi/history", "/api/poi/events"];
   if (!routes.includes(path)) return json({ error: "Not found" }, 404);

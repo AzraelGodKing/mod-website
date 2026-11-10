@@ -23,6 +23,8 @@
           <fieldset>
             <legend>Cards</legend>
             <label class="check"><input type="checkbox" name="show" value="mods" checked /> Mods on stream</label>
+            <label class="check"><input type="checkbox" name="show" value="milestones" /> Download milestones <small>counts, and an alert when a picked mod passes one</small></label>
+            <label class="check"><input type="checkbox" name="show" value="bloodmoon" /> Blood moon countdown <small>from the day on Azrael's 7 Days server</small></label>
             <label class="check"><input type="checkbox" name="show" value="commands" /> Chat commands <small>Kat's RICS</small></label>
             <label class="check"><input type="checkbox" name="show" value="addon-commands" /> More commands <small>Kat's RICS</small></label>
             <label class="check"><input type="checkbox" name="show" value="store" /> Store items and prices <small>Kat's RICS</small></label>
@@ -34,6 +36,7 @@
 
           <fieldset id="mods-box">
             <legend>Mods on stream <span id="mod-count" class="muted"></span></legend>
+            <p class="muted small">Used by the “Mods on stream” and “Download milestones” cards.</p>
             <div class="row">
               <label for="game">Game</label>
               <select id="game"><option value="">All games</option></select>
@@ -47,6 +50,7 @@
             <legend>Look</legend>
             <div class="row"><label for="title">Card title</label><input id="title" maxlength="60" placeholder="Mods on stream" /></div>
             <div class="row"><label for="msg">Your message</label><input id="msg" maxlength="160" placeholder="Mods are free at azraelsmods.com" /></div>
+            <div class="row" id="moon-row"><label for="moon">Blood moon every</label><input id="moon" type="number" min="1" max="30" value="7" /><span class="muted small">days</span></div>
             <div class="row"><label for="every">Seconds per card</label><input id="every" type="number" min="5" max="120" value="15" /></div>
             <div class="row">
               <label for="pos">Corner</label>
